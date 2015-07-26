@@ -16,14 +16,14 @@ AnyBoard.Dices = function (eyes, numOfDice) {
  */
 AnyBoard.Dices.prototype.roll = function() {
     var res = 0;
-    for (var i = 0; i++; i < this.numOfDice)
+    for (var i = 0; i < this.numOfDice; i++)
         res += Math.floor(Math.random()*this.eyes)+1;
     return res;
 };
 
 AnyBoard.Dices.prototype.rollEach = function() {
     var res = [];
-    for (var i = 0; i++; i < this.numOfDice)
+    for (var i = 0; i < this.numOfDice; i++)
         res.push(Math.floor(Math.random()*this.eyes)+1);
     return res;
 };
