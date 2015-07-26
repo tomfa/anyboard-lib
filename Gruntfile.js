@@ -80,11 +80,11 @@ module.exports = function(grunt) {
             generate: {
                 options: {
                     contentsEnabled: true,
-                    contentsFile: 'libs/README.md',
+                    contentsFile: 'dist/README.md',
                     contentsTitle: 'AnyBoard Documentation v.<%= pkg.version %>',
                 },
            
-                src: ['libs/**/*.js'],
+                src: ['dist/**.js'],
                 dest: './'
             }
         }

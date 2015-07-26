@@ -1,9 +1,11 @@
 "use strict";
 
-/** Represents a set of game dices (AnyBoard.Dices)
+/** Represents a set of game dices \
+ * *new AnyBoard.Dices(eyes, numOfDice)*
  * @constructor
- * @param {number} eyes - number of max eyes on a roll with this dice (default 6)
- * @param {number} numOfDice - number of dices in this (default 1)
+ * @property {number} eyes number of max eyes on a roll with this dice *(default 6)*\
+ * @property {number} numOfDice number of dices *(default: 1)*
+ *
  */
 AnyBoard.Dices = function (eyes, numOfDice) {
     this.eyes = eyes || 6;
@@ -11,8 +13,8 @@ AnyBoard.Dices = function (eyes, numOfDice) {
 };
 
 /**
- * Roll the dices
- * @returns {number} - total result of roll
+ * Roll the dices and returns a the sum
+ * @returns {number} combined result of rolls for all dices
  */
 AnyBoard.Dices.prototype.roll = function() {
     var res = 0;
@@ -21,6 +23,10 @@ AnyBoard.Dices.prototype.roll = function() {
     return res;
 };
 
+/**
+ * Roll the dices and returns an array of results for each dice
+ * @returns {Array} list of results for each dice
+ */
 AnyBoard.Dices.prototype.rollEach = function() {
     var res = [];
     for (var i = 0; i < this.numOfDice; i++)
