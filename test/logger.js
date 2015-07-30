@@ -2,7 +2,7 @@ var assert = require("assert")
 var AnyBoard = require("./../dist/AnyBoard.js");
 var sinon = require('sinon');
 
-AnyBoard.Logger.threshold = 40;
+AnyBoard.Logger.threshold = AnyBoard.Logger.errorLevel;
 
 describe('AnyBoard.Logger', function() {
     var debugLogger = sinon.spy();

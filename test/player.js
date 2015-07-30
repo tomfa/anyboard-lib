@@ -1,9 +1,9 @@
-var assert = require("assert")
+var assert = require("assert");
 var AnyBoard = require("./../dist/AnyBoard.js");
 var sinon = require('sinon');
-var _ = require('underscore')
+var _ = require('underscore');
 
-AnyBoard.Logger.threshold = AnyBoard.Logger.debugLevel;
+AnyBoard.Logger.threshold = AnyBoard.Logger.errorLevel;
 
 describe('AnyBoard.Player', function() {
     var cake = new AnyBoard.Resource('cake');

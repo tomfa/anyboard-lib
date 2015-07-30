@@ -3,7 +3,7 @@ var AnyBoard = require("./../dist/AnyBoard.js");
 var sinon = require('sinon');
 var _ = require('underscore');
 
-AnyBoard.Logger.threshold = 40;
+AnyBoard.Logger.threshold = AnyBoard.Logger.errorLevel;
 
 describe('AnyBoard.Resource', function() {
     describe('after being constructed', function () {

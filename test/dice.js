@@ -1,6 +1,8 @@
 var assert = require("assert")
 var AnyBoard = require("./../dist/AnyBoard.js");
 
+AnyBoard.Logger.threshold = AnyBoard.Logger.errorLevel;
+
 describe('AnyBoard.Dices', function() {
 	var simpledice;
 	var oneDice;
