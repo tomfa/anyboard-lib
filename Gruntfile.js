@@ -76,27 +76,37 @@ module.exports = function(grunt) {
                 src: ['test/**/*.js']
             }
         },
-        jsdox: {
-            generate: {
-                options: {
-                    contentsEnabled: true,
-                    contentsFile: 'dist/README.md',
-                    contentsTitle: 'AnyBoard Documentation v.<%= pkg.version %>',
-                },
-           
-                src: ['dist/**.js'],
-                dest: './'
+        jsdoc2md: {
+            oneOutputFile: {
+                src: "dist/*.js",
+                dest: "documentation.md"
             }
+            //separateOutputFilePerInput: {
+            //    files: [
+            //        { src: "src/jacket.js", dest: "api/jacket.md" },
+            //        { src: "src/shirt.js", dest: "api/shirt.md" }
+            //    ]
+            //},
+            //withOptions: {
+            //    options: {
+            //        "no-gfm": true
+            //    },
+            //    src: "src/wardrobe.js",
+            //    dest: "api/with-index.md"
+            //}
         }
+
 
     }); 
 
     grunt.registerTask('default', []);
-    grunt.registerTask('test', ['mochaTest']);
+    grunt.registerTask('test', ['build', 'mochaTest']);
     grunt.registerTask('build', ['concat', 'uglify']);
-    grunt.registerTask('doc', ['jsdox']);
+    grunt.registerTask('doc', ['build', 'jsdoc2md']);
     grunt.event.on('watch', function(action, filepath) {
         grunt.config('jshint.build.src', filepath);
     });
+
+    grunt.loadNpmTasks('grunt-jsdoc-plugin');
 
 };

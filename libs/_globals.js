@@ -1,13 +1,13 @@
 "use strict";
 
 /**
- * Creating global variable AnyBoard
- * @type {{}|AnyBoard}
+ * Global variable AnyBoard.
+ * @type {object}
  */
 var AnyBoard = AnyBoard || {};
 
 /**
  * Exporting AnyBoard as Node Module
- * @type {{}|AnyBoard}
+ * @type {object}
  */
-module.export = AnyBoard;
+module.exports = AnyBoard;
