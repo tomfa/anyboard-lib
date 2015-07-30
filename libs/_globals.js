@@ -7,7 +7,7 @@
 var AnyBoard = AnyBoard || {};
 
 /**
- * Exporting AnyBoard as Node Module
+ * Exporting AnyBoard as Node Module if applicable
  * @type {object}
  */
-module.exports = AnyBoard;
+if (typeof module !== "undefined") module.exports = AnyBoard;
