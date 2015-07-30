@@ -113,7 +113,7 @@ AnyBoard.Player.prototype.draw = function(deck, options) {
         AnyBoard.Logger.debug('' + this.name + " couldn't draw from empty deck " + deck.name, this);
     }
     else {
-        this.hand.add(card);
+        this.hand._add(card);
         AnyBoard.Logger.debug('' + this.name + " drew card " + card.title + " from deck " + deck.name, this);
     }
     return card;
@@ -169,11 +169,12 @@ AnyBoard.Hand.prototype.has = function(card, amount) {
     return false;
 };
 
-/**
+/*
+ * NB: Helpfunction! Use player.draw(deck) instead.
  * Adds a card to the hand of a player
  * @param {AnyBoard.Card} card card to be added to this hand
  */
-AnyBoard.Hand.prototype.add = function(card) {
+AnyBoard.Hand.prototype._add = function(card) {
     if (!this.cards[card.id])
         this.cards[card.id] = 0;
     AnyBoard.Logger.debug('' + this.player.name + " added to hand, card " + card.title, this);

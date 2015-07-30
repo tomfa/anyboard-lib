@@ -89,7 +89,7 @@ AnyBoard.Deck.prototype.refill = function(newDeck) {
         this.usedPile = [];
 };
 
-/**
+/*
  * NB: Helpfunction! Use player.draw(deck) instead.
  * Draws a card from the deck.
  * Refills pile if autoNewRefill or autoUsedRefill is true.
@@ -107,7 +107,7 @@ AnyBoard.Deck.prototype._draw = function(player, options) {
     }
     var card = this.pile.pop();
     if (!card) {
-        // TODO: Signal out of cards
+        // out of cards
     }
     for (var func in this.drawListeners) {
         if (this.drawListeners.hasOwnProperty(func))
