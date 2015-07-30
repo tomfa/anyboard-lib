@@ -21,7 +21,7 @@ describe('AnyBoard.Dices', function() {
 
   describe('when initated with one parameter', function () {
   	oneDice = new AnyBoard.Dices(10)
-  	it('is initiated with e.g. "new AnyBoard.Dices(10)"', function () {  	
+  	it('is initiated with e.g. "new AnyBoard.Dices(10)"', function () {
       oneDice = new AnyBoard.Dices(10)
     });
     it('have 1 dice', function () {
@@ -34,7 +34,7 @@ describe('AnyBoard.Dices', function() {
 
   describe('when initated with two parameters', function () {
   	twoDice = new AnyBoard.Dices(12, 6)
-  	it('is initiated with e.g. "new AnyBoard.Dices(12, 6)"', function () {  	
+  	it('is initiated with e.g. "new AnyBoard.Dices(12, 6)"', function () {
       twoDice = new AnyBoard.Dices(12, 6)
     });
     it('have the second parameter amount of dices (6)', function () {

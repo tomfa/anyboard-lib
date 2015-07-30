@@ -1,10 +1,9 @@
 "use strict";
 
-/** Represents a set of game dices \
- * *new AnyBoard.Dices(eyes, numOfDice)*
+/** Represents a set of game dices that can be rolled to retrieve a random result.
  * @constructor
- * @property {number} eyes number of max eyes on a roll with this dice *(default 6)*\
- * @property {number} numOfDice number of dices *(default: 1)*
+ * @param {number} eyes *(default 6)* number of max eyes on a roll with this dice
+ * @param {number} numOfDice *(default: 1)* number of dices
  *
  */
 AnyBoard.Dices = function (eyes, numOfDice) {
