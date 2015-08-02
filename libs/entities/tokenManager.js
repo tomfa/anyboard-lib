@@ -6,7 +6,7 @@
  */
 AnyBoard.TokenManager = {
     connectedTokens: {},
-    bleDriver: AnyBoard.Drivers.get('evothings-easyble-bean')
+    bleDriver: null
 };
 
 /**
@@ -103,7 +103,7 @@ AnyBoard.BaseToken = function(tokenIdentifier, bleDriver) {
     this.connected = false;
     this.device = null;
     this.listeners = {};
-    this.bleDriver = null;
+    this.bleDriver = bleDriver;
 };
 
 /**
