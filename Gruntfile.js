@@ -107,6 +107,4 @@ module.exports = function(grunt) {
         grunt.config('jshint.build.src', filepath);
     });
 
-    grunt.loadNpmTasks('grunt-jsdoc-plugin');
-
 };
