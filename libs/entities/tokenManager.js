@@ -37,7 +37,7 @@ AnyBoard.TokenManager.setBluetoothDriver = function(bluetoothDriver) {
  * @param {function} fail function to be called upon connect failure
  */
 AnyBoard.TokenManager.connect = function(tokenIdentifier, win, fail) {
-    bleDriver.connect(tokenIdentifier, win, fail)
+    this.bleDriver.connect(tokenIdentifier, win, fail)
 };
 
 /**
