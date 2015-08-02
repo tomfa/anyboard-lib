@@ -27,20 +27,14 @@
 	<script src="drivers/bean.evothings.bluetooth.js"></script>
 	<script>
 	 var app = {
-	 	whiteLed: function() {
-	 		AnyBoard.Logger.warn('whiteLed')
-	 	},
-	 	blueLed: function() {
-	 		AnyBoard.Logger.warn('blueLed')
-	 	},
-	 	greenLed: function() {
-	 		AnyBoard.Logger.warn('greenLed')
-	 	},
-	 	redLed: function() {
-	 		AnyBoard.Logger.warn('redLed')
-	 	},
-	 	noLed:  function() {
-	 		AnyBoard.Logger.warn('noLed')
+	 	discover:  function() {
+	 		AnyBoard.TokenManager.scan(function(device) {
+				hyper.log('Found device:');
+				hyper.log(device)
+			}, function(errorCode) {
+				hyper.log(errorCode)
+			});
+
 	 	}
 	 };
 	</script>
@@ -48,34 +42,12 @@
 </head>
 
 <body ontouchstart="">
-	<h1>AnyToken Bean Demo</h1>
-
-	<p><b>Status:</b> 
+	<h1>AnyToken library Demo</h1>
 
 	</div>
 
-	<button type="button" class="white" onclick="app.whiteLed()">
-		White Winter
-	</button>
-	<br />
-
-	<button type="button" class="blue" onclick="app.blueLed()">
-		Blue Ocean
-	</button>
-	<br />
-
-	<button type="button" class="green" onclick="app.greenLed()">
-		Green Forest
-	</button>
-	<br />
-
-	<button type="button" class="red" onclick="app.redLed()">
-		Red Apple
-	</button>
-	<br />
-
-	<button type="button" class="black" onclick="app.noLed()">
-		Turn Off
+	<button type="button" class="black" onclick="app.discover()">
+		Discover Bluetooth devices
 	</button>
 	<br />
 
