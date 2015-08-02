@@ -67,7 +67,7 @@
             fail(errorCode);
         });
 
-        setTimeout(function() {hyper.log(timeout); self._completeScan()}, timeout);
+        setTimeout(function() {self._completeScan()}, timeout);
     };
 
     evothingsBluetooth._completeScan = function(callback) {
