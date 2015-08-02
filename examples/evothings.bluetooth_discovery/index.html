@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, user-scalable=no
+		initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0" />
+
+	<title>AnyToken Bean Demo</title>
+
+	<style>
+		@import 'ui/css/evothings-app.css';
+
+		p.topic {
+			font-weight: bold;
+		}
+	</style>
+
+	<script>
+	// Redirect console.log to Evothings Workbench.
+	if (window.hyper && window.hyper.log) { console.log = hyper.log }
+	</script>
+
+	<script src="cordova.js"></script>
+	<script src="libs/evothings/evothings.js"></script>
+	<script src="libs/evothings/easyble/easyble.js"></script>
+	<script src="bean.js"></script>
+	<script src="app.js"></script>
+
+</head>
+
+<body ontouchstart="">
+	<h1>AnyToken Bean Demo</h1>
+
+	<p><b>Status:</b> <span id="status">Not connected</span></p>
+
+
+	</div>
+
+	<button type="button" class="white" onclick="app.whiteLed()">
+		White Winter
+	</button>
+	<br />
+
+	<button type="button" class="blue" onclick="app.blueLed()">
+		Blue Ocean
+	</button>
+	<br />
+
+	<button type="button" class="green" onclick="app.greenLed()">
+		Green Forest
+	</button>
+	<br />
+
+	<button type="button" class="red" onclick="app.redLed()">
+		Red Apple
+	</button>
+	<br />
+
+	<button type="button" class="black" onclick="app.noLed()">
+		Turn Off
+	</button>
+	<br />
+
+</body>
+
+</html>
