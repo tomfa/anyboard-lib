@@ -27,14 +27,21 @@
 	<script src="drivers/bean.evothings.bluetooth.js"></script>
 	<script>
 	 var app = {
+		devices: [],
 	 	discover:  function() {
+			this.devices = [],
+			self = this;
 	 		AnyBoard.TokenManager.scan(function(device) {
-				hyper.log('Found device:');
-				hyper.log(device)
+				hyper.log('Found device!');
+				self.devices.push(device);
+				AnyBoard.TokenManager.connect(device, function(device) {
+					hyper.log('We connected to device!')
+				}, function(errorCode) {
+					hyper.log('We couldnt connect :(');
+				});
 			}, function(errorCode) {
 				hyper.log(errorCode)
 			});
-
 	 	}
 	 };
 	</script>
