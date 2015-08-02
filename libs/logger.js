@@ -1,6 +1,3 @@
-"use strict";
-
-
 /**
  * @static {object}
  * @property {number} threshold *(default: 10)* sets a threshold on whether or not to log an event. debugLevel will be used instead if threshold is lower.

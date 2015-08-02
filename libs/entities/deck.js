@@ -1,5 +1,3 @@
-"use strict";
-
 /** Represents a Deck of Cards
  *
  * @constructor
@@ -187,7 +185,7 @@ AnyBoard.Card = function (deck, options) {
 AnyBoard.Card.COUNTER = 0;
 AnyBoard.Card.AUTO_INC = function() {
     return ++AnyBoard.Card.COUNTER;
-}
+};
 
 AnyBoard.Card.all = {};
 AnyBoard.Card.allTitle = {};
@@ -219,4 +217,4 @@ AnyBoard.Card.prototype._play = function(player, options) {
 
 AnyBoard.Card.prototype.toString = function() {
     return 'Card: ' + this.title + ', id: ' + this.id;
-}
+};

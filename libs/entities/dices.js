@@ -1,5 +1,3 @@
-"use strict";
-
 /** Represents a set of game dices that can be rolled to retrieve a random result.
  * @constructor
  * @param {number} eyes *(default 6)* number of max eyes on a roll with this dice

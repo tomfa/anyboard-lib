@@ -1,5 +1,3 @@
-"use strict";
-
 /**
  * Represents a simple resource (AnyBoard.Resource)
  * @constructor

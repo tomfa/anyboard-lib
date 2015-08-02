@@ -1,5 +1,3 @@
-"use strict";
-
 /** Represents a Player (AnyBoard.Player)
  * @constructor
  * @param {string} name name of the player
