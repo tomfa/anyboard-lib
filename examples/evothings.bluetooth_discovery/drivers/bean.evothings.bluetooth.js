@@ -7,7 +7,7 @@
 
 (function(){
     var evothingsBluetooth = new AnyBoard.Driver({
-        name: 'evothings-easyble',
+        name: 'evothings-easyble-bean',
         description: 'Driver based off evothings.easyble library for Cordova-based apps',
         dependencies: 'evothings.easyble',
         version: '0.1',
@@ -43,28 +43,37 @@
      * @param {number} timeout *(default: 5000)* number of milliseconds before stopping scan
      */
     evothingsBluetooth.scan = function (win, fail, timeout) {
-        AnyBoard.Logger.debug('Scanning for bluetooth devices...', this);
+        if (this.scanning) {
+            AnyBoard.Logger.debug('Already scanning. Ignoring new request.', this);
+            return;
+        }
+        this.scanning = true;
+        AnyBoard.Logger.debug('Scanning for bluetooth devices (timeout: ' + timeout + ')', this);
 
         this.detectedDevices = [];
         timeout = timeout || 5000;
+
+
+        var self = this;
 
         // Specify that devices are reported repeatedly so that
         // we get the most recent RSSI reading for each device.
         evothings.easyble.reportDeviceOnce(true);
         evothings.easyble.startScan(function(device){
-            this._deviceDetected(device);
+            self._deviceDetected(device);
             win(device)
         }, function(errorCode) {
-            this._scanError(errorCode);
+            self._scanError(errorCode);
             fail(errorCode);
         });
 
-        setTimeout(this._completeScan(), timeout);
+        setTimeout(function() {hyper.log(timeout); self._completeScan()}, timeout);
     };
 
     evothingsBluetooth._completeScan = function(callback) {
         AnyBoard.Logger.debug('Stopping scan for bluetooth devices...', this);
         evothings.easyble.stopScan();
+        this.scanning = false;
         callback && callback(this.detectedDevices);
     };
 
@@ -78,6 +87,7 @@
 
     evothingsBluetooth._scanError = function(errorCode) {
         AnyBoard.Logger.error('Scan failed: ' + errorCode, this);
+        this.scanning = false;
     };
 
     evothingsBluetooth._connectError = function(errorCode) {
@@ -87,6 +97,9 @@
     evothingsBluetooth._readServicesError = function(errorCode) {
         AnyBoard.Logger.error('Read services failed: ' + errorCode, this);
     };
+
+    // Set as default bluetooth driver
+    AnyBoard.TokenManager.bleDriver = AnyBoard.Drivers.drivers['evothings-easyble-bean'];
 })();
 
 
