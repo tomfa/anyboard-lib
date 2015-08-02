@@ -20,21 +20,22 @@ AnyBoard.Logger = {
     loggerObject: console,
     /**
      * logs if threshold <= level parameter
-     * @param {level} level of severity
+     * @param {number} level of severity
      * @param {string} message event to be logged
      * @param {object} sender *(optional)* sender of the message
      */
     message: function(level, message, sender) {
-        var messageFormat = 'AnyBoard: ' + message  + (sender ? ' (' + sender + ')' : '');
+        var messageFormat = 'AnyBoard (' + level + '): ' + message  + (sender ? ' (' + sender + ')' : '');
         if ((this.threshold <= level || this.errorLevel <= level) && this.debugLevel <= level) {
-            if (level >= this.errorLevel)
-                this.loggerObject.hasOwnProperty("error") && this.loggerObject.error(messageFormat);
+            if (level >= this.errorLevel) {
+                this.loggerObject.error && this.loggerObject.error(messageFormat);
+            }
             else if (level >= this.warningLevel)
-                this.loggerObject.hasOwnProperty("warn") && this.loggerObject.warn(messageFormat);
+                this.loggerObject.warn && this.loggerObject.warn(messageFormat);
             else if (level >= this.normalLevel)
-                this.loggerObject.hasOwnProperty("log") && this.loggerObject.log(messageFormat);
+                this.loggerObject.log && this.loggerObject.log(messageFormat);
             else
-                this.loggerObject.hasOwnProperty("debug") && this.loggerObject.debug(messageFormat);
+                this.loggerObject.debug && this.loggerObject.debug(messageFormat);
         }
     },
     /**
