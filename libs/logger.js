@@ -34,6 +34,8 @@ AnyBoard.Logger = {
             else
                 this.loggerObject.debug && this.loggerObject.debug(messageFormat);
         }
+
+        if (typeof hyper !== 'undefined') hyper.log(messageFormat);
     },
     /**
      * logs a warning. Ignored if threshold > this.warningLevel (default: 20)
