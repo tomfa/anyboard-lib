@@ -90,20 +90,20 @@ AnyBoard.BaseToken.prototype.isConnected = function() {
  * @returns {boolean} whether or not token is connected
  */
 AnyBoard.BaseToken.prototype.connect = function(win, fail) {
-    AnyBoard.Logger.debug('Attempting to connect to ' + this, this);
+    AnyBoard.Logger.debug('Attempting to connect to ' + this);
     var pointer = this.driver || AnyBoard.TokenManager.driver;
     var self = this;
     pointer.connect(
         self,
         function(device) {
-            AnyBoard.Logger.debug('Connected to ' + self, self);
+            AnyBoard.Logger.debug('Connected to ' + self);
             self.connected = true;
             self.device = device;
             self.trigger('connect', {device: self});
             win(device);
         },
         function(errorCode) {
-            AnyBoard.Logger.debug('Could not connect to ' + self + '. ' + errorCode, self);
+            AnyBoard.Logger.debug('Could not connect to ' + self + '. ' + errorCode);
             self.connected = false;
             fail(errorCode);
         }
@@ -127,7 +127,7 @@ AnyBoard.BaseToken.prototype.disconnect = function() {
  * @param {object} eventOptions dictionary of parameters and values
  */
 AnyBoard.BaseToken.prototype.trigger = function(eventName, eventOptions) {
-    AnyBoard.Logger.debug('' + this + ' triggered ' + eventName, this);
+    AnyBoard.Logger.debug('' + this + ' triggered "' + eventName + '"');
     if (!this.listeners[eventName])
         return;
     for (var eventListener in this.listeners) {

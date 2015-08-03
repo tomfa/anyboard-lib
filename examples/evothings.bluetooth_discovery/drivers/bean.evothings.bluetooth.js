@@ -42,7 +42,7 @@
      * @param {AnyBoard.BaseToken} token
      */
     evothingsBluetooth.disconnect = function (token) {
-        AnyBoard.Logger.debug('Disconnecting from device: ' + token.name, this);
+        AnyBoard.Logger.debug('Disconnecting from device: ' + token, this);
         token.device && token.device.close()
     };
 
@@ -213,7 +213,7 @@
 
         var self = this;
         device.gettingServices = true;
-        AnyBoard.Logger.log('Attempting to fetch services for token ' + device.name, self);
+        AnyBoard.Logger.log('Fetch services for ' + token, self);
         evothings.ble.readAllServiceData(device.deviceHandle, function(services)
             {
                 device.services = {};
