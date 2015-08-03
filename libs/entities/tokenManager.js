@@ -104,6 +104,8 @@ AnyBoard.BaseToken.prototype.connect = function(win, fail) {
         },
         function(errorCode) {
             AnyBoard.Logger.debug('Could not connect to ' + self + '. ' + errorCode);
+            if (self.connected)
+                self.trigger('disconnect', {device: self});
             self.connected = false;
             fail(errorCode);
         }
@@ -116,9 +118,9 @@ AnyBoard.BaseToken.prototype.connect = function(win, fail) {
 AnyBoard.BaseToken.prototype.disconnect = function() {
     var pointer = this.driver || AnyBoard.TokenManager.driver;
     pointer.disconnect(this);
-    AnyBoard.Logger.debug('Token: ' + this + ' disconnected', this);
-    this.trigger('disconnect', {message: 'Initiated disconnect.', device: this});
+    AnyBoard.Logger.debug('' + this + ' disconnected', this);
     this.connected = false;
+    this.trigger('disconnect', {device: this});
 };
 
 /**
@@ -130,10 +132,8 @@ AnyBoard.BaseToken.prototype.trigger = function(eventName, eventOptions) {
     AnyBoard.Logger.debug('' + this + ' triggered "' + eventName + '"');
     if (!this.listeners[eventName])
         return;
-    for (var eventListener in this.listeners) {
-        if (this.listeners.hasOwnProperty(eventListener)) {
-            this.listeners[eventListener](this, eventOptions);
-        }
+    for (var i in this.listeners[eventName]) {
+        this.listeners[eventName][i](this, eventOptions);
     }
 };
 
@@ -143,7 +143,7 @@ AnyBoard.BaseToken.prototype.trigger = function(eventName, eventOptions) {
  * @param {function} callbackFunction function to be executed
  */
 AnyBoard.BaseToken.prototype.on = function(eventName, callbackFunction) {
-    AnyBoard.Logger.debug('Token: ' + this + ' added listener to event: ' + eventName, this);
+    AnyBoard.Logger.debug('' + this + ' added listener to event: ' + eventName, this);
     if (!this.listeners[eventName])
         this.listeners[eventName] = [];
     this.listeners[eventName].push(callbackFunction);
@@ -156,7 +156,7 @@ AnyBoard.BaseToken.prototype.on = function(eventName, callbackFunction) {
  * @param {function} fail function to be executed upon failure
  */
 AnyBoard.BaseToken.prototype.sendBuffer = function(data, win, fail) {
-    AnyBoard.Logger.debug('Token: ' + this + ' attempting to send with data: ' + data, this);
+    AnyBoard.Logger.debug('' + this + ' attempting to send with data: ' + data, this);
     if (!this.isConnected()) {
         AnyBoard.Logger.warn(this + ' is not connected. Attempting to connect first.', this);
         var self = this;

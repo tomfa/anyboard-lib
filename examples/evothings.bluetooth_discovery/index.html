@@ -20,42 +20,86 @@
 	<script>
 	</script>
 
+    <!-- cordova.js based -->
 	<script src="cordova.js"></script>
-	<script src="libs/evothings/evothings.js"></script>
-	<script src="libs/evothings/easyble/easyble.js"></script>
+
+    <!-- AnyBoard libraries -->
 	<script src="libs/AnyBoard.min.js"></script>
+
+    <!-- Bluetooth driver and dependencies-->
+    <script src="libs/evothings/evothings.js"></script>
+    <script src="libs/evothings/easyble/easyble.js"></script>
 	<script src="drivers/bean.evothings.bluetooth.js"></script>
+
 	<script>
-	 var app = {
-		devices: [],
-	 	discover:  function() {
-			this.devices = [],
-			self = this;
-	 		AnyBoard.TokenManager.scan(function(device) {
-				hyper.log('Found device!');
-				self.devices.push(device);
-				AnyBoard.TokenManager.connect(device, function(device) {
-					hyper.log('We connected to device!')
-				}, function(errorCode) {
-					hyper.log('We couldnt connect :(');
-				});
-			}, function(errorCode) {
-				hyper.log(errorCode)
-			});
-	 	}
-	 };
+        var app = {
+		    devices: {},
+
+            // Discover bluetooth tokens in proximity
+            discover: function() {
+                var self = this;
+                AnyBoard.TokenManager.scan(
+                    // function to be executed upon success
+                    function(token) {
+                        self.addDiscovered(token);
+                    },
+                    // function to be executed upon failure
+                    function(errorCode) {
+                        console.log(errorCode)
+                    }
+                );
+            },
+
+            // Function to be executed upon having discovered a token
+            addDiscovered: function(token) {
+                if (!this.devices[token.name]) {
+                    this.devices[token.name] = token;
+
+                    // Add button for token to body
+                    document.body.innerHTML += '<button type="button" id="' + token.name + '" onclick="app.connect(' + "'" + token.name + "'" + ')" class="grey">' + token.name + ' </button><br />';
+
+                    // Add listener to be executed if the token connects
+                    token.on('connect', function() {
+                        document.getElementById(token.name).className = 'green';})
+
+                    // Add listener to be executed if the token disconnects
+                    token.on('disconnect', function() {
+                        document.getElementById(token.name).className = 'red';
+                    })
+                }
+
+            },
+
+            // Attempts to connect to token.
+            connect: function(tokenName) {
+                document.getElementById(tokenName).className = 'blue';
+                var token = this.devices[tokenName];
+                token.connect();
+            }
+
+
+	    };
 	</script>
 
 </head>
 
 <body ontouchstart="">
-	<h1>AnyToken library Demo</h1>
+	<h1>AnyToken Library Demo</h1>
+    <div>
+        <p>Demo of AnyToken library that makes use of: 1) Custom Bluetooth Driver, 2) Token discovery, 3) Token connecting, 4) AnyBoard Token listener
+        </p>
+    <p>
+    Click on the black button to discover devices. Devices will pop up as new grey buttons with their name on it.
+    Click the name button to attempt to connect. See console for more information about the devices.
+    </p>
 
+    <p>A blue color is <em>pending</em>, green is <em>connected</em>, and red is <em>disconnected</em></p>
 	</div>
 
 	<button type="button" class="black" onclick="app.discover()">
 		Discover Bluetooth devices
 	</button>
+
 	<br />
 
 </body>
