@@ -5,13 +5,15 @@ Global variable AnyBoard.
 **Kind**: global variable  
 
 * [AnyBoard](#AnyBoard) : <code>object</code>
+  * [.Driver](#AnyBoard.Driver)
+    * [new AnyBoard.Driver(options)](#new_AnyBoard.Driver_new)
+    * [.toString()](#AnyBoard.Driver+toString) ⇒ <code>string</code>
   * [.Deck](#AnyBoard.Deck)
     * [new AnyBoard.Deck(name, jsonDeck)](#new_AnyBoard.Deck_new)
     * _instance_
       * [.shuffle()](#AnyBoard.Deck+shuffle)
       * [.initiate(jsonDeck)](#AnyBoard.Deck+initiate)
       * [.refill(newDeck)](#AnyBoard.Deck+refill)
-      * [._draw(player, options)](#AnyBoard.Deck+_draw) ⇒ <code>[Card](#AnyBoard.Card)</code>
       * [.onPlay(func)](#AnyBoard.Deck+onPlay)
       * [.onDraw(func)](#AnyBoard.Deck+onDraw)
     * _static_
@@ -36,7 +38,6 @@ Global variable AnyBoard.
   * [.Hand](#AnyBoard.Hand)
     * [new AnyBoard.Hand(player, options)](#new_AnyBoard.Hand_new)
     * [.has(card, amount)](#AnyBoard.Hand+has) ⇒ <code>boolean</code>
-    * [.add(card)](#AnyBoard.Hand+add)
   * [.Resource](#AnyBoard.Resource)
     * [new AnyBoard.Resource(name, properties)](#new_AnyBoard.Resource_new)
     * [.get(name)](#AnyBoard.Resource.get) ⇒ <code>[Resource](#AnyBoard.Resource)</code>
@@ -46,6 +47,25 @@ Global variable AnyBoard.
     * [.add(resourceSet)](#AnyBoard.ResourceSet+add)
     * [.subtract(resourceSet)](#AnyBoard.ResourceSet+subtract) ⇒ <code>boolean</code>
     * [.similarities(resourceSet)](#AnyBoard.ResourceSet+similarities) ⇒ <code>object</code>
+  * [.BaseToken](#AnyBoard.BaseToken)
+    * [new AnyBoard.BaseToken(name, address, device, [driver])](#new_AnyBoard.BaseToken_new)
+    * [.isConnected()](#AnyBoard.BaseToken+isConnected) ⇒ <code>boolean</code>
+    * [.connect(win, fail)](#AnyBoard.BaseToken+connect) ⇒ <code>boolean</code>
+    * [.disconnect()](#AnyBoard.BaseToken+disconnect)
+    * [.trigger(eventName, eventOptions)](#AnyBoard.BaseToken+trigger)
+    * [.on(eventName, callbackFunction)](#AnyBoard.BaseToken+on)
+    * [.sendBuffer(data, win, fail)](#AnyBoard.BaseToken+sendBuffer)
+    * [.sendString(data, win, fail)](#AnyBoard.BaseToken+sendString)
+    * [.send(data, win, fail)](#AnyBoard.BaseToken+send)
+    * [.toString()](#AnyBoard.BaseToken+toString) ⇒ <code>string</code>
+  * [.DummyToken](#AnyBoard.DummyToken) ⇐ <code>BaseToken</code>
+    * [new AnyBoard.DummyToken(name, address)](#new_AnyBoard.DummyToken_new)
+  * [.Drivers](#AnyBoard.Drivers)
+    * [.get(name)](#AnyBoard.Drivers.get) ⇒ <code>[Driver](#AnyBoard.Driver)</code>
+  * [.TokenManager](#AnyBoard.TokenManager)
+    * [.setDriver(driver)](#AnyBoard.TokenManager.setDriver)
+    * [.scan(win, fail, timeout)](#AnyBoard.TokenManager.scan)
+    * [.get(address)](#AnyBoard.TokenManager.get) ⇒ <code>[BaseToken](#AnyBoard.BaseToken)</code>
   * [.Logger](#AnyBoard.Logger)
     * [.message(level, message, sender)](#AnyBoard.Logger.message)
     * [.warn(message, sender)](#AnyBoard.Logger.warn)
@@ -53,6 +73,46 @@ Global variable AnyBoard.
     * [.log(message, sender)](#AnyBoard.Logger.log)
     * [.debug(message, sender)](#AnyBoard.Logger.debug)
 
+<a name="AnyBoard.Driver"></a>
+### AnyBoard.Driver
+**Kind**: static class of <code>[AnyBoard](#AnyBoard)</code>  
+**Properties**
+
+| Name | Type | Description |
+| --- | --- | --- |
+| options | <code>object</code> | options for the driver |
+| options.name | <code>string</code> | name of the driver |
+| options.description | <code>string</code> | description of the driver |
+| options.version | <code>string</code> | version of the driver |
+| options.dependencies | <code>string</code> | (optional) What if anything the driver depends on. |
+| options.date | <code>string</code> | (optional) Date upon release/last build. |
+| properties | <code>object</code> | dictionary that holds custom attributes |
+
+
+* [.Driver](#AnyBoard.Driver)
+  * [new AnyBoard.Driver(options)](#new_AnyBoard.Driver_new)
+  * [.toString()](#AnyBoard.Driver+toString) ⇒ <code>string</code>
+
+<a name="new_AnyBoard.Driver_new"></a>
+#### new AnyBoard.Driver(options)
+Represents a single Driver, e.g. for spesific token or bluetooth on operating system.
+
+
+| Param | Type | Description |
+| --- | --- | --- |
+| options | <code>object</code> | options for the driver |
+| options.name | <code>string</code> | name of the driver |
+| options.description | <code>string</code> | description of the driver |
+| options.version | <code>string</code> | version of the driver |
+| options.dependencies | <code>string</code> | (optional) What if anything the driver depends on. |
+| options.date | <code>string</code> | (optional) Date upon release/last build. |
+| options.yourAttributeHere | <code>any</code> | custom attributes, as well as specified ones, are all placed in driver.properties. E.g. 'heat' would be placed in driver.properties.heat. |
+
+<a name="AnyBoard.Driver+toString"></a>
+#### driver.toString() ⇒ <code>string</code>
+Returns a short description of the Driver instance
+
+**Kind**: instance method of <code>[Driver](#AnyBoard.Driver)</code>  
 <a name="AnyBoard.Deck"></a>
 ### AnyBoard.Deck
 **Kind**: static class of <code>[AnyBoard](#AnyBoard)</code>  
@@ -76,7 +136,6 @@ Global variable AnyBoard.
     * [.shuffle()](#AnyBoard.Deck+shuffle)
     * [.initiate(jsonDeck)](#AnyBoard.Deck+initiate)
     * [.refill(newDeck)](#AnyBoard.Deck+refill)
-    * [._draw(player, options)](#AnyBoard.Deck+_draw) ⇒ <code>[Card](#AnyBoard.Card)</code>
     * [.onPlay(func)](#AnyBoard.Deck+onPlay)
     * [.onDraw(func)](#AnyBoard.Deck+onDraw)
   * _static_
@@ -118,20 +177,6 @@ Manually refills the pile. This is not necessary if autoUsedRefill or autoNewRef
 | Param | Type | Description |
 | --- | --- | --- |
 | newDeck | <code>boolean</code> | *(default: false)* True if to refill with a new deck. False if to refill with played cards (from usedPile) |
-
-<a name="AnyBoard.Deck+_draw"></a>
-#### deck._draw(player, options) ⇒ <code>[Card](#AnyBoard.Card)</code>
-NB: Helpfunction! Use player.draw(deck) instead.
-Draws a card from the deck.
-Refills pile if autoNewRefill or autoUsedRefill is true.
-
-**Kind**: instance method of <code>[Deck](#AnyBoard.Deck)</code>  
-**Returns**: <code>[Card](#AnyBoard.Card)</code> - card card that is drawn, or undefined if pile is empty and autoRefill properties are false.  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| player | <code>[Player](#AnyBoard.Player)</code> | player that draws the card |
-| options | <code>object</code> | *(optional)* custom options sent to drawListeners |
 
 <a name="AnyBoard.Deck+onPlay"></a>
 #### deck.onPlay(func)
@@ -364,7 +409,6 @@ Returns player with given name
 * [.Hand](#AnyBoard.Hand)
   * [new AnyBoard.Hand(player, options)](#new_AnyBoard.Hand_new)
   * [.has(card, amount)](#AnyBoard.Hand+has) ⇒ <code>boolean</code>
-  * [.add(card)](#AnyBoard.Hand+add)
 
 <a name="new_AnyBoard.Hand_new"></a>
 #### new AnyBoard.Hand(player, options)
@@ -387,16 +431,6 @@ Checks whether or not a player has an amount card in this hand.
 | --- | --- | --- |
 | card | <code>[Card](#AnyBoard.Card)</code> | card to be checked if is in hand |
 | amount | <code>number</code> | (default: 1)* amount of card to be checked if is in hand |
-
-<a name="AnyBoard.Hand+add"></a>
-#### hand.add(card)
-Adds a card to the hand of a player
-
-**Kind**: instance method of <code>[Hand](#AnyBoard.Hand)</code>  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| card | <code>[Card](#AnyBoard.Card)</code> | card to be added to this hand |
 
 <a name="AnyBoard.Resource"></a>
 ### AnyBoard.Resource
@@ -505,6 +539,208 @@ Returns the common resources and minimum amount between a dictionary of resource
 | --- | --- | --- |
 | resourceSet | <code>[ResourceSet](#AnyBoard.ResourceSet)</code> | dictionary of resources and amounts to be compared against |
 
+<a name="AnyBoard.BaseToken"></a>
+### AnyBoard.BaseToken
+**Kind**: static class of <code>[AnyBoard](#AnyBoard)</code>  
+**Properties**
+
+| Name | Type | Description |
+| --- | --- | --- |
+| connected | <code>boolean</code> | whether or not the token is connected |
+| device | <code>object</code> | driver spesific data. |
+| listeners | <code>object</code> | functions to be execute upon certain triggered events |
+| driver | <code>[Driver](#AnyBoard.Driver)</code> | driver that handles communication |
+
+
+* [.BaseToken](#AnyBoard.BaseToken)
+  * [new AnyBoard.BaseToken(name, address, device, [driver])](#new_AnyBoard.BaseToken_new)
+  * [.isConnected()](#AnyBoard.BaseToken+isConnected) ⇒ <code>boolean</code>
+  * [.connect(win, fail)](#AnyBoard.BaseToken+connect) ⇒ <code>boolean</code>
+  * [.disconnect()](#AnyBoard.BaseToken+disconnect)
+  * [.trigger(eventName, eventOptions)](#AnyBoard.BaseToken+trigger)
+  * [.on(eventName, callbackFunction)](#AnyBoard.BaseToken+on)
+  * [.sendBuffer(data, win, fail)](#AnyBoard.BaseToken+sendBuffer)
+  * [.sendString(data, win, fail)](#AnyBoard.BaseToken+sendString)
+  * [.send(data, win, fail)](#AnyBoard.BaseToken+send)
+  * [.toString()](#AnyBoard.BaseToken+toString) ⇒ <code>string</code>
+
+<a name="new_AnyBoard.BaseToken_new"></a>
+#### new AnyBoard.BaseToken(name, address, device, [driver])
+Base class for tokens. Should be used by communication driver upon AnyBoard.TokenManager.scan()
+
+
+| Param | Type | Default | Description |
+| --- | --- | --- | --- |
+| name | <code>string</code> |  | name of the token |
+| address | <code>string</code> |  | address of the token found when scanned |
+| device | <code>object</code> |  | device object used and handled by driver |
+| [driver] | <code>[Driver](#AnyBoard.Driver)</code> | <code>AnyBoard.TokenManager.driver</code> | token driver for handling communication with it. |
+
+<a name="AnyBoard.BaseToken+isConnected"></a>
+#### baseToken.isConnected() ⇒ <code>boolean</code>
+Returns whether or not the token is connected
+
+**Kind**: instance method of <code>[BaseToken](#AnyBoard.BaseToken)</code>  
+**Returns**: <code>boolean</code> - true if connected, else false  
+<a name="AnyBoard.BaseToken+connect"></a>
+#### baseToken.connect(win, fail) ⇒ <code>boolean</code>
+Attempts to connect to token.
+
+**Kind**: instance method of <code>[BaseToken](#AnyBoard.BaseToken)</code>  
+**Returns**: <code>boolean</code> - whether or not token is connected  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| win | <code>function</code> | function to be executed upon success |
+| fail | <code>function</code> | function to be executed upon failure |
+
+<a name="AnyBoard.BaseToken+disconnect"></a>
+#### baseToken.disconnect()
+Disconnects from the token.
+
+**Kind**: instance method of <code>[BaseToken](#AnyBoard.BaseToken)</code>  
+<a name="AnyBoard.BaseToken+trigger"></a>
+#### baseToken.trigger(eventName, eventOptions)
+Trigger an event on a token
+
+**Kind**: instance method of <code>[BaseToken](#AnyBoard.BaseToken)</code>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| eventName | <code>string</code> | name of event |
+| eventOptions | <code>object</code> | dictionary of parameters and values |
+
+<a name="AnyBoard.BaseToken+on"></a>
+#### baseToken.on(eventName, callbackFunction)
+Adds a callbackFunction to be executed when event is triggered
+
+**Kind**: instance method of <code>[BaseToken](#AnyBoard.BaseToken)</code>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| eventName | <code>string</code> | name of event to listen to |
+| callbackFunction | <code>function</code> | function to be executed |
+
+<a name="AnyBoard.BaseToken+sendBuffer"></a>
+#### baseToken.sendBuffer(data, win, fail)
+Sends data to token over serial BlueTooth
+
+**Kind**: instance method of <code>[BaseToken](#AnyBoard.BaseToken)</code>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| data | <code>ArrayBuffer</code> &#124; <code>Uint8Array</code> | data to be sent |
+| win | <code>function</code> | function to be executed upon success |
+| fail | <code>function</code> | function to be executed upon failure |
+
+<a name="AnyBoard.BaseToken+sendString"></a>
+#### baseToken.sendString(data, win, fail)
+Sends data to token over 8bit unsigned BlueTooth
+
+**Kind**: instance method of <code>[BaseToken](#AnyBoard.BaseToken)</code>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| data | <code>sendString</code> | binary array of data to be sent |
+| win | <code>function</code> | function to be executed upon success |
+| fail | <code>function</code> | function to be executed upon failure |
+
+<a name="AnyBoard.BaseToken+send"></a>
+#### baseToken.send(data, win, fail)
+Sends data. if data parameter is Uint8Array, uses sendBinary(). Else sendSerial().
+
+**Kind**: instance method of <code>[BaseToken](#AnyBoard.BaseToken)</code>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| data | <code>object</code> | data to be sent |
+| win | <code>function</code> | function to be executed upon success |
+| fail | <code>function</code> | function to be executed upon error |
+
+<a name="AnyBoard.BaseToken+toString"></a>
+#### baseToken.toString() ⇒ <code>string</code>
+Representational string of class instance.
+
+**Kind**: instance method of <code>[BaseToken](#AnyBoard.BaseToken)</code>  
+<a name="AnyBoard.DummyToken"></a>
+### AnyBoard.DummyToken ⇐ <code>BaseToken</code>
+**Kind**: static class of <code>[AnyBoard](#AnyBoard)</code>  
+**Extends:** <code>BaseToken</code>  
+<a name="new_AnyBoard.DummyToken_new"></a>
+#### new AnyBoard.DummyToken(name, address)
+A dummy token that prints to AnyBoard.Logger instead of attempting to communicate with a physical token
+
+
+| Param | Type | Description |
+| --- | --- | --- |
+| name | <code>string</code> | (dummy) name of token |
+| address | <code>string</code> | (dummy) address of the token |
+
+<a name="AnyBoard.Drivers"></a>
+### AnyBoard.Drivers
+**Kind**: static property of <code>[AnyBoard](#AnyBoard)</code>  
+<a name="AnyBoard.Drivers.get"></a>
+#### Drivers.get(name) ⇒ <code>[Driver](#AnyBoard.Driver)</code>
+Returns deck with given name
+
+**Kind**: static method of <code>[Drivers](#AnyBoard.Drivers)</code>  
+**Returns**: <code>[Driver](#AnyBoard.Driver)</code> - driver with given name (or undefined if non-existent)  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| name | <code>string</code> | name of driver |
+
+<a name="AnyBoard.TokenManager"></a>
+### AnyBoard.TokenManager
+A token manager.
+
+**Kind**: static property of <code>[AnyBoard](#AnyBoard)</code>  
+**Properties**
+
+| Name | Type | Description |
+| --- | --- | --- |
+| tokens | <code>object</code> | dictionary of connect tokens that maps id to object |
+| driver | <code>[Driver](#AnyBoard.Driver)</code> | driver for comm. Set with setDriver(driver); |
+
+
+* [.TokenManager](#AnyBoard.TokenManager)
+  * [.setDriver(driver)](#AnyBoard.TokenManager.setDriver)
+  * [.scan(win, fail, timeout)](#AnyBoard.TokenManager.scan)
+  * [.get(address)](#AnyBoard.TokenManager.get) ⇒ <code>[BaseToken](#AnyBoard.BaseToken)</code>
+
+<a name="AnyBoard.TokenManager.setDriver"></a>
+#### TokenManager.setDriver(driver)
+Sets a new default driver to handle communication for tokens without specified driver
+
+**Kind**: static method of <code>[TokenManager](#AnyBoard.TokenManager)</code>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| driver | <code>[Driver](#AnyBoard.Driver)</code> | driver to be used for communication |
+
+<a name="AnyBoard.TokenManager.scan"></a>
+#### TokenManager.scan(win, fail, timeout)
+Scans for tokens nearby and stores in discoveredTokens property
+
+**Kind**: static method of <code>[TokenManager](#AnyBoard.TokenManager)</code>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| win | <code>function</code> | function to be executed when devices are found (called for each device found) |
+| fail | <code>function</code> | function to be executed upon failure |
+| timeout | <code>number</code> | amount of milliseconds to scan before stopping |
+
+<a name="AnyBoard.TokenManager.get"></a>
+#### TokenManager.get(address) ⇒ <code>[BaseToken](#AnyBoard.BaseToken)</code>
+Returns a token handled by this TokenManager
+
+**Kind**: static method of <code>[TokenManager](#AnyBoard.TokenManager)</code>  
+**Returns**: <code>[BaseToken](#AnyBoard.BaseToken)</code> - token if handled by this tokenManager, else undefined  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| address | <code>string</code> | identifer of the token found when scanned |
+
 <a name="AnyBoard.Logger"></a>
 ### AnyBoard.Logger
 **Kind**: static property of <code>[AnyBoard](#AnyBoard)</code>  
@@ -535,7 +771,7 @@ logs if threshold <= level parameter
 
 | Param | Type | Description |
 | --- | --- | --- |
-| level | <code>level</code> | of severity |
+| level | <code>number</code> | of severity |
 | message | <code>string</code> | event to be logged |
 | sender | <code>object</code> | *(optional)* sender of the message |
 
