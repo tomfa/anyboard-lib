@@ -44,7 +44,7 @@ describe('AnyBoard.TokenManager', function() {
                         }, 320);
                         if (threshold > 500) {
                             setTimeout(function () {
-                                win({address: 'testadress', name: 'jellyHouse'});
+                                win({address: 'testaddress', name: 'jellyHouse'});
                             }, 500);
                         }
                     }
@@ -53,7 +53,7 @@ describe('AnyBoard.TokenManager', function() {
 
         }
     });
-    AnyBoard.TokenManager.setBluetoothDriver(dummyDriver)
+    AnyBoard.TokenManager.setDriver(dummyDriver)
 
     describe('when calling AnyBoard.TokenManager.scan(win, fail, threshold)', function(){
         it.skip('it will call win(object) for every device responding', function () {

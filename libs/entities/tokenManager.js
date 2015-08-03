@@ -2,108 +2,110 @@
  * A token manager.
  * @static
  * @property {object} connectedTokens dictionary of connect tokens that maps id to object
- * @property {AnyBoard.Driver} bleDriver driver driver for bluetooth comm. Set with setBlueToothDriver();
+ * @property {AnyBoard.Driver} driver driver for comm. Set with setDriver(driver);
  */
 AnyBoard.TokenManager = {
     connectedTokens: {},
-    bleDriver: null
+    driver: null
 };
 
 /**
- * Sets a new driver to handle bluetooth communication
- * @param {AnyBoard.Driver} bluetoothDriver driver to be used for bluetooth communication
+ * Sets a new driver to handle communication
+ * @param {AnyBoard.Driver} driver driver to be used for communication
  */
-AnyBoard.TokenManager.setBluetoothDriver = function(bluetoothDriver) {
+AnyBoard.TokenManager.setDriver = function(driver) {
     // Check that functions exists on driver
-    (bluetoothDriver.connect && typeof bluetoothDriver.connect === 'function') || AnyBoard.Logger.warn('Could not find connect() on given bluetooth driver.', this);
-    (bluetoothDriver.disconnect && typeof bluetoothDriver.disconnect === 'function') || AnyBoard.Logger.warn('Could not find disconnect() on given bluetooth driver', this);
-    (bluetoothDriver.scan && typeof bluetoothDriver.scan === 'function') || AnyBoard.Logger.warn('Could not find scan() on given bluetooth driver', this);
-    (bluetoothDriver.sendSerial && typeof bluetoothDriver.sendSerial === 'function') || AnyBoard.Logger.warn('Could not find sendSerial() on given bluetooth driver', this);
-    (bluetoothDriver.sendBinary && typeof bluetoothDriver.sendBinary === 'function') || AnyBoard.Logger.warn('Could not find sendBinary() on given bluetooth driver', this);
+    (driver.connect && typeof driver.connect === 'function') || AnyBoard.Logger.warn('Could not find connect() on given driver.', this);
+    (driver.disconnect && typeof driver.disconnect === 'function') || AnyBoard.Logger.warn('Could not find disconnect() on given driver', this);
+    (driver.scan && typeof driver.scan === 'function') || AnyBoard.Logger.warn('Could not find scan() on given driver', this);
+    (driver.sendSerial && typeof driver.sendSerial === 'function') || AnyBoard.Logger.warn('Could not find sendSerial() on given driver', this);
+    (driver.sendBinary && typeof driver.sendBinary === 'function') || AnyBoard.Logger.warn('Could not find sendBinary() on given driver', this);
 
-    if ((!this.bleDriver) || (bluetoothDriver.connect && typeof bluetoothDriver.connect === 'function' &&
-        bluetoothDriver.disconnect && typeof bluetoothDriver.disconnect === 'function' &&
-        bluetoothDriver.scan && typeof bluetoothDriver.scan === 'function' &&
-        bluetoothDriver.sendSerial && typeof bluetoothDriver.sendSerial === 'function' &&
-        bluetoothDriver.sendBinary && typeof bluetoothDriver.sendBinary === 'function'))
+    if ((!this.driver) || (driver.connect && typeof driver.connect === 'function' &&
+        driver.disconnect && typeof driver.disconnect === 'function' &&
+        driver.scan && typeof driver.scan === 'function' &&
+        driver.sendSerial && typeof driver.sendSerial === 'function' &&
+        driver.sendBinary && typeof driver.sendBinary === 'function'))
 
-        this.bleDriver = bluetoothDriver;
+        this.driver = driver;
 };
 
 /**
  * * Attempts to connect to a token
- * @param {string} tokenIdentifier identifier of the token found when scanned
+ * @param {string} address identifier of the token found when scanned
  * @param {function} win function to be called upon connect success
  * @param {function} fail function to be called upon connect failure
  */
-AnyBoard.TokenManager.connect = function(tokenIdentifier, win, fail) {
-    this.bleDriver.connect(tokenIdentifier, win, fail)
+AnyBoard.TokenManager.connect = function(address, win, fail) {
+    this.driver.connect(address, win, fail)
 };
 
 /**
  * Disconnects a connected token
- * @param {string} tokenIdentifier identifier of the token
+ * @param {string} address identifier of the token
  */
-AnyBoard.TokenManager.disconnect = function(tokenIdentifier){
-    this.bleDriver.disconnect(tokenIdentifier)
+AnyBoard.TokenManager.disconnect = function(address){
+    this.driver.disconnect(address)
 };
 
 /**
  * Attempts to send binary data to the token
- * @param {string} tokenIdentifier
+ * @param {string} address
  * @param {Uint8Array} data
  * @param {function} win
  * @param {function} fail
  */
-AnyBoard.TokenManager.sendBinary = function(tokenIdentifier, data, win, fail) {
-    this.bleDriver.sendBinary(tokenIdentifier, data, win, fail);
+AnyBoard.TokenManager.sendBinary = function(address, data, win, fail) {
+    this.driver.sendBinary(address, data, win, fail);
 };
 /**
  * Sends JSON data to the token
- * @param {string} tokenIdentifier
+ * @param {string} address
  * @param {object} data JSON data.
  * @param {function} win function to be executed upon success
  * @param {function} fail function to be executed upon failure
  */
-AnyBoard.TokenManager.sendSerial = function(tokenIdentifier, data, win, fail) {
-    this.bleDriver.sendSerial(tokenIdentifier, data, win, fail);
+AnyBoard.TokenManager.sendSerial = function(address, data, win, fail) {
+    this.driver.sendSerial(address, data, win, fail);
 };
 
 /**
- * Scans for bluetooth tokens nearby and stores in discoveredTokens property
+ * Scans for tokens nearby and stores in discoveredTokens property
  * @param {function} win function to be executed when devices are found (called for each device found)
  * @param {function} fail function to be executed upon failure
  * @param {number} timeout amount of milliseconds to scan before stopping
  */
 AnyBoard.TokenManager.scan = function(win, fail, timeout) {
-    this.bleDriver.scan(win, fail, timeout)
+    this.driver.scan(win, fail, timeout)
 };
 
 /**
  * Returns a token handled by this TokenManager
- * @param {string} tokenIdentifier identifer of the token found when scanned
- * @returns {AnyBoard.BaseToken|AnyBoard.BinaryToken|AnyBoard.JSONToken} token if handled by this tokenManager, else undefined
+ * @param {string} address identifer of the token found when scanned
+ * @returns {AnyBoard.BaseToken} token if handled by this tokenManager, else undefined
  */
-AnyBoard.TokenManager.get = function(tokenIdentifier) {
-    return this.tokens[tokenIdentifier];
+AnyBoard.TokenManager.get = function(address) {
+    return this.tokens[address];
 };
 
 /**
  * Base class for tokens
- * @param {string} tokenIdentifier identifer of the token found when scanned
- * @param {AnyBoard.Driver} [bleDriver=AnyBoard.TokenManager.bleDriver] token driver for handling bluetooth communication with it.
- * @property {boolean} connected
- * @property {object} device
- * @property {object} listeners
- * @property {AnyBoard.Driver} bleDriver
+ * @param {string} name name of the token
+ * @param {string} address address of the token found when scanned
+ * @param {AnyBoard.Driver} [driver=AnyBoard.TokenManager.driver] token driver for handling communication with it.
+ * @property {boolean} connected whether or not the token is connected
+ * @property {object} device driver spesific data.
+ * @property {object} listeners functions to be execute upon certain triggered events
+ * @property {AnyBoard.Driver} driver driver that handles communication
  * @constructor
  */
-AnyBoard.BaseToken = function(tokenIdentifier, bleDriver) {
-    this.id = tokenIdentifier;
+AnyBoard.BaseToken = function(name, address, driver) {
+    this.name = name;
+    this.address = address;
     this.connected = false;
     this.device = null;
     this.listeners = {};
-    this.bleDriver = bleDriver;
+    this.driver = driver;
 };
 
 /**
@@ -121,7 +123,7 @@ AnyBoard.BaseToken.prototype.isConnected = function() {
  * @returns {boolean} whether or not token is connected
  */
 AnyBoard.BaseToken.prototype.connect = function(win, fail) {
-    var pointer = this.bleDriver || AnyBoard.TokenManager;
+    var pointer = this.driver || AnyBoard.TokenManager;
     var self = this;
     pointer.connect(
         this.id,
@@ -144,7 +146,7 @@ AnyBoard.BaseToken.prototype.connect = function(win, fail) {
  * Disconnects from the token.
  */
 AnyBoard.BaseToken.prototype.disconnect = function() {
-    var pointer = this.bleDriver || AnyBoard.TokenManager;
+    var pointer = this.driver || AnyBoard.TokenManager;
     pointer.disconnect(this.id);
     AnyBoard.Logger.debug('Token: ' + this + ' disconnected', this);
     this.trigger('disconnect', {message: 'Initiated disconnect.', device: this});
@@ -198,7 +200,7 @@ AnyBoard.BaseToken.prototype.sendSerial = function(data, win, fail) {
             }
         )
     } else {
-        var pointer = this.bleDriver || AnyBoard.TokenManager;
+        var pointer = this.driver || AnyBoard.TokenManager;
         pointer.sendSerial(this.id, data, win, fail);
     }
 };
@@ -222,7 +224,7 @@ AnyBoard.BaseToken.prototype.sendBinary = function(data, win, fail) {
             }
         )
     } else {
-        var pointer = this.bleDriver || AnyBoard.TokenManager;
+        var pointer = this.driver || AnyBoard.TokenManager;
         pointer.sendBinary(this.id, data, win, fail);
     }
 };
@@ -250,13 +252,13 @@ AnyBoard.BaseToken.prototype.toString = function() {
 
 /**
  * A dummy token that prints to AnyBoard.Logger instead of attempting to communicate with a physical token
- * @param {string} tokenIdentifier (dummy) identifer of the token
+ * @param {string} address (dummy) identifer of the token
  * @constructor
  * @augments BaseToken
  */
-AnyBoard.DummyToken = function(tokenIdentifier) {
-    AnyBoard.BaseToken.call(this, tokenIdentifier);
-    this.bleDriver = new AnyBoard.Driver({
+AnyBoard.DummyToken = function(address) {
+    AnyBoard.BaseToken.call(this, address);
+    this.driver = new AnyBoard.Driver({
         sendBinary: function(data, win, fail) {
             AnyBoard.Logger.log('SIMULTE SEND: ' + data, this);
             if (data instanceof Uint8Array)
