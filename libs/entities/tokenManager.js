@@ -98,14 +98,12 @@ AnyBoard.BaseToken.prototype.connect = function(win, fail) {
         function(device) {
             AnyBoard.Logger.debug('Connected to ' + self);
             self.connected = true;
-            self.device = device;
             self.trigger('connect', {device: self});
             win(device);
         },
         function(errorCode) {
             AnyBoard.Logger.debug('Could not connect to ' + self + '. ' + errorCode);
-            if (self.connected)
-                self.trigger('disconnect', {device: self});
+            self.trigger('disconnect', {device: self});
             self.connected = false;
             fail(errorCode);
         }
@@ -151,7 +149,7 @@ AnyBoard.BaseToken.prototype.on = function(eventName, callbackFunction) {
 
 /**
  * Sends data to token over serial BlueTooth
- * @param {ArrayBuffer|Uint8Array|Uint16Array|Uint32Array|Float64Array} data data to be sent
+ * @param {ArrayBuffer|Uint8Array} data data to be sent
  * @param {function} win function to be executed upon success
  * @param {function} fail function to be executed upon failure
  */
@@ -180,7 +178,7 @@ AnyBoard.BaseToken.prototype.sendBuffer = function(data, win, fail) {
  * @param {function} fail function to be executed upon failure
  */
 AnyBoard.BaseToken.prototype.sendString = function(data, win, fail) {
-    AnyBoard.Logger.debug('Token: ' + this + ' attempting to sendString with data: ' + data, this);
+    AnyBoard.Logger.debug('Aattempting to sendString with data: ' + data, this);
     if (!this.isConnected()) {
         AnyBoard.Logger.warn(this + ' is not connected. Attempting to connect first.', this);
         var self = this;
@@ -204,10 +202,10 @@ AnyBoard.BaseToken.prototype.sendString = function(data, win, fail) {
  * @param {function} fail function to be executed upon error
  */
 AnyBoard.BaseToken.prototype.send = function(data, win, fail) {
-    if (data instanceof Uint8Array || data instanceof Uint16Array || data instanceof Uint32Array || data instanceof ArrayBuffer)
-        this.sendBuffer(this, data, win, fail);
+    if (data instanceof Uint8Array || data instanceof ArrayBuffer)
+        this.sendBuffer(data, win, fail);
     else
-        this.sendString(this, data, win, fail);
+        this.sendString(data, win, fail);
 };
 
 /**

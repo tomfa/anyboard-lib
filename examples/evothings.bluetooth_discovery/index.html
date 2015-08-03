@@ -72,10 +72,25 @@
 
             // Attempts to connect to token.
             connect: function(tokenName) {
-                document.getElementById(tokenName).className = 'blue';
                 var token = this.devices[tokenName];
+                if (document.getElementById(tokenName).className == 'blue')
+                    return;  // Already connecting
+                if (document.getElementById(tokenName).className == 'green') {
+                    this.sendGreenLed(token);  // If connected, send green led
+                    return;
+                }
+                document.getElementById(tokenName).className = 'blue';
                 token.connect();
+            },
+
+            sendGreenLed: function(token) {
+                token.send(
+                    '{"device":"LED","event":"on","color":"green"}',
+                    function(){ hyper.log('success');},
+                    function(){ hyper.log('fail');}
+                );
             }
+
 
 
 	    };
@@ -90,10 +105,10 @@
         </p>
     <p>
     Click on the black button to discover devices. Devices will pop up as new grey buttons with their name on it.
-    Click the name button to attempt to connect. See console for more information about the devices.
+    Click the name button to attempt to connect. It will turn <em>blue</em> to signal connection is pending, and <em>green</em> when connected. <em>Red</em> signals it being/having disconnected.
     </p>
 
-    <p>A blue color is <em>pending</em>, green is <em>connected</em>, and red is <em>disconnected</em></p>
+        <p><em>PS: Clicking a green token will attempt to send {"device":"LED","event":"on","color":"green"} to the token. This is adapted to work with LightBlue Bean with a certain firmware, and might not work.</em></p>
 	</div>
 
 	<button type="button" class="black" onclick="app.discover()">

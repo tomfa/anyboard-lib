@@ -33,6 +33,7 @@
         token.device.connect(function(device) {
             self.getServices(token, win, fail);
         }, function(errorCode) {
+            token.device.haveServices = false;
             fail(errorCode);
         });
     };
@@ -44,6 +45,7 @@
     evothingsBluetooth.disconnect = function (token) {
         AnyBoard.Logger.debug('Disconnecting from device: ' + token, this);
         token.device && token.device.close()
+        token.device.haveServices = false;
     };
 
     /**
@@ -61,14 +63,16 @@
     /**
      * Send data to device
      * @param {AnyBoard.BaseToken} token token to send data to
-     * @param {ArrayBuffer|Uint8Array|Uint16Array|Uint32Array|Float64Array} data data to be sent
+     * @param {ArrayBuffer|Uint8Array} data data to be sent
      * @param {function} win function to be executed upon success
      * @param {function} fail function to be executed upon failure
      */
     evothingsBluetooth.send = function(token, data, win, fail) {
-        if(!m.haveServices) {
-            m.getServices(function() {
-                this.serialWrite(data, win, fail);
+        var self = this;
+
+        if(!(token.device.haveServices)) {
+            this.getServices(token, function() {
+                self.send(token, data, win, fail);
             }, fail);
             return;
         }
@@ -80,21 +84,21 @@
         } else if(data instanceof ArrayBuffer) {
             data = new Uint8Array(data);
         } else {
-            AnyBoard.Logger.error("serialWrite data is not an ArrayBuffer.", this);
+            AnyBoard.Logger.error("send data is not an ArrayBuffer.", this);
         }
 
-        if(m.singlePacketWrite && data.byteLength > 13) {
+        if (token.device.singlePacketWrite && data.byteLength > 13) {
             var pos = 0;
             var win2 = function() {
                 if(pos < data.byteLength) {
                     var len = Math.min(13, data.byteLength - pos);
-                    bean.serialWrite(data.subarray(pos, pos+len), win2, fail);
+                    self.send(token, data.subarray(pos, pos+len), win2, fail);
                     pos += len;
                 } else {
                     win();
                 }
-            }
-            bean.serialWrite(data.subarray(pos, pos+13), win2, fail);
+            };
+            this.send(token, data.subarray(pos, pos+13), win2, fail);
             pos = 13;
             return;
         }
@@ -105,7 +109,7 @@
 
         // 6 = length+reserved+messageId+crc.
         var gstPacketLength = data.byteLength + 6;
-        var buffer = m.gtBuffer(gstPacketLength);
+        var buffer = this._gtBuffer(token, gstPacketLength);
 
         //evothings.printObject(buffer);
 
@@ -120,14 +124,14 @@
         buffer.append(0);
 
         // App Message Payload
-        for(var i=0; i<data.byteLength; i++) {
-            buffer.append(data[i]);
+        for (var j = 0; j<data.byteLength; j++) {
+            buffer.append(data[j]);
         }
 
         // GST CRC
         // compute in two steps.
-        var crc = m.computeCRC16(buffer.buf, 1, 4);
-        crc = m.computeCRC16(data, 0, data.byteLength, crc);
+        var crc = this._computeCRC16(buffer.buf, 1, 4);
+        crc = this._computeCRC16(data, 0, data.byteLength, crc);
         buffer.append(crc & 0xff);
         buffer.append((crc >> 8) & 0xff);
 
@@ -137,11 +141,11 @@
                 win();
             } else {
                 var packet = buffer.packet(i);
-                console.log("write packet "+bean.bytesToHexString(packet));
-                evothings.ble.writeCharacteristic(m.deviceHandle, m.serialChar, packet, partWin, fail);
+                AnyBoard.Logger.debug("write packet "+ self._bytesToHexString(packet), token);
+                evothings.ble.writeCharacteristic(token.device.deviceHandle, token.device.serialChar, packet, partWin, fail);
                 i++;
             }
-        }
+        };
         partWin();
     };
 
@@ -197,6 +201,11 @@
     evothingsBluetooth._initializeDevice = function(device) {
         AnyBoard.Logger.log('Device found: ' + device.name + ' address: ' + device.address + ' rssi: ' + device.rssi);
         if (!this._devices[device.address]) {
+            device.sendGtHeader = 0x80;
+            device.gettingServices = false;
+            device.serialChar = null; // Characteristic handle for serial write, set on getServices()
+            device.serialDesc = null; // Description for characteristic handle, set on getServices()
+            device.singlePacketWrite = true;
             var token = new AnyBoard.BaseToken(device.name, device.address, device, this);
             this._devices[device.address] = token;
             return token;
@@ -205,17 +214,23 @@
         return this._devices[device.address];
     };
 
+    /**
+     * Initializes token. Queries for services and characteristics.
+     * @param {AnyBoard.BaseToken} token token to find services from
+     * @param {function} win callback to be called upon success
+     * @param {function} fail callback to be called upon failure
+     */
     evothingsBluetooth.getServices = function(token, win, fail) {
         var device = token.device;
         if (device.gettingServices)
             return;
 
-
         var self = this;
         device.gettingServices = true;
         AnyBoard.Logger.log('Fetch services for ' + token, self);
-        evothings.ble.readAllServiceData(device.deviceHandle, function(services)
-            {
+        evothings.ble.readAllServiceData(
+            device.deviceHandle,
+            function(services) {
                 device.services = {};
                 device.characteristics = {};
                 device.descriptors = {};
@@ -226,44 +241,40 @@
                     device.services[service.uuid] = service;
                     AnyBoard.Logger.debug('Service: ' + service.uuid);
 
-//                    if(service.uuid == 'a495ff10-c5b1-4b44-b512-1370f02d74de')
-                        for (var ci in service.characteristics) {
-                            var characteristic = service.characteristics[ci];
-                            AnyBoard.Logger.debug('Characteristic: ' + characteristic.uuid);
+                    for (var ci in service.characteristics) {
+                        var characteristic = service.characteristics[ci];
+                        AnyBoard.Logger.debug('Characteristic: ' + characteristic.uuid);
 
-                            device.characteristics[characteristic.uuid] = characteristic;
+                        device.characteristics[characteristic.uuid] = characteristic;
 
-                            //if (characteristic.uuid == 'a495ff11-c5b1-4b44-b512-1370f02d74de')
-                            //{
-                                device.serialChar = characteristic.handle;
-                                for (var di in characteristic.descriptors) {
-                                    var descriptor = characteristic.descriptors[di];
-                                    AnyBoard.Logger.debug('Descriptor: ' + descriptor.uuid);
-                                    device.descriptors[descriptor.uuid] = descriptor;
+                        // STORE BEAN SPESIFIC WRITE CHARACTERISTIC
+                        if (characteristic.uuid == 'a495ff11-c5b1-4b44-b512-1370f02d74de')
+                            device.serialChar = characteristic.handle;
 
-                                    //if (descriptor.uuid == '00002902-0000-1000-8000-00805f9b34fb')
-                                    //{
-                                    //    device.serialDesc = descriptor.handle;
-                                    //}
-                                }
-                            //}
+                        for (var di in characteristic.descriptors) {
+                            var descriptor = characteristic.descriptors[di];
+                            AnyBoard.Logger.debug('Descriptor: ' + descriptor.uuid);
+                            device.descriptors[descriptor.uuid] = descriptor;
+
+                            // STORE BEAN SPECIFIC WRITE DESC
+                            if (descriptor.uuid == '00002902-0000-1000-8000-00805f9b34fb')
+                                device.serialDesc = descriptor.handle;
                         }
+                    }
                 }
 
-                //if (device.serialChar && device.serialDesc)
-                //{
-                //    device.haveServices = true;
-                //    device.gettingServices = false;
-                //
-                //    win();
-                //}
-                //else
-                //{
-                //    device.gettingServices = false;
-                //    fail('Services not found!');
-                //}
-                device.gettingServices = false;
-                win && win();
+                if (device.serialChar && device.serialDesc)
+                {
+                    device.haveServices = true;
+                    device.gettingServices = false;
+                    win();
+                }
+                else
+                {
+                    device.gettingServices = false;
+                    AnyBoard.Logger.error('Could not find predefined services for BlueBean token:' + device.name, self);
+                    fail('Services not found!');
+                }
             },
             function(errorCode) {
                 device.gettingServices = false;
@@ -298,6 +309,72 @@
         }
 
         return crc;
+    };
+
+    /**
+     * Returns an object representing a GT message buffer.
+     * @param token
+     * @param gstPacketLength
+     * @returns {{packetCount: number, buf: Uint8Array, append: Function, packet: Function}}
+     * @private
+     */
+    evothingsBluetooth._gtBuffer = function(token, gstPacketLength) {
+        // BLE max is 20. GT header takes 1 byte.
+        var packetCount = Math.ceil(gstPacketLength / 19);
+
+        // We'll store all the packets in one buffer.
+        var bufferLength = gstPacketLength + packetCount;
+
+        var buf = new Uint8Array(bufferLength);
+        var pos = 0;
+
+        return {
+            packetCount: packetCount,
+            buf: buf,
+            append: function(b) {
+                // If this is the start of a GT packet, add the GT header.
+                if((pos % 20) == 0) {
+
+                    // Decrement the local packetCount. This should not affect the member packetCount.
+                    buf[pos] = evothingsBluetooth._gtHeader(token, --packetCount, pos);
+                    pos++;
+                }
+                buf[pos++] = b;
+            },
+            // Returns the i:th packet in the message.
+            packet: function(i) {
+                return buf.subarray(i*20, Math.min((i+1)*20, bufferLength));
+            }
+        };
+    };
+
+    /**
+     * Returns the next GT header, given the number of packets remaining in the message.
+     * @param token
+     * @param remain
+     * @param pos
+     * @returns {*}
+     * @private
+     */
+    evothingsBluetooth._gtHeader = function(token, remain, pos) {
+        var h = token.device.sendGtHeader + (remain);
+        if(remain == 0) {
+            token.device.sendGtHeader = (token.device.sendGtHeader + 0x20) & 0xff;
+            if(token.device.sendGtHeader < 0x80) token.device.sendGtHeader = 0x80;
+        }
+        if(pos != 0) h &= 0x7f;
+        return h;
+    };
+
+    evothingsBluetooth._bytesToHexString = function(data, offset, length) {
+        offset = offset || 0;
+        length = length || data.byteLength;
+        var hex = '';
+        for(var i=offset; i<(offset+length); i++) {
+            hex += (data[i] >> 4).toString(16);
+            hex += (data[i] & 0xF).toString(16);
+        }
+        return hex;
     };
 
     // Set as default communication driver

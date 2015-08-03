@@ -55,7 +55,6 @@ evothings.bean = (function() {
 
 	/** Scans for Bean devices, and connects to the first one found. */
 	bean.connectToFirstDevice = function(win, fail) {
-		m.sendState("scanning");
 		var knownDevices = {};
 		evothings.ble.startScan(
 			function(deviceInfo)
@@ -78,7 +77,6 @@ evothings.bean = (function() {
 
 	m.connect = function(address, win, fail) {
 		evothings.ble.stopScan();
-		m.sendState("connecting");
 		evothings.ble.connect(
 			address,
 			function(connectInfo) {
@@ -90,14 +88,12 @@ evothings.bean = (function() {
 	m.connectCallback = function(connectInfo, win) {
 		if(connectInfo.state == 2) {	// Connected
 			m.deviceHandle = connectInfo.deviceHandle;
-			m.sendState("connected");
 			win();
 		}
 		if(connectInfo.state == 0) {	// Disconnected
 			m.deviceInfo = false;
 			m.deviceHandle = false;
 			m.haveServices = false;
-			m.sendState("disconnected");
 		}
 	}
 
@@ -110,7 +106,6 @@ evothings.bean = (function() {
 			m.deviceInfo = false;
 			m.deviceHandle = false;
 			m.haveServices = false;
-			m.sendState("disconnected");
 		} else {
 			evothings.ble.stopScan();
 		}
@@ -403,7 +398,6 @@ evothings.bean = (function() {
 		}
 
 		m.gettingServices = true;
-		m.sendState('querying');
 
 		evothings.ble.readAllServiceData(m.deviceHandle, function(services)
 		{
@@ -441,7 +435,6 @@ evothings.bean = (function() {
 			{
 				m.haveServices = true;
 				m.gettingServices = false;
-				m.sendState('active');
 
 				// copy to local, to avoid callbacks modifying the array.
 				// not really needed in such a small library, but good practice anyway.
