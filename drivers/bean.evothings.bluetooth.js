@@ -11,7 +11,15 @@
         description: 'Driver based off evothings.easyble library for Cordova-based apps',
         dependencies: 'evothings.easyble',
         version: '0.1',
-        date: '2015-08-01'
+        date: '2015-08-01',
+        type: ['bluetooth', 'bluetooth-discovery'],
+        compatibility: [
+            {
+                descriptor_uuid: '00002902-0000-1000-8000-00805f9b34fb',
+                characteristic_uuid: 'a495ff11-c5b1-4b44-b512-1370f02d74de',
+                service_uuid: 'a495ff10-c5b1-4b44-b512-1370f02d74de'
+            }
+        ]
     });
 
     evothingsBluetooth._devices = {};
@@ -167,8 +175,6 @@
 
         var self = this;
 
-        // Specify that devices are reported repeatedly so that
-        // we get the most recent RSSI reading for each device.
         evothings.easyble.reportDeviceOnce(true);
         evothings.easyble.startScan(function(device){
             var token = self._initializeDevice(device);
@@ -215,9 +221,10 @@
     };
 
     /**
-     * Initializes token. Queries for services and characteristics.
+     * Initializes token. Queries for services and characteristics and sets driver property on token to
+     * a supported driver if successful (win callback called)
      * @param {AnyBoard.BaseToken} token token to find services from
-     * @param {function} win callback to be called upon success
+     * @param {function} win callback to be called upon success with token as parameter
      * @param {function} fail callback to be called upon failure
      */
     evothingsBluetooth.getServices = function(token, win, fail) {
@@ -235,6 +242,8 @@
                 device.characteristics = {};
                 device.descriptors = {};
 
+                var driver;
+
                 for (var si in services)
                 {
                     var service = services[si];
@@ -247,18 +256,25 @@
 
                         device.characteristics[characteristic.uuid] = characteristic;
 
-                        // STORE BEAN SPESIFIC WRITE CHARACTERISTIC
-                        if (characteristic.uuid == 'a495ff11-c5b1-4b44-b512-1370f02d74de')
-                            device.serialChar = characteristic.handle;
-
                         for (var di in characteristic.descriptors) {
                             var descriptor = characteristic.descriptors[di];
                             AnyBoard.Logger.debug('Descriptor: ' + descriptor.uuid);
                             device.descriptors[descriptor.uuid] = descriptor;
 
-                            // STORE BEAN SPECIFIC WRITE DESC
-                            if (descriptor.uuid == '00002902-0000-1000-8000-00805f9b34fb')
-                                device.serialDesc = descriptor.handle;
+                            if (!driver) {
+                                driver = AnyBoard.Drivers.getCompatibleDriver('bluetooth', {
+                                    descriptor_uuid: descriptor_uuid,
+                                    characteristic_uuid: characteristic_uuid,
+                                    service_uuid: service_uuid
+                                });
+                                if (driver) {
+                                    device.serialChar = characteristic.handle;
+                                    device.serialDesc = descriptor.handle;
+                                    token.driver = driver;
+                                }
+                            }
+
+
                         }
                     }
                 }
@@ -267,7 +283,7 @@
                 {
                     device.haveServices = true;
                     device.gettingServices = false;
-                    win();
+                    win && win(token);
                 }
                 else
                 {
