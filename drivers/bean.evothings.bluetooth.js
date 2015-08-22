@@ -263,9 +263,9 @@
 
                             if (!driver) {
                                 driver = AnyBoard.Drivers.getCompatibleDriver('bluetooth', {
-                                    descriptor_uuid: descriptor_uuid,
-                                    characteristic_uuid: characteristic_uuid,
-                                    service_uuid: service_uuid
+                                    descriptor_uuid: descriptor.uuid,
+                                    characteristic_uuid: characteristic.uuid,
+                                    service_uuid: service.uuid
                                 });
                                 if (driver) {
                                     device.serialChar = characteristic.handle;
