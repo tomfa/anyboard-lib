@@ -21,6 +21,92 @@
         ]
     });
 
+    var GenericSend = function(name, functionId, takesData) {
+        if (!takesData) {
+            var data = new Uint8Array(1);
+            data[0] = functionId;
+            return function(token, win, fail) {
+                AnyBoard.Logger.debug("Executing " + name, token);
+                rfduinoBluetooth.send(token, new Uint8Array(1), win, fail)
+            };
+        }
+        return function(token, data, win, fail) {
+            AnyBoard.Logger.debug("Executing " + name, token);
+            if(data.buffer) {
+                if(!(data instanceof Uint8Array))
+                    data = new Uint8Array(data.buffer);
+            } else if(data instanceof ArrayBuffer) {
+                data = new Uint8Array(data);
+            } else {
+                AnyBoard.Logger.warn("send data is not an ArrayBuffer.", this);
+                fail("cannot send data that is not an ArrayBuffer");
+                return;
+            }
+
+            if (data.length > 18) {
+                AnyBoard.Logger.warn("cannot send data of length over 18.", this);
+                fail("cannot send data of length over 18.");
+                return;
+            }
+
+            var newData = new Uint8Array(data.length+1);
+            newData[0] = functionId;
+            for (var index in data) {
+                if (data.hasOwnProperty(index))
+                    newData[index+1] = data[index];
+            }
+
+            rfduinoBluetooth.send(token, newData, win, fail)
+        }
+    };
+
+    var COMMANDS = {
+        GET_NAME: GenericSend("GET_NAME", 1, false),
+        GET_VERSION: GenericSend("GET_VERSION", 2, false),
+        GET_UUID: GenericSend("GET_UUID", 3, false),
+        GET_BATTERY_STATUS: GenericSend("GET_BATTERY_STATUS", 4, false),
+        HAS_LED: GenericSend("HAS_LED", 16, false),
+        HAS_LED_COLOR: GenericSend("HAS_LED_COLOR", 17, false),
+        HAS_VIBRATION: GenericSend("HAS_VIBRATION", 18, false),
+        HAS_COLOR_DETECTION: GenericSend("HAS_COLOR_DETECTION", 19, false),
+        HAS_LED_SCREEN: GenericSend("HAS_LED_SCREEN", 20, false),
+        LED_SCREEN_WIDTH: GenericSend("LED_SCREEN_WIDTH", 21, false),
+        LED_SCREEN_HEIGHT: GenericSend("LED_SCREEN_HEIGHT", 22, false),
+        HAS_RFID: GenericSend("HAS_RFID", 23, false),
+        HAS_NFC: GenericSend("HAS_NFC", 24, false),
+        HAS_ACCELEROMETER: GenericSend("HAS_ACCELEROMETER", 25, false),
+        LED_OFF: GenericSend("LED_OFF", 64, false),
+        LED_ON: GenericSend("LED_ON", 65, true),
+        LED_BLINK: GenericSend("LED_BLINK", 66, true),
+        VIBRATE_OFF: GenericSend("VIBRATE_OFF", 67, false),
+        VIBRATE: GenericSend("VIBRATE", 68, true),
+        SET_LED_SCREEN: GenericSend("SET_LED_SCREEN", 69, true),
+        READ_NFC: GenericSend("READ_NFC", 70, false),
+        READ_RFID: GenericSend("READ_RFID", 71, false),
+        READ_COLOR: GenericSend("READ_COLOR", 72, false)
+    };
+
+    /**
+     * Predefined colors for Token LEDs
+     * @property {Uint8Array} red predefined color red
+     * @property {Uint8Array} green predefined color green
+     * @property {Uint8Array} blue predefined color blue
+     * @property {Uint8Array} white predefined color white
+     * @property {Uint8Array} pink predefined color pink
+     * @property {Uint8Array} yellow predefined color yellow
+     * @property {Uint8Array} aqua predefined color aqua
+     */
+    var COLORS = {
+        'red': new Uint8Array([255, 0, 0]),
+        'green': new Uint8Array([0, 255, 0]),
+        'blue': new Uint8Array([0, 0, 255]),
+        'white': new Uint8Array([255, 255, 255]),
+        'pink': new Uint8Array([255, 0, 255]),
+        'yellow': new Uint8Array([255, 255, 0]),
+        'aqua': new Uint8Array([0, 255, 255]),
+        'off': new Uint8Array([0, 0, 0])
+    };
+
     rfduinoBluetooth._devices = {};
 
     /**
@@ -67,6 +153,34 @@
         this.send(token, data, win, fail);
     };
 
+    rfduinoBluetooth.getName = function (token, win, fail) {
+        COMMANDS.GET_NAME(token, win, fail);
+    };
+
+    rfduinoBluetooth.getVersion = function (token, win, fail) {
+        COMMANDS.GET_VERSION(token, win, fail);
+    };
+
+    rfduinoBluetooth.setLed = function (token, value, win, fail) {
+        value = value || 'white';
+
+        if (typeof value === 'string' && value in COLORS) {
+            COMMANDS.LED_ON(token, COLORS[value], win, fail);
+        } else if (value instanceof Array && value.length === 3) {
+            COMMANDS.LED_ON(token, new Uint8Array(value), win, fail);
+        } else {
+            fail && fail('Invalid or unsupported color parameters');
+        }
+    };
+
+    rfduinoBluetooth.vibrate = function (token, options, win, fail) {
+        options = options || {};
+        options.length = options.length || 10; // *100milliseconds
+        options.mode = options.mode || 1;
+        options.strength = options.strength || 10;
+        COMMANDS.VIBRATE(token, new Uint8Array([options.length, options.mode, options.strength]), win, fail);
+    };
+
     /**
      * Send data to device
      * @param {AnyBoard.BaseToken} token token to send data to
@@ -91,20 +205,21 @@
         } else if(data instanceof ArrayBuffer) {
             data = new Uint8Array(data);
         } else {
-            AnyBoard.Logger.error("send data is not an ArrayBuffer.", this);
+            AnyBoard.Logger.warn("send data is not an ArrayBuffer.", this);
             return;
         }
 
-        evothings.ble.writeCharacteristic(token.device.deviceHandle,
+        if (data.length > 20) {
+            AnyBoard.Logger.warn("cannot send data of length over 20.", this);
+            return;
+        }
+
+        evothings.ble.writeCharacteristic(
+            token.device.deviceHandle,
             token.device.serialChar,
             data,
-            function() {
-                hyper.log('writeCharacteristic success');
-                win();
-            },
-            function(errorCode) {
-                hyper.log('writeCharacteristic error: ' + errorCode);
-            }
+            win,
+            fail
         );
     };
 
@@ -114,32 +229,6 @@
 
     rfduinoBluetooth._readServicesError = function(errorCode) {
         AnyBoard.Logger.error('Read services failed: ' + errorCode, this);
-    };
-
-    rfduinoBluetooth._computeCRC16 = function(data) {
-        var crc = 0xFFFF;
-
-        for (var i=0; i<data.length; i++) {
-            var byte = data[i];
-            crc = (((crc >> 8) & 0xff) | (crc << 8)) & 0xFFFF;
-            crc ^= byte;
-            crc ^= ((crc & 0xff) >> 4) & 0xFFFF;
-            crc ^= ((crc << 8) << 4) & 0xFFFF;
-            crc ^= (((crc & 0xff) << 4) << 1) & 0xFFFF;
-        }
-
-        return crc;
-    };
-
-    rfduinoBluetooth._bytesToHexString = function(data, offset, length) {
-        offset = offset || 0;
-        length = length || data.byteLength;
-        var hex = '';
-        for(var i=offset; i<(offset+length); i++) {
-            hex += (data[i] >> 4).toString(16);
-            hex += (data[i] & 0xF).toString(16);
-        }
-        return hex;
     };
 
 })();

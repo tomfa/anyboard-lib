@@ -6,8 +6,8 @@
  */
 
 (function(){
-    var evothingsBluetooth = new AnyBoard.Driver({
-        name: 'evothings-easyble-bean',
+    var beanBluetooth = new AnyBoard.Driver({
+        name: 'evothings-bean-token',
         description: 'Driver based off evothings.easyble library for Cordova-based apps',
         dependencies: 'evothings.easyble',
         version: '0.1',
@@ -22,7 +22,93 @@
         ]
     });
 
-    evothingsBluetooth._devices = {};
+    beanBluetooth._devices = {};
+
+    var GenericSend = function(name, functionId, takesData) {
+        if (!takesData) {
+            var data = new Uint8Array(1);
+            data[0] = functionId;
+            return function(token, win, fail) {
+                AnyBoard.Logger.debug("Executing " + name, token);
+                beanBluetooth.send(token, new Uint8Array(1), win, fail)
+            };
+        }
+        return function(token, data, win, fail) {
+            AnyBoard.Logger.debug("Executing " + name, token);
+            if(data.buffer) {
+                if(!(data instanceof Uint8Array))
+                    data = new Uint8Array(data.buffer);
+            } else if(data instanceof ArrayBuffer) {
+                data = new Uint8Array(data);
+            } else {
+                AnyBoard.Logger.warn("send data is not an ArrayBuffer.", this);
+                fail("cannot send data that is not an ArrayBuffer");
+                return;
+            }
+
+            if (data.length > 18) {
+                AnyBoard.Logger.warn("cannot send data of length over 18.", this);
+                fail("cannot send data of length over 18.");
+                return;
+            }
+
+            var newData = new Uint8Array(data.length+1);
+            newData[0] = functionId;
+            for (var index in data) {
+                if (data.hasOwnProperty(index))
+                    newData[index+1] = data[index];
+            }
+
+            beanBluetooth.send(token, newData, win, fail)
+        }
+    };
+
+    var COMMANDS = {
+        GET_NAME: GenericSend("GET_NAME", 1, false),
+        GET_VERSION: GenericSend("GET_VERSION", 2, false),
+        GET_UUID: GenericSend("GET_UUID", 3, false),
+        GET_BATTERY_STATUS: GenericSend("GET_BATTERY_STATUS", 4, false),
+        HAS_LED: GenericSend("HAS_LED", 16, false),
+        HAS_LED_COLOR: GenericSend("HAS_LED_COLOR", 17, false),
+        HAS_VIBRATION: GenericSend("HAS_VIBRATION", 18, false),
+        HAS_COLOR_DETECTION: GenericSend("HAS_COLOR_DETECTION", 19, false),
+        HAS_LED_SCREEN: GenericSend("HAS_LED_SCREEN", 20, false),
+        LED_SCREEN_WIDTH: GenericSend("LED_SCREEN_WIDTH", 21, false),
+        LED_SCREEN_HEIGHT: GenericSend("LED_SCREEN_HEIGHT", 22, false),
+        HAS_RFID: GenericSend("HAS_RFID", 23, false),
+        HAS_NFC: GenericSend("HAS_NFC", 24, false),
+        HAS_ACCELEROMETER: GenericSend("HAS_ACCELEROMETER", 25, false),
+        LED_OFF: GenericSend("LED_OFF", 64, false),
+        LED_ON: GenericSend("LED_ON", 65, true),
+        LED_BLINK: GenericSend("LED_BLINK", 66, true),
+        VIBRATE_OFF: GenericSend("VIBRATE_OFF", 67, false),
+        VIBRATE: GenericSend("VIBRATE", 68, true),
+        SET_LED_SCREEN: GenericSend("SET_LED_SCREEN", 69, true),
+        READ_NFC: GenericSend("READ_NFC", 70, false),
+        READ_RFID: GenericSend("READ_RFID", 71, false),
+        READ_COLOR: GenericSend("READ_COLOR", 72, false)
+    };
+
+    /**
+     * Predefined colors for Token LEDs
+     * @property {Uint8Array} red predefined color red
+     * @property {Uint8Array} green predefined color green
+     * @property {Uint8Array} blue predefined color blue
+     * @property {Uint8Array} white predefined color white
+     * @property {Uint8Array} pink predefined color pink
+     * @property {Uint8Array} yellow predefined color yellow
+     * @property {Uint8Array} aqua predefined color aqua
+     */
+    var COLORS = {
+        'red': new Uint8Array([255, 0, 0]),
+        'green': new Uint8Array([0, 255, 0]),
+        'blue': new Uint8Array([0, 0, 255]),
+        'white': new Uint8Array([255, 255, 255]),
+        'pink': new Uint8Array([255, 0, 255]),
+        'yellow': new Uint8Array([255, 255, 0]),
+        'aqua': new Uint8Array([0, 255, 255]),
+        'off': new Uint8Array([0, 0, 0])
+    };
 
     /**
      * Attempts to connect to a device and retrieves available services.
@@ -35,7 +121,7 @@
      * @param {function} win function to be executed upon success
      * @param {function} fail function to be executed upon failure
      */
-    evothingsBluetooth.connect = function (token, win, fail) {
+    beanBluetooth.connect = function (token, win, fail) {
         var self = this;
 
         token.device.connect(function(device) {
@@ -50,10 +136,38 @@
      * Disconnects from device
      * @param {AnyBoard.BaseToken} token
      */
-    evothingsBluetooth.disconnect = function (token) {
+    beanBluetooth.disconnect = function (token) {
         AnyBoard.Logger.debug('Disconnecting from device: ' + token, this);
         token.device && token.device.close()
         token.device.haveServices = false;
+    };
+
+    beanBluetooth.getName = function (token, win, fail) {
+        COMMANDS.GET_NAME(token, win, fail);
+    };
+
+    beanBluetooth.getVersion = function (token, win, fail) {
+        COMMANDS.GET_VERSION(token, win, fail);
+    };
+
+    beanBluetooth.setLed = function (token, value, win, fail) {
+        value = value || 'white';
+
+        if (typeof value === 'string' && value in COLORS) {
+            COMMANDS.LED_ON(token, COLORS[value], win, fail);
+        } else if (value instanceof Array && value.length === 3) {
+            COMMANDS.LED_ON(token, new Uint8Array(value), win, fail);
+        } else {
+            fail && fail('Invalid or unsupported color parameters');
+        }
+    };
+
+    beanBluetooth.vibrate = function (token, options, win, fail) {
+        options = options || {};
+        options.length = options.length || 10; // *100milliseconds
+        options.mode = options.mode || 1;
+        options.strength = options.strength || 10;
+        COMMANDS.VIBRATE(token, new Uint8Array([options.length, options.mode, options.strength]), win, fail);
     };
 
     /**
@@ -63,7 +177,7 @@
      * @param {function} win function to be executed upon success
      * @param {function} fail function to be executed upon failure
      */
-    evothingsBluetooth.sendString = function(token, string, win, fail) {
+    beanBluetooth.sendString = function(token, string, win, fail) {
         var data = new Uint8Array(evothings.ble.toUtf8(string));
         this.send(token, data, win, fail);
     };
@@ -75,7 +189,7 @@
      * @param {function} win function to be executed upon success
      * @param {function} fail function to be executed upon failure
      */
-    evothingsBluetooth.send = function(token, data, win, fail) {
+    beanBluetooth.send = function(token, data, win, fail) {
         var self = this;
 
         if(!(token.device.haveServices)) {
@@ -165,7 +279,7 @@
      * @param {function} fail function to be executed upon failure with parameter errorCode
      * @param {number} timeout *(default: 5000)* number of milliseconds before stopping scan
      */
-    evothingsBluetooth.scan = function (win, fail, timeout) {
+    beanBluetooth.scan = function (win, fail, timeout) {
         if (this.scanning) {
             AnyBoard.Logger.debug('Already scanning. Ignoring new request.', this);
             return;
@@ -189,11 +303,11 @@
         setTimeout(function() {self._completeScan()}, timeout);
     };
 
-    evothingsBluetooth.getToken = function(address) {
+    beanBluetooth.getToken = function(address) {
         return this._devices[address];
     };
 
-    evothingsBluetooth._completeScan = function(callback) {
+    beanBluetooth._completeScan = function(callback) {
         AnyBoard.Logger.debug('Stopping scan for bluetooth devices...', this);
         evothings.easyble.stopScan();
         this.scanning = false;
@@ -206,7 +320,7 @@
      * @returns {AnyBoard.BaseToken} token instance of token generated
      * @private
      */
-    evothingsBluetooth._initializeDevice = function(device) {
+    beanBluetooth._initializeDevice = function(device) {
         AnyBoard.Logger.log('Device found: ' + device.name + ' address: ' + device.address + ' rssi: ' + device.rssi);
         if (!this._devices[device.address]) {
             device.sendGtHeader = 0x80;
@@ -229,7 +343,7 @@
      * @param {function} win callback to be called upon success with token as parameter
      * @param {function} fail callback to be called upon failure
      */
-    evothingsBluetooth.getServices = function(token, win, fail) {
+    beanBluetooth.getServices = function(token, win, fail) {
         var device = token.device;
         if (device.gettingServices)
             return;
@@ -312,20 +426,20 @@
             });
     };
 
-    evothingsBluetooth._scanError = function(errorCode) {
+    beanBluetooth._scanError = function(errorCode) {
         AnyBoard.Logger.error('Scan failed: ' + errorCode, this);
         this.scanning = false;
     };
 
-    evothingsBluetooth._connectError = function(errorCode) {
+    beanBluetooth._connectError = function(errorCode) {
         AnyBoard.Logger.error('Connect failed: ' + errorCode, this);
     };
 
-    evothingsBluetooth._readServicesError = function(errorCode) {
+    beanBluetooth._readServicesError = function(errorCode) {
         AnyBoard.Logger.error('Read services failed: ' + errorCode, this);
     };
 
-    evothingsBluetooth._computeCRC16 = function(data) {
+    beanBluetooth._computeCRC16 = function(data) {
         var crc = 0xFFFF;
 
         for (var i=0; i<data.length; i++) {
@@ -347,7 +461,7 @@
      * @returns {{packetCount: number, buf: Uint8Array, append: Function, packet: Function}}
      * @private
      */
-    evothingsBluetooth._gtBuffer = function(token, gstPacketLength) {
+    beanBluetooth._gtBuffer = function(token, gstPacketLength) {
         // BLE max is 20. GT header takes 1 byte.
         var packetCount = Math.ceil(gstPacketLength / 19);
 
@@ -365,7 +479,7 @@
                 if((pos % 20) == 0) {
 
                     // Decrement the local packetCount. This should not affect the member packetCount.
-                    buf[pos] = evothingsBluetooth._gtHeader(token, --packetCount, pos);
+                    buf[pos] = beanBluetooth._gtHeader(token, --packetCount, pos);
                     pos++;
                 }
                 buf[pos++] = b;
@@ -385,7 +499,7 @@
      * @returns {*}
      * @private
      */
-    evothingsBluetooth._gtHeader = function(token, remain, pos) {
+    beanBluetooth._gtHeader = function(token, remain, pos) {
         var h = token.device.sendGtHeader + (remain);
         if(remain == 0) {
             token.device.sendGtHeader = (token.device.sendGtHeader + 0x20) & 0xff;
@@ -395,7 +509,7 @@
         return h;
     };
 
-    evothingsBluetooth._bytesToHexString = function(data, offset, length) {
+    beanBluetooth._bytesToHexString = function(data, offset, length) {
         offset = offset || 0;
         length = length || data.byteLength;
         var hex = '';
@@ -407,5 +521,5 @@
     };
 
     // Set as default communication driver
-    AnyBoard.TokenManager.setDriver(AnyBoard.Drivers.get('evothings-easyble-bean'));
+    AnyBoard.TokenManager.setDriver(AnyBoard.Drivers.get('evothings-bean-token'));
 })();

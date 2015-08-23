@@ -217,6 +217,64 @@ AnyBoard.BaseToken.prototype.toString = function() {
 };
 
 /**
+ * Gets the name of the firmware type of the token
+ * @param {function} [win] callback function to be called upon successful execution
+ * @param {function} [fail] callback function to be executed upon failure
+ */
+AnyBoard.BaseToken.prototype.getFirmwareName = function(win, fail) {
+    if (!this.driver.hasOwnProperty('getName')) {
+        AnyBoard.Logger.warn('This token has not implemented getName', this)
+        fail && fail('This token has not implemented getName');
+    } else {
+        this.driver.getName(this, win, fail);
+    }
+};
+
+/**
+ * Gets the version of the firmware type of the token
+ * @param {function} [win] callback function to be called upon successful execution
+ * @param {function} [fail] callback function to be executed upon failure
+ */
+AnyBoard.BaseToken.prototype.getFirmWareVersion = function(win, fail) {
+    if (!this.driver.hasOwnProperty('getName')) {
+        AnyBoard.Logger.warn('This token has not implemented getName', this)
+        fail && fail('This token has not implemented getName');
+    } else {
+        this.driver.getName(this, win, fail);
+    }
+};
+
+
+/**
+ * Gets the name of the firmware type of the token
+ * @param {function} [win] callback function to be called upon successful execution
+ * @param {function} [fail] callback function to be executed upon failure
+ */
+AnyBoard.BaseToken.prototype.getName = function(win, fail) {
+    if (!this.driver.hasOwnProperty('getName')) {
+        AnyBoard.Logger.warn('This token has not implemented getName', this)
+        fail && fail('This token has not implemented getName');
+    } else {
+        this.driver.getName(this, win, fail);
+    }
+};
+
+/**
+ * Sets color on token
+ * @param {string|Array} value string with color name or array of [red, green, blue] values 0-255
+ * @param {function} [win] callback function to be called upon successful execution
+ * @param {function} [fail] callback function to be executed upon
+ */
+AnyBoard.BaseToken.prototype.setLed = function(value, win, fail) {
+    if (!this.driver.hasOwnProperty('setLed')) {
+        AnyBoard.Logger.warn('This token has not implemented setLed', this)
+        fail && fail('This token has not implemented setLed');
+    } else {
+        this.driver.setLed(this, value, win, fail);
+    }
+};
+
+/**
  * A dummy token that prints to AnyBoard.Logger instead of attempting to communicate with a physical token
  * @param {string} name (dummy) name of token
  * @param {string} address (dummy) address of the token

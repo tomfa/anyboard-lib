@@ -91,10 +91,7 @@
 
             // Send green led command. Will only work on LightBlue Bean with a certain hardware.
             sendGreenLed: function(token) {
-                var data = {"device":"LED","event":"on","color":"green"};
-                token.send(
-                    JSON.stringify(data)
-                );
+                token.setLed("green");
             }
 
 	    };
