@@ -93,6 +93,8 @@
             data = new Uint8Array(data);
         } else {
             AnyBoard.Logger.error("send data is not an ArrayBuffer.", this);
+            fail && fail('Invalid send data');
+            return;
         }
 
         if (token.device.singlePacketWrite && data.byteLength > 13) {
@@ -256,6 +258,17 @@
 
                         device.characteristics[characteristic.uuid] = characteristic;
 
+                        if (!driver) {
+                            driver = AnyBoard.Drivers.getCompatibleDriver('bluetooth', {
+                                characteristic_uuid: characteristic.uuid,
+                                service_uuid: service.uuid
+                            });
+                            if (driver) {
+                                device.serialChar = characteristic.handle;
+                                token.driver = driver;
+                            }
+                        }
+
                         for (var di in characteristic.descriptors) {
                             var descriptor = characteristic.descriptors[di];
                             AnyBoard.Logger.debug('Descriptor: ' + descriptor.uuid);
@@ -279,7 +292,7 @@
                     }
                 }
 
-                if (device.serialChar && device.serialDesc)
+                if (device.serialChar)
                 {
                     device.haveServices = true;
                     device.gettingServices = false;
@@ -288,7 +301,7 @@
                 else
                 {
                     device.gettingServices = false;
-                    AnyBoard.Logger.error('Could not find predefined services for BlueBean token:' + device.name, self);
+                    AnyBoard.Logger.error('Could not find predefined services for token:' + device.name, self);
                     fail('Services not found!');
                 }
             },
@@ -396,5 +409,3 @@
     // Set as default communication driver
     AnyBoard.TokenManager.setDriver(AnyBoard.Drivers.get('evothings-easyble-bean'));
 })();
-
-
