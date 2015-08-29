@@ -1,83 +1,220 @@
-//
-// Copyright 2014, Evothings AB
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//   http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-//
-// LightBlue Bean - Basic
-//
-// Created October 28, 2014
-// Andreas Lundquist, Evothings AB
-//
-// This example shows how to use the Scratch data areas
-// to communicate with an external application.
-//
-// In this example the sketch fetches the LED values from
-// the scratch data area 1 and writes the current temperature
-// to the scratch data area 2.
-//
+#include <string.h>
 
+// VARIABLES
+uint8_t resetBuffer[20] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+uint8_t cmd;
+bool connected;
+int i;
+int len;
+char sendData[20];
+uint8_t getData[20];
+
+// BOARD CONSTANTS
 String beanName = "LightBlueBean";
-const uint8_t ledScratch = 1;
-const uint8_t temperatureScratch = 2;
-#define NAME          "AnyToken 1"
-#define VERSION       "0.1"
+const int RED_LED_PIN   = 2;
+const int GREEN_LED_PIN = 3;
+const int BLUE_LED_PIN  = 4;
+const uint8_t ledScratch = 3;
+const uint8_t temperatureScratch = 4;
+const uint8_t accelerationScratch = 5;
 
-#define GET_NAME      1
-#define GET_VERSION   2
-#define LED_ON        65
+// TOKEN FIRMWARE METADATA
+#define NAME    "AnyBoard Bean Pawn"
+#define VERSION "0.1"
+#define UUID    "2071-5c87-364f"
+
+// COMMANDS
+const uint8_t GET_NAME             = 32;
+const uint8_t GET_VERSION          = 33;
+const uint8_t GET_UUID             = 34;
+const uint8_t GET_BATTERY_STATUS   = 35;
+const uint8_t GET_TEMPERATURE      = 36;
+const uint8_t HAS_LED              = 64;
+const uint8_t HAS_LED_COLOR        = 65;
+const uint8_t HAS_VIBRATION        = 66;
+const uint8_t HAS_COLOR_DETECTION  = 67;
+const uint8_t HAS_LED_SCREEN       = 68;
+const uint8_t HAS_RFID             = 71;
+const uint8_t HAS_NFC              = 72;
+const uint8_t HAS_ACCELEROMETER    = 73;
+const uint8_t HAS_TEMPERATURE      = 74;
+const uint8_t LED_OFF              = 128;
+const uint8_t LED_ON               = 129;
+const uint8_t LED_BLINK            = 130;
 
 void setup() {
-        Serial.begin(9600);
-	// Setup bean
-	Bean.setBeanName(beanName);
-	Bean.enableWakeOnConnect(true);
+    Serial.begin(9600);
 
-	// Reset the scratch data area 1.
-	uint8_t resetLedBuffer[] = {0, 0, 0};
-	Bean.setScratchData(ledScratch, resetLedBuffer, 3);
+    // Setup bean
+    Bean.setBeanName(beanName);
+    Bean.enableWakeOnConnect(true);
+    Bean.setLed(255, 0, 0);
+
+    Bean.setScratchData(ledScratch, resetBuffer, 20);
+    Bean.setScratchData(temperatureScratch, resetBuffer, 20);
+    Bean.setScratchData(accelerationScratch, resetBuffer, 20);
 }
 
 // the loop routine runs over and over again forever:
 void loop() {
-	bool connected = Bean.getConnectionState();
+    connected = Bean.getConnectionState();
 
-	if(connected) {
-		// Write current temperature to a scratch data area.
-		uint8_t temperatureBuffer[1];
-		temperatureBuffer[0] = Bean.getTemperature();
-		Bean.setScratchData(temperatureScratch, temperatureBuffer, 1);
+    if(connected) {
+        if (Serial.available() > 0) {
+            cmd = (uint8_t) Serial.read();
+            getData[20] = {0};
+            for (i = 0; Serial.available() > 0; i++)
+            {
+                getData[i] = (uint8_t) Serial.read();
+            }
 
-		// Update LEDs
-		ScratchData receivedData = Bean.readScratchData(ledScratch);
-
-		uint8_t cmd = receivedData.data[0];
-                if (cmd == GET_NAME) {
-                  Serial.println(NAME);
-                }
-                if (cmd == GET_VERSION) {
-                  Serial.println(VERSION);
-                }
-                if (cmd == LED_ON) {
-                  Bean.setLed(receivedData.data[1], receivedData.data[2], receivedData.data[3]);
-                } 
-	}
-	else {
-		// Turn LED off and put to sleep.
-		Bean.setLed(0, 0, 0);
-		Bean.sleep(0xFFFFFFFF);
-	}
+            parse(cmd);
+        }
+        Bean.sleep(500);
+    }
+    else {
+        Bean.sleep(0xFFFFFFFF);
+    }
 }
 
-void ledON(int r, int g, int b) {
-  Bean.setLed(r, g, b);
+void readTemperature() {
+	uint8_t temperatureBuffer[1];
+    temperatureBuffer[0] = Bean.getTemperature();
+    Bean.setScratchData(temperatureScratch, temperatureBuffer, 1);
+}
+
+void readAcceleration() {
+	// TODO
+}
+
+void readLed() {
+	uint8_t ledReading[3];
+	ledReading[0] = Bean.getLedRed();
+	ledReading[1] = Bean.getLedGreen();
+	ledReading[2] = Bean.getLedBlue();
+	Bean.setScratchData(ledScratch, ledReading, 3);
+}
+
+void ledOn(uint8_t r, uint8_t g, uint8_t b) {
+    Bean.setLed(r, g, b);
+}
+
+void ledOff() {
+    Bean.setLed(0, 0, 0);
+}
+
+void ledBlink(uint8_t r, uint8_t g, uint8_t b, int delayTime) {
+    readLed();
+    ledOn(r, g, b);
+    delay(delayTime*10);
+    ledOff();
+    delay(delayTime*10);
+    ledOn(r, g, b);
+    delay(delayTime*10);
+    ledOff();
+    delay(delayTime*10);
+    ledOn(r, g, b);
+    delay(delayTime*10);
+    ledOff();
+    delay(delayTime*10);
+    ledOn(r, g, b);
+    delay(delayTime*10);
+    ledOff();
+    delay(delayTime*10);
+    ledOn(r, g, b);
+    delay(delayTime*10);
+    ledOff();
+    delay(delayTime*10);
+    ledOn(r, g, b);
+}
+
+void send(char *data, int length) {
+    // TODO: impl
+}
+
+void parse(uint8_t command) {
+
+    switch (command) {
+        case GET_NAME:
+            Serial.println("GET_NAME");
+            len = strlen(NAME);
+            send(NAME, len);
+            break;
+        case GET_VERSION:
+            Serial.println("GET_VERSION");
+            len = strlen(VERSION);
+            send(VERSION, len);
+            break;
+        case GET_UUID:
+            Serial.println("GET_UUID");
+            len = strlen(UUID);
+            send(UUID, len);
+            break;
+        case LED_ON:
+            Serial.println("LED_ON");
+            ledOn(getData[0], getData[1], getData[2]);
+            break;
+        case LED_OFF:
+            Serial.println("LED_OFF");
+            ledOff();
+            break;
+        case LED_BLINK:
+            Serial.println("LED_BLINK");
+            ledBlink(getData[0], getData[1], getData[2], getData[3]);
+            break;
+        case GET_BATTERY_STATUS:
+            Serial.println("GET_BATTERY_STATUS");
+            sendData[0] = 0;
+            send(sendData, 1);
+            break;
+        case HAS_LED:
+            Serial.println("HAS_LED");
+            sendData[0] = 1;
+            send(sendData, 1);
+            break;
+        case HAS_LED_COLOR:
+            Serial.println("HAS_LED_COLOR");
+            sendData[0] = 1;
+            send(sendData, 1);
+            break;
+        case HAS_VIBRATION:
+            Serial.println("HAS_VIBRATION");
+            sendData[0] = 0;
+            send(sendData, 1);
+            break;
+        case HAS_COLOR_DETECTION:
+            Serial.println("HAS_COLOR_DETEC");
+            sendData[0] = 1;
+            send(sendData, 1);
+            break;
+        case HAS_LED_SCREEN:
+            Serial.println("HAS_LED_SCREEN");
+            sendData[0] = 0;
+            send(sendData, 1);
+            break;
+        case HAS_RFID:
+            Serial.println("HAS_RFID");
+            sendData[0] = 0;
+            send(sendData, 1);
+            break;
+        case HAS_NFC:
+            Serial.println("HAS_NFC");
+            sendData[0] = 0;
+            send(sendData, 1);
+            break;
+        case HAS_ACCELEROMETER:
+            Serial.println("HAS_ACCELEROMET");
+            sendData[0] = 0;
+            send(sendData, 1);
+            break;
+        case HAS_TEMPERATURE:
+            Serial.println("HAS_TEMPERATURE");
+            sendData[0] = 0;
+            send(sendData, 1);
+            break;
+        default:
+            Serial.print("command not supported: ");
+            Serial.print(command);
+            Serial.print("\n");
+    }
 }

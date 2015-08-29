@@ -76,10 +76,10 @@
                 var token = this.devices[tokenName];
                 // If already connecting, stop
                 if (document.getElementById(tokenName).className == 'blue')
-                    return;  
+                    return;
                 // If already connected, attempt to send green led command
                 if (document.getElementById(tokenName).className == 'green') {
-                    this.sendGreenLed(token); 
+                    this.sendGreenLed(token);
                     return;
                 }
                 // Signal that we're attempting to connect
@@ -91,7 +91,7 @@
 
             // Send green led command. Will only work on LightBlue Bean with a certain hardware.
             sendGreenLed: function(token) {
-                token.setLed("green");
+                token.setLed("green", function(data){hyper.log(data)},function(data){hyper.log(data)});
             }
 
 	    };

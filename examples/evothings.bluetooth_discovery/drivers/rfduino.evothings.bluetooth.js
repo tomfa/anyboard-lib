@@ -27,7 +27,7 @@
             data[0] = functionId;
             return function(token, win, fail) {
                 AnyBoard.Logger.debug("Executing " + name, token);
-                rfduinoBluetooth.send(token, new Uint8Array(1), win, fail)
+                rfduinoBluetooth.send(token, data, win, fail)
             };
         }
         return function(token, data, win, fail) {
@@ -53,7 +53,7 @@
             newData[0] = functionId;
             for (var index in data) {
                 if (data.hasOwnProperty(index))
-                    newData[index+1] = data[index];
+                    newData[parseInt(index)+1] = data[index];
             }
 
             rfduinoBluetooth.send(token, newData, win, fail)
@@ -61,29 +61,29 @@
     };
 
     var COMMANDS = {
-        GET_NAME: GenericSend("GET_NAME", 1, false),
-        GET_VERSION: GenericSend("GET_VERSION", 2, false),
-        GET_UUID: GenericSend("GET_UUID", 3, false),
-        GET_BATTERY_STATUS: GenericSend("GET_BATTERY_STATUS", 4, false),
-        HAS_LED: GenericSend("HAS_LED", 16, false),
-        HAS_LED_COLOR: GenericSend("HAS_LED_COLOR", 17, false),
-        HAS_VIBRATION: GenericSend("HAS_VIBRATION", 18, false),
-        HAS_COLOR_DETECTION: GenericSend("HAS_COLOR_DETECTION", 19, false),
-        HAS_LED_SCREEN: GenericSend("HAS_LED_SCREEN", 20, false),
-        LED_SCREEN_WIDTH: GenericSend("LED_SCREEN_WIDTH", 21, false),
-        LED_SCREEN_HEIGHT: GenericSend("LED_SCREEN_HEIGHT", 22, false),
-        HAS_RFID: GenericSend("HAS_RFID", 23, false),
-        HAS_NFC: GenericSend("HAS_NFC", 24, false),
-        HAS_ACCELEROMETER: GenericSend("HAS_ACCELEROMETER", 25, false),
-        LED_OFF: GenericSend("LED_OFF", 64, false),
-        LED_ON: GenericSend("LED_ON", 65, true),
-        LED_BLINK: GenericSend("LED_BLINK", 66, true),
-        VIBRATE_OFF: GenericSend("VIBRATE_OFF", 67, false),
-        VIBRATE: GenericSend("VIBRATE", 68, true),
-        SET_LED_SCREEN: GenericSend("SET_LED_SCREEN", 69, true),
-        READ_NFC: GenericSend("READ_NFC", 70, false),
-        READ_RFID: GenericSend("READ_RFID", 71, false),
-        READ_COLOR: GenericSend("READ_COLOR", 72, false)
+        GET_NAME: GenericSend("GET_NAME", 32, false),
+        GET_VERSION: GenericSend("GET_VERSION", 33, false),
+        GET_UUID: GenericSend("GET_UUID", 34, false),
+        GET_BATTERY_STATUS: GenericSend("GET_BATTERY_STATUS", 35, false),
+        HAS_LED: GenericSend("HAS_LED", 64, false),
+        HAS_LED_COLOR: GenericSend("HAS_LED_COLOR", 65, false),
+        HAS_VIBRATION: GenericSend("HAS_VIBRATION", 66, false),
+        HAS_COLOR_DETECTION: GenericSend("HAS_COLOR_DETECTION", 67, false),
+        HAS_LED_SCREEN: GenericSend("HAS_LED_SCREEN", 68, false),
+        LED_SCREEN_WIDTH: GenericSend("LED_SCREEN_WIDTH", 69, false),
+        LED_SCREEN_HEIGHT: GenericSend("LED_SCREEN_HEIGHT", 70, false),
+        HAS_RFID: GenericSend("HAS_RFID", 71, false),
+        HAS_NFC: GenericSend("HAS_NFC", 72, false),
+        HAS_ACCELEROMETER: GenericSend("HAS_ACCELEROMETER", 73, false),
+        LED_OFF: GenericSend("LED_OFF", 128, false),
+        LED_ON: GenericSend("LED_ON", 129, true),
+        LED_BLINK: GenericSend("LED_BLINK", 130, true),
+        VIBRATE_OFF: GenericSend("VIBRATE_OFF", 131, false),
+        VIBRATE: GenericSend("VIBRATE", 132, true),
+        SET_LED_SCREEN: GenericSend("SET_LED_SCREEN", 133, true),
+        READ_NFC: GenericSend("READ_NFC", 134, false),
+        READ_RFID: GenericSend("READ_RFID", 135, false),
+        READ_COLOR: GenericSend("READ_COLOR", 136, false)
     };
 
     /**
@@ -192,7 +192,7 @@
         var self = this;
 
         if(!(token.device.haveServices)) {
-            this.getServices(token, function() {
+            rfduinoBluetooth.getServices(token, function() {
                 self.send(token, data, win, fail);
             }, fail);
             return;
@@ -214,6 +214,8 @@
             return;
         }
 
+
+
         evothings.ble.writeCharacteristic(
             token.device.deviceHandle,
             token.device.serialChar,
@@ -230,6 +232,7 @@
     rfduinoBluetooth._readServicesError = function(errorCode) {
         AnyBoard.Logger.error('Read services failed: ' + errorCode, this);
     };
+
 
 })();
 

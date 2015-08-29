@@ -6,6 +6,7 @@
  */
 AnyBoard.TokenManager = {
     tokens: {},
+    cache: {},
     driver: null
 };
 
@@ -92,6 +93,7 @@ AnyBoard.BaseToken.prototype.isConnected = function() {
 AnyBoard.BaseToken.prototype.connect = function(win, fail) {
     AnyBoard.Logger.debug('Attempting to connect to ' + this);
     var pointer = this.driver || AnyBoard.TokenManager.driver;
+    this.cache = {};
     var self = this;
     pointer.connect(
         self,
@@ -222,11 +224,19 @@ AnyBoard.BaseToken.prototype.toString = function() {
  * @param {function} [fail] callback function to be executed upon failure
  */
 AnyBoard.BaseToken.prototype.getFirmwareName = function(win, fail) {
+    var self = this;
+    if (this.cache['firmwareName']) {
+        win && win(self.cache_firmwareName);
+        return;
+    }
     if (!this.driver.hasOwnProperty('getName')) {
         AnyBoard.Logger.warn('This token has not implemented getName', this)
         fail && fail('This token has not implemented getName');
     } else {
-        this.driver.getName(this, win, fail);
+        this.driver.getName(this, function(name){
+            self.cache['firmwareName'] = name;
+            win && win(name)
+        }, fail);
     }
 };
 
@@ -235,27 +245,20 @@ AnyBoard.BaseToken.prototype.getFirmwareName = function(win, fail) {
  * @param {function} [win] callback function to be called upon successful execution
  * @param {function} [fail] callback function to be executed upon failure
  */
-AnyBoard.BaseToken.prototype.getFirmWareVersion = function(win, fail) {
-    if (!this.driver.hasOwnProperty('getName')) {
-        AnyBoard.Logger.warn('This token has not implemented getName', this)
-        fail && fail('This token has not implemented getName');
-    } else {
-        this.driver.getName(this, win, fail);
+AnyBoard.BaseToken.prototype.getFirmwareVersion = function(win, fail) {
+    var self = this;
+    if (this.cache['firmwareVersion']) {
+        win && win(self.cache['firmwareVersion']);
+        return;
     }
-};
-
-
-/**
- * Gets the name of the firmware type of the token
- * @param {function} [win] callback function to be called upon successful execution
- * @param {function} [fail] callback function to be executed upon failure
- */
-AnyBoard.BaseToken.prototype.getName = function(win, fail) {
-    if (!this.driver.hasOwnProperty('getName')) {
-        AnyBoard.Logger.warn('This token has not implemented getName', this)
-        fail && fail('This token has not implemented getName');
+    if (!this.driver.hasOwnProperty('getVersion')) {
+        AnyBoard.Logger.warn('This token has not implemented getVersion', this)
+        fail && fail('This token has not implemented getVersion');
     } else {
-        this.driver.getName(this, win, fail);
+        this.driver.getVersion(this, function(version){
+            self.cache['firmwareVersion'] = version;
+            win && win(version)
+        }, fail);
     }
 };
 
