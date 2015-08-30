@@ -6,7 +6,6 @@
  */
 AnyBoard.TokenManager = {
     tokens: {},
-    cache: {},
     driver: null
 };
 
@@ -93,7 +92,6 @@ AnyBoard.BaseToken.prototype.isConnected = function() {
 AnyBoard.BaseToken.prototype.connect = function(win, fail) {
     AnyBoard.Logger.debug('Attempting to connect to ' + this);
     var pointer = this.driver || AnyBoard.TokenManager.driver;
-    this.cache = {};
     var self = this;
     pointer.connect(
         self,
@@ -180,7 +178,7 @@ AnyBoard.BaseToken.prototype.sendBuffer = function(data, win, fail) {
  * @param {function} fail function to be executed upon failure
  */
 AnyBoard.BaseToken.prototype.sendString = function(data, win, fail) {
-    AnyBoard.Logger.debug('Aattempting to sendString with data: ' + data, this);
+    AnyBoard.Logger.debug('Attempting to sendString with data: ' + data, this);
     if (!this.isConnected()) {
         AnyBoard.Logger.warn(this + ' is not connected. Attempting to connect first.', this);
         var self = this;
@@ -263,19 +261,72 @@ AnyBoard.BaseToken.prototype.getFirmwareVersion = function(win, fail) {
 };
 
 /**
+ * Gets a uniquie ID the firmware of the token
+ * @param {function} [win] callback function to be called upon successful execution
+ * @param {function} [fail] callback function to be executed upon failure
+ */
+AnyBoard.BaseToken.prototype.getFirmwareUUID = function(win, fail) {
+    var self = this;
+    if (this.cache['firmwareUUID']) {
+        win && win(self.cache['firmwareUUID']);
+        return;
+    }
+    if (!this.driver.hasOwnProperty('getUUID')) {
+        AnyBoard.Logger.warn('This token has not implemented getUUID', this)
+        fail && fail('This token has not implemented getUUID');
+    } else {
+        this.driver.getUUID(this, function(version){
+            self.cache['firmwareUUID'] = version;
+            win && win(version)
+        }, fail);
+    }
+};
+
+/**
  * Sets color on token
  * @param {string|Array} value string with color name or array of [red, green, blue] values 0-255
  * @param {function} [win] callback function to be called upon successful execution
  * @param {function} [fail] callback function to be executed upon
  */
-AnyBoard.BaseToken.prototype.setLed = function(value, win, fail) {
-    if (!this.driver.hasOwnProperty('setLed')) {
-        AnyBoard.Logger.warn('This token has not implemented setLed', this)
-        fail && fail('This token has not implemented setLed');
+AnyBoard.BaseToken.prototype.ledOn = function(value, win, fail) {
+    if (!this.driver.hasOwnProperty('ledOn')) {
+        AnyBoard.Logger.warn('This token has not implemented ledOn', this)
+        fail && fail('This token has not implemented ledOn');
     } else {
-        this.driver.setLed(this, value, win, fail);
+        this.driver.ledOn(this, value, win, fail);
     }
 };
+
+/**
+ * Sets color on token
+ * @param {string|Array} value string with color name or array of [red, green, blue] values 0-255
+ * @param {function} [win] callback function to be called upon successful execution
+ * @param {function} [fail] callback function to be executed upon
+ */
+AnyBoard.BaseToken.prototype.ledBlink = function(value, win, fail) {
+    if (!this.driver.hasOwnProperty('ledBlink')) {
+        AnyBoard.Logger.warn('This token has not implemented ledBlink', this)
+        fail && fail('This token has not implemented ledBlink');
+    } else {
+        this.driver.ledBlink(this, value, win, fail);
+    }
+};
+
+/**
+ * Turns LED off
+ * @param {string|Array} value string with color name or array of [red, green, blue] values 0-255
+ * @param {function} [win] callback function to be called upon successful execution
+ * @param {function} [fail] callback function to be executed upon
+ */
+AnyBoard.BaseToken.prototype.ledOff = function(win, fail) {
+    if (!this.driver.hasOwnProperty('ledOff')) {
+        AnyBoard.Logger.warn('This token has not implemented ledOff', this)
+        fail && fail('This token has not implemented ledOff');
+    } else {
+        this.driver.ledOff(this, win, fail);
+    }
+};
+
 
 /**
  * A dummy token that prints to AnyBoard.Logger instead of attempting to communicate with a physical token

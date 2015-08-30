@@ -63,32 +63,6 @@
         }
     };
 
-    var COMMANDS = {
-        GET_NAME: GenericSend("GET_NAME", 32, false),
-        GET_VERSION: GenericSend("GET_VERSION", 33, false),
-        GET_UUID: GenericSend("GET_UUID", 34, false),
-        GET_BATTERY_STATUS: GenericSend("GET_BATTERY_STATUS", 35, false),
-        HAS_LED: GenericSend("HAS_LED", 64, false),
-        HAS_LED_COLOR: GenericSend("HAS_LED_COLOR", 65, false),
-        HAS_VIBRATION: GenericSend("HAS_VIBRATION", 66, false),
-        HAS_COLOR_DETECTION: GenericSend("HAS_COLOR_DETECTION", 67, false),
-        HAS_LED_SCREEN: GenericSend("HAS_LED_SCREEN", 68, false),
-        LED_SCREEN_WIDTH: GenericSend("LED_SCREEN_WIDTH", 69, false),
-        LED_SCREEN_HEIGHT: GenericSend("LED_SCREEN_HEIGHT", 70, false),
-        HAS_RFID: GenericSend("HAS_RFID", 71, false),
-        HAS_NFC: GenericSend("HAS_NFC", 72, false),
-        HAS_ACCELEROMETER: GenericSend("HAS_ACCELEROMETER", 73, false),
-        LED_OFF: GenericSend("LED_OFF", 128, false),
-        LED_ON: GenericSend("LED_ON", 129, true),
-        LED_BLINK: GenericSend("LED_BLINK", 130, true),
-        VIBRATE_OFF: GenericSend("VIBRATE_OFF", 131, false),
-        VIBRATE: GenericSend("VIBRATE", 132, true),
-        SET_LED_SCREEN: GenericSend("SET_LED_SCREEN", 133, true),
-        READ_NFC: GenericSend("READ_NFC", 134, false),
-        READ_RFID: GenericSend("READ_RFID", 135, false),
-        READ_COLOR: GenericSend("READ_COLOR", 136, false)
-    };
-
     /**
      * Predefined colors for Token LEDs
      * @property {Uint8Array} red predefined color red
@@ -108,6 +82,16 @@
         'yellow': new Uint8Array([255, 255, 0]),
         'aqua': new Uint8Array([0, 255, 255]),
         'off': new Uint8Array([0, 0, 0])
+    };
+
+    var COMMANDS = {
+        GET_NAME: GenericSend("GET_NAME", 32, false),
+        GET_VERSION: GenericSend("GET_VERSION", 33, false),
+        GET_UUID: GenericSend("GET_UUID", 34, false),
+        GET_BATTERY_STATUS: GenericSend("GET_BATTERY_STATUS", 35, false),
+        LED_OFF: GenericSend("LED_OFF", 128, false),
+        LED_ON: GenericSend("LED_ON", 129, true),
+        LED_BLINK: GenericSend("LED_BLINK", 130, true),
     };
 
     /**
@@ -150,24 +134,36 @@
         COMMANDS.GET_VERSION(token, win, fail);
     };
 
-    beanBluetooth.setLed = function (token, value, win, fail) {
+    beanBluetooth.getUUID = function (token, win, fail) {
+        COMMANDS.GET_UUID(token, win, fail);
+    };
+
+    beanBluetooth.ledOn = function (token, value, win, fail) {
         value = value || 'white';
 
         if (typeof value === 'string' && value in COLORS) {
             COMMANDS.LED_ON(token, COLORS[value], win, fail);
-        } else if (value instanceof Array && value.length === 3) {
+        } else if ((value instanceof Array || value instanceof Uint8Array) && value.length === 3) {
             COMMANDS.LED_ON(token, new Uint8Array([value[0], value[1], value[2]]), win, fail);
         } else {
             fail && fail('Invalid or unsupported color parameters');
         }
     };
 
-    beanBluetooth.vibrate = function (token, options, win, fail) {
-        options = options || {};
-        options.length = options.length || 10; // *100milliseconds
-        options.mode = options.mode || 1;
-        options.strength = options.strength || 10;
-        COMMANDS.VIBRATE(token, new Uint8Array([options.length, options.mode, options.strength]), win, fail);
+    beanBluetooth.ledBlink = function (token, value, win, fail) {
+        value = value || 'white';
+
+        if (typeof value === 'string' && value in COLORS) {
+            beanBluetooth.ledBlink(token, COLORS[value], win, fail);
+        } else if ((value instanceof Array || value instanceof Uint8Array) && value.length === 3) {
+            COMMANDS.LED_BLINK(token, new Uint8Array([value[0], value[1], value[2], 30]), win, fail);
+        } else {
+            fail && fail('Invalid or unsupported color parameters');
+        }
+    };
+
+    beanBluetooth.ledOff = function (token, win, fail) {
+        COMMANDS.LED_OFF(token, win, fail);
     };
 
     /**
