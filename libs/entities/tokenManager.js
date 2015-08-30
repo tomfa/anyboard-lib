@@ -209,6 +209,25 @@ AnyBoard.BaseToken.prototype.send = function(data, win, fail) {
 };
 
 /**
+ * Prints to Token
+ *
+ * String has special characters:
+ * ##
+ *
+ * @param {string} value
+ * @param {function} win
+ * @param {function} fail
+ */
+AnyBoard.BaseToken.prototype.print = function(value, win, fail) {
+    if (!this.driver.hasOwnProperty('print')) {
+        AnyBoard.Logger.warn('This token has not implemented print', this)
+        fail && fail('This token has not implemented print');
+    } else {
+        this.driver.print(this, value, win, fail);
+    }
+}
+
+/**
  * Representational string of class instance.
  * @returns {string}
  */

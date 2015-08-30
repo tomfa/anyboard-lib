@@ -523,6 +523,7 @@ evothings.easyble = {};
 			{
 				// Array that stores services.
 				device.__services = [];
+				device.services[service.uuid] = service;
 
 				for (var i = 0; i < services.length; ++i)
 				{

@@ -14,11 +14,20 @@ bool connected;
 int len;
 char sendData[20];
 uint8_t getData[20];
+uint8_t last_sector_ID = 0;
+uint8_t current_sector_ID = 0;
+
+uint16_t r, g, b, color, colorTemp, lux;
 
 // BOARD CONSTANTS
 #define RED_LED_PIN   2
 #define GREEN_LED_PIN 3
 #define BLUE_LED_PIN  4
+
+/* Initialise color sensor with default values (int time = 2.4ms, gain = 1x) */
+// Adafruit_TCS34725 tcs = Adafruit_TCS34725();
+/* Initialise color sensor with specific int time and gain values */
+Adafruit_TCS34725 tcs = Adafruit_TCS34725(TCS34725_INTEGRATIONTIME_700MS, TCS34725_GAIN_1X);
 
 // TOKEN FIRMWARE METADATA
 #define NAME    "AnyBoard Pawn"
@@ -44,6 +53,7 @@ const uint8_t LED_OFF              = 128;
 const uint8_t LED_ON               = 129;
 const uint8_t LED_BLINK            = 130;
 const uint8_t READ_COLOR           = 136;
+const uint8_t MOVE                 = 194;
 
 void setup() {
 	// Enable outputs.
@@ -78,7 +88,54 @@ void setup() {
 
 void loop()
 {   
-    RFduino_ULPDelay(INFINITE);   
+    //Read color codes, based on the code in https://learn.adafruit.com/adafruit-color-sensors/programming
+
+      tcs.getRawData(&r, &g, &b, &color);
+      colorTemp = tcs.calculateColorTemperature(r, g, b);
+      Serial.print("DEBUG: Color: "); Serial.print(color, DEC); Serial.print(" ");
+      Serial.println(" ");
+
+      //Color hex translation to sector IDs
+      // Sector_NAMES 	Sector_ID	                Color_ID (approx value given by the sensor)
+      // START	 		1			12228
+      // STOP	 		2			5737
+      // A				3			18330
+      // B				4			9560
+      // C				5			8550
+      // D				6			6806
+      // E				7			5920
+      // F				8			15454
+
+      if (color > 12000 && color < 13000)
+        current_sector_ID = 1;
+      else if (color > 5300 && color < 5800)
+        current_sector_ID = 2;
+      else if (color > 18000 && color < 19000)
+        current_sector_ID = 3;
+      else if (color > 9000 && color < 10000)
+        current_sector_ID = 4;
+      else if (color > 8000 && color < 9000)
+        current_sector_ID = 5;
+      else if (color > 6500 && color < 7500)
+        current_sector_ID = 6;
+      else if (color > 5801 && color < 6300)
+        current_sector_ID = 7;
+      else if (color > 15000 && color < 16000)
+        current_sector_ID = 8;
+
+
+      //Sends sectors ID of the sector that has been left and the sector that has been reached in formatted JSON
+      if (current_sector_ID != last_sector_ID)
+      {
+      	sendData[0] = MOVE;
+      	sendData[1] = current_sector_ID;
+      	sendData[2] = last_sector_ID;
+        RFduinoBLE.send((char*) sendData, 3);
+
+        //Update sector_ID variables
+        last_sector_ID = current_sector_ID;
+      }
+	delay(300);
 }
 
 // Turns on the LED on a specific color: r=red, g=gree, etc..
@@ -126,6 +183,7 @@ void ledBlink(int r, int g, int b, int delayTime) {
     ledOff();
     delay(delayTime*10);
     ledOn(r, g, b);
+    // TODO: Hvorfor slutter denne ikke på?
 }
 
 
@@ -139,22 +197,22 @@ void RFduinoBLE_onAdvertisement()
 
 void RFduinoBLE_onConnect()
 {
-Serial.println("Connected");
-  connected = true;
+	Serial.println("Connected");
+  	connected = true;
 
 }
 
 void RFduinoBLE_onDisconnect()
 {
-Serial.println("Disconnected");
-   connected = false;
+	Serial.println("Disconnected");
+   	connected = false;
 }
 
 void send(char *data, int length) {
     // TODO: impl
 }
 
-void RFduinoBLE_onReceive(char *data, int lentgh) {
+void RFduinoBLE_onReceive(char *data, int length) {
     cmd = data[0];
     for (i = 1; i < length; i++)
     {

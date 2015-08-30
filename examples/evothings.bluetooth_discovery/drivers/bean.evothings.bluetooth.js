@@ -35,7 +35,10 @@
         }
         return function(token, data, win, fail) {
             AnyBoard.Logger.debug("Executing " + name, token);
-            if(data.buffer) {
+            if (typeof data === 'string') {
+                data = beanBluetooth._stringToUint8(data)
+            }
+            else if (data.buffer) {
                 if(!(data instanceof Uint8Array))
                     data = new Uint8Array(data.buffer);
             } else if(data instanceof ArrayBuffer) {
@@ -46,11 +49,6 @@
                 return;
             }
 
-            if (data.length > 18) {
-                AnyBoard.Logger.warn("cannot send data of length over 18.", this);
-                fail("cannot send data of length over 18.");
-                return;
-            }
 
             var newData = new Uint8Array(data.length+1);
             newData[0] = functionId;
@@ -92,8 +90,13 @@
         LED_OFF: GenericSend("LED_OFF", 128, false),
         LED_ON: GenericSend("LED_ON", 129, true),
         LED_BLINK: GenericSend("LED_BLINK", 130, true),
+        HAS_PRINT: GenericSend("HAS_PRINT", 74, false),
+        PRINT_FEED: GenericSend("PRINT_FEED", 137, false),
+        PRINT_JUSTIFY: GenericSend("PRINT_JUSTIFY", 138, true),
+        PRINT_SET_SIZE: GenericSend("PRINT_SET_SIZE", 139, true),
+        PRINT_WRITE: GenericSend("PRINT_WRITE", 140, true),
+        PRINT_NEWLINE: GenericSend("PRINT_NEWLINE", 141, false)
     };
-
     /**
      * Attempts to connect to a device and retrieves available services.
      *
@@ -138,6 +141,53 @@
         COMMANDS.GET_UUID(token, win, fail);
     };
 
+    beanBluetooth.hasPrint = function (token, win, fail) {
+        COMMANDS.HAS_PRINT(token, win, fail);
+    };
+
+    beanBluetooth.print = function (token, string, win, fail) {
+        var commands = {
+            "##l": function() {COMMANDS.PRINT_JUSTIFY(token, 'l')} ,
+            "##c": function() {COMMANDS.PRINT_JUSTIFY(token, 'c')} ,
+            "##r": function() {COMMANDS.PRINT_JUSTIFY(token, 'r')} ,
+            "##L": function() {COMMANDS.PRINT_SET_SIZE(token, 'L')} ,
+            "##S": function() {COMMANDS.PRINT_SET_SIZE(token, 'S')} ,
+            "##M": function() {COMMANDS.PRINT_SET_SIZE(token, 'M')} ,
+            "##f": function() {COMMANDS.PRINT_FEED(token)},
+            "##n": function() {COMMANDS.PRINT_NEWLINE(token)}
+        };
+
+        var run = function(inc) {
+            if (!inc) return;
+            var remains = "";
+            var command;
+            var wait = 1000;
+
+            var firstpos = inc.indexOf("##");
+            if (firstpos === -1) {
+                COMMANDS.PRINT_WRITE(token, inc.substr(0, 12))
+                wait = 2700;
+                remains = inc.substr(12);
+            } else if (firstpos !== 0) {
+                var textPart = inc.substr(0, Math.min(12, firstpos));
+                COMMANDS.PRINT_WRITE(token, textPart);
+                wait = 3200;
+                remains = inc.substr(Math.min(12, firstpos));
+            } else {
+                command = inc.substr(0, 3);
+                remains = inc.substr(3);
+                if (command in commands) {
+                    commands[command]();
+                }
+            }
+            setTimeout(function(){
+                run(remains);
+            }, wait);
+        };
+
+        run(string);
+    };
+
     beanBluetooth.ledOn = function (token, value, win, fail) {
         value = value || 'white';
 
@@ -174,8 +224,7 @@
      * @param {function} fail function to be executed upon failure
      */
     beanBluetooth.sendString = function(token, string, win, fail) {
-        var data = new Uint8Array(evothings.ble.toUtf8(string));
-        this.send(token, data, win, fail);
+        this.send(token, beanBluetooth._stringToUint8(data), win, fail);
     };
 
     /**
@@ -406,6 +455,7 @@
                 {
                     device.haveServices = true;
                     device.gettingServices = false;
+                    token.driver.hasOwnProperty('initialize') && token.driver.initialize(token);
                     win && win(token);
                 }
                 else
@@ -514,6 +564,10 @@
             hex += (data[i] & 0xF).toString(16);
         }
         return hex;
+    };
+
+    beanBluetooth._stringToUint8 = function(string) {
+        return new Uint8Array(evothings.ble.toUtf8(string));
     };
 
     // Set as default communication driver

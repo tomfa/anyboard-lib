@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, user-scalable=no
+		initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0" />
+
+	<title>AnyToken LED Demo</title>
+
+	<style>
+		@import 'ui/css/evothings-app.css';
+
+		p.topic {
+			font-weight: bold;
+		}
+	</style>
+
+	<script>
+	</script>
+
+    <!-- cordova.js based -->
+	<script src="cordova.js"></script>
+
+    <!-- AnyBoard libraries -->
+	<script src="libs/AnyBoard.min.js"></script>
+
+    <!-- Bluetooth driver and dependencies-->
+    <script src="libs/evothings/evothings.js"></script>
+    <script src="libs/evothings/easyble/easyble.js"></script>
+	<script src="drivers/bean.evothings.bluetooth.js"></script>
+    <script src="drivers/rfduino.evothings.bluetooth.js"></script>
+
+	<script>
+        var app = {
+		    devices: {},
+
+            // Discover bluetooth tokens in proximity
+            discover: function() {
+                var self = this;
+                AnyBoard.TokenManager.scan(
+                    // success function to be executed upon _each_ token that is discovered
+                    function(token) {
+                        self.addDiscovered(token);
+                    },
+                    // function to be executed upon failure
+                    function(errorCode) {
+                        console.log(errorCode)
+                    }
+                );
+            },
+
+            // Function to be executed upon having discovered a token
+            addDiscovered: function(token) {
+                if (!this.devices[token.name]) {
+                    this.devices[token.name] = token;
+
+                    // Add button for token to body
+                    document.body.innerHTML += '<button type="button" id="' + token.name + '" onclick="app.connect(' + "'" + token.name + "'" + ')" class="grey">' + token.name + ' </button><br />';
+
+                    // Add listener to be executed if the token connects
+                    token.on('connect', function() {
+                        document.getElementById(token.name).className = 'green';})
+
+                    // Add listener to be executed if the token disconnects
+                    token.on('disconnect', function() {
+                        document.getElementById(token.name).className = 'red';
+                    })
+                }
+
+            },
+
+            // Attempts to connect to token.
+            connect: function(tokenName) {
+                var token = this.devices[tokenName];
+                // If already connecting, stop
+                if (document.getElementById(tokenName).className == 'blue')
+                    return;
+                // If already connected, attempt to send green led command
+                if (document.getElementById(tokenName).className == 'green') {
+                    this.sendGreenLed(token);
+                    return;
+                }
+                // Signal that we're attempting to connect
+                document.getElementById(tokenName).className = 'blue';
+
+                // Send connect command. 
+                token.connect();
+            },
+
+            // Send green led command. Will only work on LightBlue Bean with a certain hardware.
+            sendGreenLed: function(token) {
+                token.ledOn("green", function(data){hyper.log(data)},function(data){hyper.log(data)});
+            }
+
+	    };
+	</script>
+
+</head>
+
+<body ontouchstart="">
+	<h1>AnyToken LED Demo</h1>
+    <div>
+        <p>Demo of AnyToken library that makes use of: 1) Custom Bluetooth Driver, 2) Token discovery, 3) Token connecting, 4) AnyBoard Token listener
+        </p>
+    <p>
+    Click on the black button to discover devices. Devices will pop up as new grey buttons with their name on it.
+    Click the name button to attempt to connect. It will turn <em>blue</em> to signal connection is pending, and <em>green</em> when connected. <em>Red</em> signals it being/having disconnected.
+    </p>
+
+        <p><em>PS: Clicking a green token will attempt to send {"device":"LED","event":"on","color":"green"} to the token. This is adapted to work with LightBlue Bean with a certain firmware, and might not work.</em></p>
+	</div>
+
+	<button type="button" class="black" onclick="app.discover()">
+		Discover Bluetooth devices
+	</button>
+
+	<br />
+
+</body>
+
+</html>

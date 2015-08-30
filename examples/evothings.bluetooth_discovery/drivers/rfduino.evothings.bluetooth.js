@@ -70,7 +70,15 @@
         GET_BATTERY_STATUS: GenericSend("GET_BATTERY_STATUS", 35, NO_PARAMS),
         LED_OFF: GenericSend("LED_OFF", 128, NO_PARAMS),
         LED_ON: GenericSend("LED_ON", 129, HAS_PARAMS),
-        LED_BLINK: GenericSend("LED_BLINK", 130, HAS_PARAMS),
+        LED_BLINK: GenericSend("LED_BLINK", 130, HAS_PARAMS)
+    };
+
+    var INCOMING_CMD = {
+        MOVE: 194,
+        NAME: 32,
+        VERSION: 33,
+        UUID: 34,
+        BATTERY_STATUS: 35
     };
 
     /**
@@ -97,28 +105,6 @@
     rfduinoBluetooth._devices = {};
 
     /**
-     * Attempts to connect to a device and retrieves available services.
-     *
-     * NOTE: Attempts at connecting with certain devices, has executed both win and fail callback.
-     * This bug is traced back to Cordova library. It has never occured with Tokens, however should be handled
-     * by your failure function (it should 'cancel' a potenial call to win.)
-     *
-     * @param {AnyBoard.BaseToken} token token to be connected to
-     * @param {function} win function to be executed upon success
-     * @param {function} fail function to be executed upon failure
-     */
-    rfduinoBluetooth.connect = function (token, win, fail) {
-        var self = this;
-
-        token.device.connect(function(device) {
-            self.getServices(token, win, fail);
-        }, function(errorCode) {
-            token.device.haveServices = false;
-            fail(errorCode);
-        });
-    };
-
-    /**
      * Disconnects from device
      * @param {AnyBoard.BaseToken} token
      */
@@ -127,6 +113,80 @@
         token.device && token.device.close()
         token.device.haveServices = false;
     };
+
+    // Calls callback with uint8array of data upon sends
+    rfduinoBluetooth.subscribe = function(token, callback, success, fail)
+    {
+        evothings.ble.writeDescriptor(
+            token.device.deviceHandle,
+            token.device.descriptors['00002902-0000-1000-8000-00805f9b34fb'].handle,
+            new Uint8Array([1,0])
+            );
+
+        evothings.ble.enableNotification(
+            token.device.deviceHandle,
+            token.device.characteristics['00002221-0000-1000-8000-00805f9b34fb'].handle,
+            function(data){
+                data = new DataView(data);
+                var length = data.byteLength;
+                var uint8Data = [];
+                for (var i = 0; i < length; i++) {
+                    uint8Data.push(data.getUint8(i));
+                }
+                callback && callback(uint8Data);
+            },
+            function(errorCode){
+                AnyBoard.Logger.error("Could not subscribe to notifications", token);
+            });
+
+    };
+
+    rfduinoBluetooth.unsubscribe = function(token, win, fail)
+    {
+        evothings.ble.writeDescriptor(
+            token.device.deviceHandle,
+            token.device.descriptors['00002902-0000-1000-8000-00805f9b34fb'].handle,
+            new Uint8Array([0,0])
+        );
+
+        evothings.ble.disableNotification(
+            token.device.deviceHandle,
+            token.device.characteristics['00002221-0000-1000-8000-00805f9b34fb'].handle,
+            function(data){ success && success(data); },
+            function(errorCode){ fail && fail(errorCode); }
+        );
+    };
+
+    /**
+     * Executed automatically upon connect
+     */
+    rfduinoBluetooth.initialize = function(token) {
+        var cb = function(uint8array) {
+            var cmd = uint8array[0];
+            switch (cmd) {
+                case INCOMING_CMD.BATTERY_STATUS:
+                    var strData = String.fromCharCode.apply(null, uint8array.subarray(1));
+                    token.trigger('GET_BATTERY_STATUS', {"value": strData});
+                    break;
+                case INCOMING_CMD.MOVE:
+                    token.trigger('MOVE', {"newTile": uint8array[1], "oldTile": uint8array[2]});
+                    break;
+                case INCOMING_CMD.NAME:
+                    var strData = String.fromCharCode.apply(null, uint8array.subarray(1));
+                    token.trigger('GET_NAME', {"value": strData});
+                    break;
+                case INCOMING_CMD.VERSION:
+                    var strData = String.fromCharCode.apply(null, uint8array.subarray(1));
+                    token.trigger('GET_VERSION', {"value": strData});
+                    break;
+                case INCOMING_CMD.UUID:
+                    var strData = String.fromCharCode.apply(null, uint8array.subarray(1));
+                    token.trigger('GET_UUID', {"value": strData});
+                    break;
+            }
+        };
+        rfduinoBluetooth.subscribe(token, cb)
+    }
 
     /**
      * Sends data to device
@@ -195,13 +255,10 @@
         var self = this;
 
         if(!(token.device.haveServices)) {
-            rfduinoBluetooth.getServices(token, function() {
-                self.send(token, data, win, fail);
-            }, fail);
+            fail && fail();
             return;
         }
 
-        // view data as a Uint8Array, unless it already is one.
         if(data.buffer) {
             if(!(data instanceof Uint8Array))
                 data = new Uint8Array(data.buffer);
@@ -234,7 +291,4 @@
         AnyBoard.Logger.error('Read services failed: ' + errorCode, this);
     };
 
-
 })();
-
-
