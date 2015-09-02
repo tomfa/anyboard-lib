@@ -23,15 +23,16 @@ AnyBoard.Drivers.get = function(name) {
 AnyBoard.Drivers.getCompatibleDriver = function(type, compatibility) {
     for (var key in AnyBoard.Drivers.drivers) {
         if (!AnyBoard.Drivers.drivers.hasOwnProperty(key))
-            continue
+            continue;
         var driver = AnyBoard.Drivers.drivers[key];
         if (typeof driver.type === 'string' && type !== driver.type
             || driver.type instanceof Array && driver.type.indexOf(type) === -1)
             continue;
         if (driver.compatibility instanceof Array) {
             for (var index in driver.compatibility) {
-                if (AnyBoard._isEqual(compatibility, driver.compatibility[index]))
-                    return driver;
+                if (driver.compatibility.hasOwnProperty(index))
+                    if (AnyBoard._isEqual(compatibility, driver.compatibility[index]))
+                        return driver;
             }
         } else if (AnyBoard._isEqual(compatibility, driver.compatibility)) {
             return driver;
