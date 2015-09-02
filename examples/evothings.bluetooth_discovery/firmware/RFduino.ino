@@ -12,7 +12,7 @@ uint8_t cmd;
 int i;
 bool connected;
 int len;
-char sendData[20];
+uint8_t sendData[20];
 uint8_t getData[20];
 uint8_t last_sector_ID = 0;
 uint8_t current_sector_ID = 0;
@@ -222,7 +222,7 @@ void parse(uint8_t command) {
             send_string(GET_VERSION, VERSION);
             break;
         case GET_UUID:
-            send_string(GET_UUID, GET_UUID);
+            send_string(GET_UUID, UUID);
             break;
         case LED_ON:
             ledOn(getData[0], getData[1], getData[2]);
