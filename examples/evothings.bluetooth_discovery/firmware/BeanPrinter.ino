@@ -24,7 +24,7 @@ uint8_t cmd;
 bool connected;
 int i;
 int len;
-char sendData[20];
+uint8_t sendData[20];
 uint8_t getData[20];
 String temp_string;
 
@@ -46,7 +46,6 @@ const uint8_t accelerationScratch = 5;
 const uint8_t GET_NAME             = 32;
 const uint8_t GET_VERSION          = 33;
 const uint8_t GET_UUID             = 34;
-const uint8_t GET_BATTERY_STATUS   = 35;
 const uint8_t GET_TEMPERATURE      = 36;
 const uint8_t HAS_LED              = 64;
 const uint8_t HAS_LED_COLOR        = 65;
@@ -56,14 +55,17 @@ const uint8_t HAS_LED_SCREEN       = 68;
 const uint8_t HAS_RFID             = 71;
 const uint8_t HAS_NFC              = 72;
 const uint8_t HAS_ACCELEROMETER    = 73;
-const uint8_t HAS_TEMPERATURE      = 74;
 const uint8_t HAS_PRINT            = 74;
+const uint8_t HAS_TEMPERATURE      = 75;
+const uint8_t LED_OFF              = 128;
 const uint8_t LED_ON               = 129;
+const uint8_t LED_BLINK            = 130;
 const uint8_t PRINT_FEED           = 137;
 const uint8_t PRINT_JUSTIFY        = 138;
 const uint8_t PRINT_SET_SIZE       = 139;
 const uint8_t PRINT_WRITE          = 140;
 const uint8_t PRINT_NEWLINE        = 141;
+
 
 void setup() {
     Serial.begin(57600);
@@ -106,105 +108,95 @@ void loop() {
     }
 }
 
-void readTemperature() {
-	uint8_t temperatureBuffer[1];
-    temperatureBuffer[0] = Bean.getTemperature();
-    Bean.setScratchData(temperatureScratch, temperatureBuffer, 1);
+void send_uint8(uint8_t *data, int length) {
+    // Serial.write(data, length); // Can't find out how to read programatically
+    sendData[length] = data[length];
 }
 
-void send(char *data, int length) {
-    // TODO: impl
+void send_string(uint8_t command, char* string) {
+    len = strlen(string);
+    sendData[0] = command;
+    for (i = 0; i < len; i++) {
+        sendData[i+1] = string[i];
+    }
+    send_uint8(sendData, len+1);
 }
 
 void parse(uint8_t command) {
+    memset(sendData, 0, sizeof(sendData));
+    sendData[0] = command;
     switch (command) {
         case GET_NAME:
-            Serial.println("GET_NAME");
-            len = strlen(NAME);
-            send(NAME, len);
+            send_string(GET_NAME, NAME);
             break;
         case GET_VERSION:
-            Serial.println("GET_VERSION");
-            len = strlen(VERSION);
-            send(VERSION, len);
+            send_string(GET_VERSION, VERSION);
             break;
         case GET_UUID:
-            Serial.println("GET_UUID");
-            len = strlen(UUID);
-            send(UUID, len);
-            break;
-        case GET_BATTERY_STATUS:
-            Serial.println("GET_BATTERY_STATUS");
-            sendData[0] = 0;
-            send(sendData, 1);
+            send_string(GET_UUID, UUID);
             break;
         case HAS_LED:
-            Serial.println("HAS_LED");
-            sendData[0] = 0;
-            send(sendData, 1);
+            sendData[1] = 0;
+            send_uint8(sendData, 2);
             break;
         case HAS_LED_COLOR:
-            Serial.println("HAS_LED_COLOR");
-            sendData[0] = 0;
-            send(sendData, 1);
+            sendData[1] = 1;
+            send_uint8(sendData, 2);
             break;
         case HAS_VIBRATION:
-            Serial.println("HAS_VIBRATION");
-            sendData[0] = 0;
-            send(sendData, 1);
+            sendData[1] = 0;
+            send_uint8(sendData, 2);
             break;
         case HAS_COLOR_DETECTION:
-            Serial.println("HAS_COLOR_DETEC");
-            sendData[0] = 0;
-            send(sendData, 1);
+            sendData[1] = 0;
+            send_uint8(sendData, 2);
             break;
         case HAS_LED_SCREEN:
-            Serial.println("HAS_LED_SCREEN");
-            sendData[0] = 0;
-            send(sendData, 1);
+            sendData[1] = 0;
+            send_uint8(sendData, 2);
             break;
         case HAS_RFID:
-            Serial.println("HAS_RFID");
-            sendData[0] = 0;
-            send(sendData, 1);
+            sendData[1] = 0;
+            send_uint8(sendData, 2);
             break;
         case HAS_NFC:
-            Serial.println("HAS_NFC");
-            sendData[0] = 0;
-            send(sendData, 1);
+            sendData[1] = 0;
+            send_uint8(sendData, 2);
             break;
         case HAS_ACCELEROMETER:
-            Serial.println("HAS_ACCELEROMET");
-            sendData[0] = 0;
-            send(sendData, 1);
+            sendData[1] = 1;
+            send_uint8(sendData, 2);
+            break;
+        case HAS_PRINT:
+            sendData[1] = 0;
+            send_uint8(sendData, 2);
             break;
         case HAS_TEMPERATURE:
-            Serial.println("HAS_TEMPERATURE");
-            sendData[0] = 0;
-            send(sendData, 1);
-            break;
-        case LED_ON:
-            Serial.println("LED_ON");
-            Bean.setLed(getData[0], getData[1], getData[2]);
+            sendData[1] = 1;
+            send_uint8(sendData, 2);
             break;
         case PRINT_FEED:
             printer.feed(1);
+            send_uint8(sendData, 1);
             break;
         case PRINT_WRITE:
             printer.print((char *) getData);
+            send_uint8(sendData, 1);
             break;
         case PRINT_JUSTIFY:
             printer.justify(getData[0]);
+            send_uint8(sendData, 1);
             break;
         case PRINT_SET_SIZE:
             printer.setSize(getData[0]);
+            send_uint8(sendData, 1);
             break;
         case PRINT_NEWLINE:
             printer.println();
+            send_uint8(sendData, 1);
             break;
         default:
-            Serial.print("command not supported: ");
-            Serial.print(command);
-            Serial.print("\n");
+            sendData[0] = 0;
+            send_uint8(sendData, 1);
     }
 }

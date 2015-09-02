@@ -2,12 +2,12 @@
 
 /**
  * Driver for evothings.ble based on cordova
- * requires evothings.easyble
+ * requires evothings.easyble, evothings.ble
  */
 
 (function(){
     var beanBluetooth = new AnyBoard.Driver({
-        name: 'evothings-bean-token',
+        name: 'anyboard-bean-token',
         description: 'Driver based off evothings.easyble library for Cordova-based apps',
         dependencies: 'evothings.easyble',
         version: '0.1',
@@ -24,54 +24,50 @@
 
     beanBluetooth._devices = {};
 
-    var GenericSend = function(name, functionId, takesData) {
-        if (!takesData) {
+    beanBluetooth._GenericSend = function(name, functionId, hasParams, useCache) {
+        var internalSend = function(token, data, win, fail) {
+            AnyBoard.Logger.debug("Executing " + name, token);
+            if (useCache && token.cache[name]) {
+                win && win(token.cache[name]);
+                return;
+            }
+            beanBluetooth.send(
+                token,
+                data,
+                function(){
+                    token.once(name,
+                        function(returnData) {
+                            if (useCache) {
+                                token.cache[name] = returnData;
+                            }
+                            win && win(returnData);
+                        }
+                    )
+                },
+                function(errorCode){ fail && fail(errorCode);}
+            )
+        };
+        if (!hasParams) {
             var data = new Uint8Array(1);
             data[0] = functionId;
             return function(token, win, fail) {
-                AnyBoard.Logger.debug("Executing " + name, token);
-                beanBluetooth.send(token, data, win, fail)
+                internalSend(token, data, win, fail);
             };
         }
         return function(token, data, win, fail) {
-            AnyBoard.Logger.debug("Executing " + name, token);
-            if (typeof data === 'string') {
-                data = beanBluetooth._stringToUint8(data)
-            }
-            else if (data.buffer) {
-                if(!(data instanceof Uint8Array))
-                    data = new Uint8Array(data.buffer);
-            } else if(data instanceof ArrayBuffer) {
-                data = new Uint8Array(data);
-            } else {
-                AnyBoard.Logger.warn("send data is not an ArrayBuffer.", this);
-                fail("cannot send data that is not an ArrayBuffer");
-                return;
-            }
-
-
             var newData = new Uint8Array(data.length+1);
             newData[0] = functionId;
             for (var index in data) {
                 if (data.hasOwnProperty(index))
                     newData[parseInt(index)+1] = data[index];
             }
-
-            beanBluetooth.send(token, newData, win, fail)
+            internalSend(token, data, win, fail);
         }
     };
 
-    /**
-     * Predefined colors for Token LEDs
-     * @property {Uint8Array} red predefined color red
-     * @property {Uint8Array} green predefined color green
-     * @property {Uint8Array} blue predefined color blue
-     * @property {Uint8Array} white predefined color white
-     * @property {Uint8Array} pink predefined color pink
-     * @property {Uint8Array} yellow predefined color yellow
-     * @property {Uint8Array} aqua predefined color aqua
-     */
-    var COLORS = {
+
+    // Internal mapping between color strings to Uint8 array of RGB colors
+    beanBluetooth._COLORS = {
         'red': new Uint8Array([255, 0, 0]),
         'green': new Uint8Array([0, 255, 0]),
         'blue': new Uint8Array([0, 0, 255]),
@@ -82,20 +78,106 @@
         'off': new Uint8Array([0, 0, 0])
     };
 
-    var COMMANDS = {
-        GET_NAME: GenericSend("GET_NAME", 32, false),
-        GET_VERSION: GenericSend("GET_VERSION", 33, false),
-        GET_UUID: GenericSend("GET_UUID", 34, false),
-        GET_BATTERY_STATUS: GenericSend("GET_BATTERY_STATUS", 35, false),
-        LED_OFF: GenericSend("LED_OFF", 128, false),
-        LED_ON: GenericSend("LED_ON", 129, true),
-        LED_BLINK: GenericSend("LED_BLINK", 130, true),
-        HAS_PRINT: GenericSend("HAS_PRINT", 74, false),
-        PRINT_FEED: GenericSend("PRINT_FEED", 137, false),
-        PRINT_JUSTIFY: GenericSend("PRINT_JUSTIFY", 138, true),
-        PRINT_SET_SIZE: GenericSend("PRINT_SET_SIZE", 139, true),
-        PRINT_WRITE: GenericSend("PRINT_WRITE", 140, true),
-        PRINT_NEWLINE: GenericSend("PRINT_NEWLINE", 141, false)
+    // Internal mapping and generation of commands
+    var NO_PARAMS = false;
+    var HAS_PARAMS = true;
+    var USE_CACHE = true;
+    beanBluetooth._COMMANDS = {
+        GET_VERSION: beanBluetooth._GenericSend(
+            "GET_VERSION",
+            beanBluetooth._CMD_CODE.GET_VERSION,
+            NO_PARAMS),
+        GET_UUID: beanBluetooth._GenericSend(
+            "GET_UUID",
+            beanBluetooth._CMD_CODE.GET_UUID,
+            NO_PARAMS),
+        GET_BATTERY_STATUS: beanBluetooth._GenericSend(
+            "GET_BATTERY_STATUS",
+            beanBluetooth._CMD_CODE.GET_BATTERY_STATUS,
+            NO_PARAMS),
+        LED_OFF: beanBluetooth._GenericSend(
+            "LED_OFF",
+            beanBluetooth._CMD_CODE.LED_OFF,
+            NO_PARAMS),
+        LED_ON: beanBluetooth._GenericSend(
+            "LED_ON",
+            beanBluetooth._CMD_CODE.LED_ON,
+            HAS_PARAMS),
+        LED_BLINK: beanBluetooth._GenericSend(
+            "LED_BLINK",
+            beanBluetooth._CMD_CODE.LED_BLINK,
+            HAS_PARAMS),
+        HAS_LED: beanBluetooth._GenericSend(
+            "HAS_LED",
+            beanBluetooth._CMD_CODE.HAS_LED,
+            NO_PARAMS,
+            USE_CACHE),
+        HAS_LED_COLOR: beanBluetooth._GenericSend(
+            "HAS_LED_COLOR",
+            beanBluetooth._CMD_CODE.HAS_LED_COLOR,
+            NO_PARAMS,
+            USE_CACHE),
+        HAS_VIBRATION: beanBluetooth._GenericSend(
+            "HAS_VIBRATION",
+            beanBluetooth._CMD_CODE.HAS_VIBRATION,
+            NO_PARAMS,
+            USE_CACHE),
+        HAS_COLOR_DETECTION: beanBluetooth._GenericSend(
+            "HAS_COLOR_DETECTION",
+            beanBluetooth._CMD_CODE.HAS_COLOR_DETECTION,
+            NO_PARAMS,
+            USE_CACHE),
+        HAS_LED_SCREEN: beanBluetooth._GenericSend(
+            "HAS_LED_SCREEN",
+            beanBluetooth._CMD_CODE.HAS_LED_SCREEN,
+            NO_PARAMS,
+            USE_CACHE),
+        HAS_RFID: beanBluetooth._GenericSend(
+            "HAS_RFID",
+            beanBluetooth._CMD_CODE.HAS_RFID,
+            NO_PARAMS,
+            USE_CACHE),
+        HAS_NFC: beanBluetooth._GenericSend(
+            "HAS_NFC",
+            beanBluetooth._CMD_CODE.HAS_NFC,
+            NO_PARAMS,
+            USE_CACHE),
+        HAS_ACCELEROMETER: beanBluetooth._GenericSend(
+            "HAS_ACCELEROMETER",
+            beanBluetooth._CMD_CODE.HAS_ACCELEROMETER,
+            NO_PARAMS,
+            USE_CACHE),
+        HAS_TEMPERATURE: beanBluetooth._GenericSend(
+            "HAS_TEMPERATURE",
+            beanBluetooth._CMD_CODE.HAS_TEMPERATURE,
+            NO_PARAMS,
+            USE_CACHE),
+        HAS_PRINT: beanBluetooth._GenericSend(
+            "HAS_PRINT",
+            74,
+            NO_PARAMS,
+            USE_CACHE
+        ),
+        PRINT_FEED: beanBluetooth._GenericSend(
+            "PRINT_FEED",
+            137,
+            NO_PARAMS),
+        PRINT_JUSTIFY: beanBluetooth._GenericSend(
+            "PRINT_JUSTIFY",
+            138,
+            true),
+        PRINT_SET_SIZE: beanBluetooth._GenericSend(
+            "PRINT_SET_SIZE",
+            139,
+            true),
+        PRINT_WRITE: beanBluetooth._GenericSend(
+            "PRINT_WRITE",
+            140,
+            true),
+        PRINT_NEWLINE: beanBluetooth._GenericSend(
+            "PRINT_NEWLINE",
+            141,
+            NO_PARAMS)
     };
     /**
      * Attempts to connect to a device and retrieves available services.
@@ -130,15 +212,79 @@
     };
 
     beanBluetooth.getName = function (token, win, fail) {
-        COMMANDS.GET_NAME(token, win, fail);
+        this._COMMANDS.GET_NAME(token, win, fail);
     };
 
     beanBluetooth.getVersion = function (token, win, fail) {
-        COMMANDS.GET_VERSION(token, win, fail);
+        this._COMMANDS.GET_VERSION(token, win, fail);
     };
 
     beanBluetooth.getUUID = function (token, win, fail) {
-        COMMANDS.GET_UUID(token, win, fail);
+        this._COMMANDS.GET_UUID(token, win, fail);
+    };
+
+    beanBluetooth.hasLed = function(token, win, fail) {
+        this._COMMANDS.HAS_LED(token, win, fail);
+    };
+
+    beanBluetooth.hasLedColor = function(token, win, fail) {
+        this._COMMANDS.HAS_LED_COLOR(token, win, fail);
+    };
+
+    beanBluetooth.hasVibration = function(token, win, fail) {
+        this._COMMANDS.HAS_VIBRATION(token, win, fail);
+    };
+
+    beanBluetooth.hasColorDetection = function(token, win, fail) {
+        this._COMMANDS.HAS_COLOR_DETECTION(token, win, fail);
+    };
+
+    beanBluetooth.hasLedSceen = function(token, win, fail) {
+        this._COMMANDS.HAS_LED_SCREEN(token, win, fail);
+    };
+
+    beanBluetooth.hasRfid = function(token, win, fail) {
+        this._COMMANDS.HAS_RFID(token, win, fail);
+    };
+
+    beanBluetooth.hasNfc = function(token, win, fail) {
+        this._COMMANDS.HAS_NFC(token, win, fail);
+    };
+
+    beanBluetooth.hasAccelometer = function(token, win, fail) {
+        this._COMMANDS.HAS_ACCELEROMETER(token, win, fail);
+    };
+
+    beanBluetooth.hasTemperature = function(token, win, fail) {
+        this._COMMANDS.HAS_TEMPERATURE(token, win, fail);
+    };
+
+    beanBluetooth.ledOn = function (token, value, win, fail) {
+        value = value || 'white';
+
+        if (typeof value === 'string' && value in this._COLORS) {
+            this._COMMANDS.LED_ON(token, this._COLORS[value], win, fail);
+        } else if ((value instanceof Array || value instanceof Uint8Array) && value.length === 3) {
+            this._COMMANDS.LED_ON(token, new Uint8Array([value[0], value[1], value[2]]), win, fail);
+        } else {
+            fail && fail('Invalid or unsupported color parameters');
+        }
+    };
+
+    beanBluetooth.ledBlink = function (token, value, win, fail) {
+        value = value || 'white';
+
+        if (typeof value === 'string' && value in this._COLORS) {
+            beanBluetooth.ledBlink(token, this._COLORS[value], win, fail);
+        } else if ((value instanceof Array || value instanceof Uint8Array) && value.length === 3) {
+            this._COMMANDS.LED_BLINK(token, new Uint8Array([value[0], value[1], value[2], 30]), win, fail);
+        } else {
+            fail && fail('Invalid or unsupported color parameters');
+        }
+    };
+
+    beanBluetooth.ledOff = function (token, win, fail) {
+        this._COMMANDS.LED_OFF(token, win, fail);
     };
 
     beanBluetooth.hasPrint = function (token, win, fail) {
@@ -166,7 +312,7 @@
             var firstpos = inc.indexOf("##");
             if (firstpos === -1) {
                 COMMANDS.PRINT_WRITE(token, inc.substr(0, 12))
-                wait = 2700;
+                wait = 3200;
                 remains = inc.substr(12);
             } else if (firstpos !== 0) {
                 var textPart = inc.substr(0, Math.min(12, firstpos));
@@ -188,45 +334,6 @@
         run(string);
     };
 
-    beanBluetooth.ledOn = function (token, value, win, fail) {
-        value = value || 'white';
-
-        if (typeof value === 'string' && value in COLORS) {
-            COMMANDS.LED_ON(token, COLORS[value], win, fail);
-        } else if ((value instanceof Array || value instanceof Uint8Array) && value.length === 3) {
-            COMMANDS.LED_ON(token, new Uint8Array([value[0], value[1], value[2]]), win, fail);
-        } else {
-            fail && fail('Invalid or unsupported color parameters');
-        }
-    };
-
-    beanBluetooth.ledBlink = function (token, value, win, fail) {
-        value = value || 'white';
-
-        if (typeof value === 'string' && value in COLORS) {
-            beanBluetooth.ledBlink(token, COLORS[value], win, fail);
-        } else if ((value instanceof Array || value instanceof Uint8Array) && value.length === 3) {
-            COMMANDS.LED_BLINK(token, new Uint8Array([value[0], value[1], value[2], 30]), win, fail);
-        } else {
-            fail && fail('Invalid or unsupported color parameters');
-        }
-    };
-
-    beanBluetooth.ledOff = function (token, win, fail) {
-        COMMANDS.LED_OFF(token, win, fail);
-    };
-
-    /**
-     * Sends data to device
-     * @param {AnyBoard.BaseToken} token token to send data to
-     * @param {string} string regular string.
-     * @param {function} win function to be executed upon success
-     * @param {function} fail function to be executed upon failure
-     */
-    beanBluetooth.sendString = function(token, string, win, fail) {
-        this.send(token, beanBluetooth._stringToUint8(data), win, fail);
-    };
-
     /**
      * Send data to device
      * @param {AnyBoard.BaseToken} token token to send data to
@@ -244,7 +351,9 @@
             return;
         }
 
-        // view data as a Uint8Array, unless it already is one.
+        if (typeof data === 'string')
+            data = beanBluetooth._stringToUint8(data)
+
         if(data.buffer) {
             if(!(data instanceof Uint8Array))
                 data = new Uint8Array(data.buffer);
@@ -571,5 +680,5 @@
     };
 
     // Set as default communication driver
-    AnyBoard.TokenManager.setDriver(AnyBoard.Drivers.get('evothings-bean-token'));
+    AnyBoard.TokenManager.setDriver(AnyBoard.Drivers.get('anyboard-bean-token'));
 })();
