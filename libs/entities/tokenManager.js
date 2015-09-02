@@ -18,13 +18,11 @@ AnyBoard.TokenManager.setDriver = function(driver) {
     (driver.connect && typeof driver.connect === 'function') || AnyBoard.Logger.warn('Could not find connect() on given driver.', this);
     (driver.disconnect && typeof driver.disconnect === 'function') || AnyBoard.Logger.warn('Could not find disconnect() on given driver', this);
     (driver.scan && typeof driver.scan === 'function') || AnyBoard.Logger.warn('Could not find scan() on given driver', this);
-    (driver.sendString && typeof driver.sendString === 'function') || AnyBoard.Logger.warn('Could not find sendString() on given driver', this);
     (driver.send && typeof driver.send === 'function') || AnyBoard.Logger.warn('Could not find send() on given driver', this);
 
     if ((!this.driver) || (driver.connect && typeof driver.connect === 'function' &&
         driver.disconnect && typeof driver.disconnect === 'function' &&
         driver.scan && typeof driver.scan === 'function' &&
-        driver.sendString && typeof driver.sendString === 'function' &&
         driver.send && typeof driver.send === 'function'))
 
         this.driver = driver;
@@ -60,9 +58,12 @@ AnyBoard.TokenManager.get = function(address) {
  * @param {string} address address of the token found when scanned
  * @param {object} device device object used and handled by driver
  * @param {AnyBoard.Driver} [driver=AnyBoard.TokenManager.driver] token driver for handling communication with it.
+ * @property {string} name name of the token
+ * @property {string} address address of the token found when scanned
  * @property {boolean} connected whether or not the token is connected
  * @property {object} device driver spesific data.
  * @property {object} listeners functions to be execute upon certain triggered events
+ * @property {object} onceListeners functions to be execute upon next triggering of certain events
  * @property {AnyBoard.Driver} driver driver that handles communication
  * @constructor
  */
@@ -72,6 +73,7 @@ AnyBoard.BaseToken = function(name, address, device, driver) {
     this.connected = false;
     this.device = device;
     this.listeners = {};
+    this.onceListeners = {};
     this.driver = driver;
 };
 
@@ -128,15 +130,21 @@ AnyBoard.BaseToken.prototype.disconnect = function() {
  */
 AnyBoard.BaseToken.prototype.trigger = function(eventName, eventOptions) {
     AnyBoard.Logger.debug('' + this + ' triggered "' + eventName + '"');
-    if (!this.listeners[eventName])
-        return;
-    for (var i in this.listeners[eventName]) {
-        this.listeners[eventName][i](this, eventOptions);
-    }
+    if (this.listeners[eventName])
+            for (var i in this.listeners[eventName]) {
+                if (this.listeners[eventName].hasOwnProperty(i))
+                    this.listeners[eventName][i](this, eventOptions);
+            }
+    if (this.onceListeners[eventName])
+        for (var j in this.onceListeners[eventName]) {
+            if (this.onceListeners[eventName].hasOwnProperty(j))
+                this.onceListeners[eventName][j](this, eventOptions);
+        }
+
 };
 
 /**
- * Adds a callbackFunction to be executed when event is triggered
+ * Adds a callbackFunction to be executed always when event is triggered
  * @param {string} eventName name of event to listen to
  * @param {function} callbackFunction function to be executed
  */
@@ -148,12 +156,24 @@ AnyBoard.BaseToken.prototype.on = function(eventName, callbackFunction) {
 };
 
 /**
- * Sends data to token over serial BlueTooth
- * @param {ArrayBuffer|Uint8Array} data data to be sent
- * @param {function} win function to be executed upon success
- * @param {function} fail function to be executed upon failure
+ * Adds a callbackFunction to be executed next time an event is triggered
+ * @param {string} eventName name of event to listen to
+ * @param {function} callbackFunction function to be executed
  */
-AnyBoard.BaseToken.prototype.sendBuffer = function(data, win, fail) {
+AnyBoard.BaseToken.prototype.once = function(eventName, callbackFunction) {
+    AnyBoard.Logger.debug('' + this + ' added onceListener to event: ' + eventName, this);
+    if (!this.onceListeners[eventName])
+        this.onceListeners[eventName] = [];
+    this.onceListeners[eventName].push(callbackFunction);
+};
+
+/**
+ * Sends raw data to the token.
+ * @param {Uint8Array|ArrayBuffer|String} data data to be sent
+ * @param {function} win function to be executed upon success
+ * @param {function} fail function to be executed upon error
+ */
+AnyBoard.BaseToken.prototype.send = function(data, win, fail) {
     AnyBoard.Logger.debug('' + this + ' attempting to send with data: ' + data, this);
     if (!this.isConnected()) {
         AnyBoard.Logger.warn(this + ' is not connected. Attempting to connect first.', this);
@@ -172,67 +192,22 @@ AnyBoard.BaseToken.prototype.sendBuffer = function(data, win, fail) {
 };
 
 /**
- * Sends data to token over 8bit unsigned BlueTooth
- * @param {sendString} data binary array of data to be sent
- * @param {function} win function to be executed upon success
- * @param {function} fail function to be executed upon failure
- */
-AnyBoard.BaseToken.prototype.sendString = function(data, win, fail) {
-    AnyBoard.Logger.debug('Attempting to sendString with data: ' + data, this);
-    if (!this.isConnected()) {
-        AnyBoard.Logger.warn(this + ' is not connected. Attempting to connect first.', this);
-        var self = this;
-        this.connect(
-            function(device){
-                self.sendString(data, win, fail);
-            }, function(errorCode){
-                fail(errorCode);
-            }
-        )
-    } else {
-        var pointer = this.driver || AnyBoard.TokenManager.driver;
-        pointer.sendString(this, data, win, fail);
-    }
-};
-
-/**
- * Sends data. if data parameter is Uint8Array, uses sendBinary(). Else sendSerial().
- * @param {object} data data to be sent
- * @param {function} win function to be executed upon success
- * @param {function} fail function to be executed upon error
- */
-AnyBoard.BaseToken.prototype.send = function(data, win, fail) {
-    if (data instanceof Uint8Array || data instanceof ArrayBuffer)
-        this.sendBuffer(data, win, fail);
-    else
-        this.sendString(data, win, fail);
-};
-
-/**
  * Prints to Token
  *
- * String has special characters:
- * ##
+ * String can have special tokens to signify some printer command, e.g. ##n = newLine
+ * Refer to the individual driver for token spesific implementation and capabilites
  *
  * @param {string} value
- * @param {function} win
- * @param {function} fail
+ * @param {function} [win] callback function to be called upon successful execution
+ * @param {function} [fail] callback function to be executed upon failure
  */
 AnyBoard.BaseToken.prototype.print = function(value, win, fail) {
     if (!this.driver.hasOwnProperty('print')) {
-        AnyBoard.Logger.warn('This token has not implemented print', this)
+        AnyBoard.Logger.warn('This token has not implemented print', this);
         fail && fail('This token has not implemented print');
     } else {
         this.driver.print(this, value, win, fail);
     }
-}
-
-/**
- * Representational string of class instance.
- * @returns {string}
- */
-AnyBoard.BaseToken.prototype.toString = function() {
-    return 'Token: ' + this.name + ' (' + this.address + ')';
 };
 
 /**
@@ -241,19 +216,11 @@ AnyBoard.BaseToken.prototype.toString = function() {
  * @param {function} [fail] callback function to be executed upon failure
  */
 AnyBoard.BaseToken.prototype.getFirmwareName = function(win, fail) {
-    var self = this;
-    if (this.cache['firmwareName']) {
-        win && win(self.cache_firmwareName);
-        return;
-    }
     if (!this.driver.hasOwnProperty('getName')) {
-        AnyBoard.Logger.warn('This token has not implemented getName', this)
+        AnyBoard.Logger.warn('This token has not implemented getName', this);
         fail && fail('This token has not implemented getName');
     } else {
-        this.driver.getName(this, function(name){
-            self.cache['firmwareName'] = name;
-            win && win(name)
-        }, fail);
+        this.driver.getName(this, function(data){ win && win(data.value); }, fail);
     }
 };
 
@@ -263,19 +230,11 @@ AnyBoard.BaseToken.prototype.getFirmwareName = function(win, fail) {
  * @param {function} [fail] callback function to be executed upon failure
  */
 AnyBoard.BaseToken.prototype.getFirmwareVersion = function(win, fail) {
-    var self = this;
-    if (this.cache['firmwareVersion']) {
-        win && win(self.cache['firmwareVersion']);
-        return;
-    }
     if (!this.driver.hasOwnProperty('getVersion')) {
-        AnyBoard.Logger.warn('This token has not implemented getVersion', this)
+        AnyBoard.Logger.warn('This token has not implemented getVersion', this);
         fail && fail('This token has not implemented getVersion');
     } else {
-        this.driver.getVersion(this, function(version){
-            self.cache['firmwareVersion'] = version;
-            win && win(version)
-        }, fail);
+        this.driver.getVersion(this, function(data){ win && win(data.value); }, fail);
     }
 };
 
@@ -285,19 +244,137 @@ AnyBoard.BaseToken.prototype.getFirmwareVersion = function(win, fail) {
  * @param {function} [fail] callback function to be executed upon failure
  */
 AnyBoard.BaseToken.prototype.getFirmwareUUID = function(win, fail) {
-    var self = this;
-    if (this.cache['firmwareUUID']) {
-        win && win(self.cache['firmwareUUID']);
-        return;
-    }
     if (!this.driver.hasOwnProperty('getUUID')) {
-        AnyBoard.Logger.warn('This token has not implemented getUUID', this)
+        AnyBoard.Logger.warn('This token has not implemented getUUID', this);
         fail && fail('This token has not implemented getUUID');
     } else {
-        this.driver.getUUID(this, function(version){
-            self.cache['firmwareUUID'] = version;
-            win && win(version)
-        }, fail);
+        this.driver.getUUID(this, function(data){ win && win(data.value); }, fail);
+    }
+};
+
+/**
+ * Checks whether or not the token has simple LED
+ * @param {function} [win] callback function to be called upon successful execution
+ * @param {function} [fail] callback function to be executed upon failure
+ */
+AnyBoard.BaseToken.prototype.hasLed = function(win, fail) {
+    if (!this.driver.hasOwnProperty('hasLed')) {
+        AnyBoard.Logger.debug('This token has not implemented hasLed', this);
+        fail && fail('This token has not implemented hasLed');
+    } else {
+        this.driver.hasLed(this, function(data) { win && win(data.value); }, fail);
+    }
+};
+
+/**
+ * Checks whether or not the token has colored LEDs
+ * @param {function} [win] callback function to be called upon successful execution
+ * @param {function} [fail] callback function to be executed upon failure
+ */
+AnyBoard.BaseToken.prototype.hasLedColor = function(win, fail) {
+    if (!this.driver.hasOwnProperty('hasLedColor')) {
+        AnyBoard.Logger.debug('This token has not implemented hasLedColor', this);
+        fail && fail('This token has not implemented hasLedColor');
+    } else {
+        this.driver.hasLedColor(this, function(data) { win && win(data.value); }, fail);
+    }
+};
+
+/**
+ * Checks whether or not the token has vibration
+ * @param {function} [win] callback function to be called upon successful execution
+ * @param {function} [fail] callback function to be executed upon failure
+ */
+AnyBoard.BaseToken.prototype.hasVibration = function(win, fail) {
+    if (!this.driver.hasOwnProperty('hasVibration')) {
+        AnyBoard.Logger.debug('This token has not implemented hasVibration', this);
+        fail && fail('This token has not implemented hasVibration');
+    } else {
+        this.driver.hasVibration(this, function(data) { win && win(data.value); }, fail);
+    }
+};
+
+/**
+ * Checks whether or not the token has ColorDetection
+ * @param {function} [win] callback function to be called upon successful execution
+ * @param {function} [fail] callback function to be executed upon failure
+ */
+AnyBoard.BaseToken.prototype.hasColorDetection = function(win, fail) {
+    if (!this.driver.hasOwnProperty('hasColorDetection')) {
+        AnyBoard.Logger.debug('This token has not implemented hasColorDetection', this);
+        fail && fail('This token has not implemented hasColorDetection');
+    } else {
+        this.driver.hasColorDetection(this, function(data) { win && win(data.value); }, fail);
+    }
+};
+
+/**
+ * Checks whether or not the token has LedSceen
+ * @param {function} [win] callback function to be called upon successful execution
+ * @param {function} [fail] callback function to be executed upon failure
+ */
+AnyBoard.BaseToken.prototype.hasLedSceen = function(win, fail) {
+    if (!this.driver.hasOwnProperty('hasLedSceen')) {
+        AnyBoard.Logger.debug('This token has not implemented hasLedSceen', this);
+        fail && fail('This token has not implemented hasLedSceen');
+    } else {
+        this.driver.hasLedSceen(this, function(data) { win && win(data.value); }, fail);
+    }
+};
+
+/**
+ * Checks whether or not the token has RFID reader
+ * @param {function} [win] callback function to be called upon successful execution
+ * @param {function} [fail] callback function to be executed upon failure
+ */
+AnyBoard.BaseToken.prototype.hasRfid = function(win, fail) {
+    if (!this.driver.hasOwnProperty('hasRfid')) {
+        AnyBoard.Logger.debug('This token has not implemented hasRfid', this);
+        fail && fail('This token has not implemented hasRfid');
+    } else {
+        this.driver.hasRfid(this, function(data) { win && win(data.value); }, fail);
+    }
+};
+
+/**
+ * Checks whether or not the token has NFC reader
+ * @param {function} [win] callback function to be called upon successful execution
+ * @param {function} [fail] callback function to be executed upon failure
+ */
+AnyBoard.BaseToken.prototype.hasNfc = function(win, fail) {
+    if (!this.driver.hasOwnProperty('hasNfc')) {
+        AnyBoard.Logger.debug('This token has not implemented hasNfc', this);
+        fail && fail('This token has not implemented hasNfc');
+    } else {
+        this.driver.hasNfc(this, function(data) { win && win(data.value); }, fail);
+    }
+};
+
+/**
+ * Checks whether or not the token has Accelometer
+ * @param {function} [win] callback function to be called upon successful execution
+ * @param {function} [fail] callback function to be executed upon failure
+ */
+AnyBoard.BaseToken.prototype.hasAccelometer = function(win, fail) {
+    if (!this.driver.hasOwnProperty('hasAccelometer')) {
+        AnyBoard.Logger.debug('This token has not implemented hasAccelometer', this);
+        fail && fail('This token has not implemented hasAccelometer');
+    } else {
+        this.driver.hasAccelometer(this, function(data) { win && win(data.value); }, fail);
+    }
+};
+
+/**
+ * Checks whether or not the token has temperature measurement
+ * @param {function} [win] callback function to be called upon successful execution
+ * @param {function} [fail] callback function to be executed upon failure
+ */
+AnyBoard.BaseToken.prototype.hasTemperature = function(win, fail) {
+    if (!this.driver.hasOwnProperty('hasTemperature')) {
+        AnyBoard.Logger.debug('This token has not implemented hasTemperature', this);
+        fail && fail('This token has not implemented hasTemperature');
+    } else {
+        this.driver.hasTemperature(this, function(data) { win && win(data.value); }, fail);
     }
 };
 
@@ -309,7 +386,7 @@ AnyBoard.BaseToken.prototype.getFirmwareUUID = function(win, fail) {
  */
 AnyBoard.BaseToken.prototype.ledOn = function(value, win, fail) {
     if (!this.driver.hasOwnProperty('ledOn')) {
-        AnyBoard.Logger.warn('This token has not implemented ledOn', this)
+        AnyBoard.Logger.warn('This token has not implemented ledOn', this);
         fail && fail('This token has not implemented ledOn');
     } else {
         this.driver.ledOn(this, value, win, fail);
@@ -324,7 +401,7 @@ AnyBoard.BaseToken.prototype.ledOn = function(value, win, fail) {
  */
 AnyBoard.BaseToken.prototype.ledBlink = function(value, win, fail) {
     if (!this.driver.hasOwnProperty('ledBlink')) {
-        AnyBoard.Logger.warn('This token has not implemented ledBlink', this)
+        AnyBoard.Logger.warn('This token has not implemented ledBlink', this);
         fail && fail('This token has not implemented ledBlink');
     } else {
         this.driver.ledBlink(this, value, win, fail);
@@ -333,7 +410,6 @@ AnyBoard.BaseToken.prototype.ledBlink = function(value, win, fail) {
 
 /**
  * Turns LED off
- * @param {string|Array} value string with color name or array of [red, green, blue] values 0-255
  * @param {function} [win] callback function to be called upon successful execution
  * @param {function} [fail] callback function to be executed upon
  */
@@ -346,40 +422,10 @@ AnyBoard.BaseToken.prototype.ledOff = function(win, fail) {
     }
 };
 
-
 /**
- * A dummy token that prints to AnyBoard.Logger instead of attempting to communicate with a physical token
- * @param {string} name (dummy) name of token
- * @param {string} address (dummy) address of the token
- * @constructor
- * @augments BaseToken
+ * Representational string of class instance.
+ * @returns {string}
  */
-AnyBoard.DummyToken = function(name, address) {
-    AnyBoard.BaseToken.call(this, name, address);
-    this.driver = new AnyBoard.Driver({
-        send: function(data, win, fail) {
-            AnyBoard.Logger.log('SIMULTE SEND: ' + data, this);
-            if (data instanceof Uint8Array)
-                win();
-            else
-                fail('wrong format');
-        },
-        sendString: function(data, win, fail) {
-            AnyBoard.Logger.log('SIMULTE SENDSTRING: ' + data, this);
-            if (typeof data === 'string')
-                win();
-            else
-                fail('wrong format');
-        },
-        connect: function(id, win, fail) {
-            AnyBoard.Logger.log('SIMULTE CONNECT: ' + data, this);
-            win({'dummyDevice': 'OK'});
-        },
-        disconnect: function(id) {
-            AnyBoard.Logger.log('SIMULTE DISCONNECT: ' + data, this);
-            return true;
-        }
-    });
+AnyBoard.BaseToken.prototype.toString = function() {
+    return 'Token: ' + this.name + ' (' + this.address + ')';
 };
-AnyBoard.DummyToken.prototype = new AnyBoard.BaseToken();
-AnyBoard.DummyToken.prototype.constructor = AnyBoard.DummyToken;
