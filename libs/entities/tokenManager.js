@@ -64,6 +64,7 @@ AnyBoard.TokenManager.get = function(address) {
  * @property {object} device driver spesific data.
  * @property {object} listeners functions to be execute upon certain triggered events
  * @property {object} onceListeners functions to be execute upon next triggering of certain events
+ * @property {object} sendQueue sending to Pawn is being held here until available
  * @property {AnyBoard.Driver} driver driver that handles communication
  * @constructor
  */
@@ -74,6 +75,7 @@ AnyBoard.BaseToken = function(name, address, device, driver) {
     this.device = device;
     this.listeners = {};
     this.onceListeners = {};
+    this.sendQueue = [];
     this.driver = driver;
 };
 

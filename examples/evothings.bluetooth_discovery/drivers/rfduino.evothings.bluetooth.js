@@ -316,7 +316,12 @@
                 default:
                     token.trigger('INVALID_DATA_RECEIVE', {"value": uint8array});
             }
-        };
+
+            token.sendQueue.shift(); // Remove function from queue
+            if (token.sendQueue.length > 0)  // If there's more functions queued
+                token.sendQueue[0]();  // Send next function off
+
+            };
         this._subscribe(token, cb)
     };
 
@@ -431,6 +436,14 @@
 
         if (data.length > 20) {
             AnyBoard.Logger.warn("cannot send data of length over 20.", this);
+            return;
+        }
+
+        if (token.sendQueue.length === 0) {  // this was first command
+            token.sendQueue.push(function(){ rfduinoBluetooth.send(token, data, win, fail); });
+        } else {
+            // send function will be handled by existing
+            token.sendQueue.push(function(){ rfduinoBluetooth.send(token, data, win, fail); });
             return;
         }
 

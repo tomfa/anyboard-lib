@@ -2,14 +2,14 @@
 
 /**
  * Driver for evothings.ble based on cordova
- * requires evothings.easyble
+ * requires evothings.ble
  */
 
 (function(){
     var rfduinoBluetooth = new AnyBoard.Driver({
-        name: 'evothings-easyble-rfduino',
-        description: 'rfduino-driver based off evothings.easyble library for Cordova-based apps',
-        dependencies: 'evothings.easyble',
+        name: 'anyboard-ble-rfduino',
+        description: 'rfduino-driver based off evothings.ble library for Cordova-based apps',
+        dependencies: 'evothings.ble',
         version: '0.1',
         date: '2015-08-23',
         type: ['bluetooth'],
@@ -204,7 +204,7 @@
             token.device.deviceHandle,
             token.device.descriptors['00002902-0000-1000-8000-00805f9b34fb'].handle,
             new Uint8Array([1,0])
-        );
+            );
 
         evothings.ble.enableNotification(
             token.device.deviceHandle,
@@ -316,7 +316,12 @@
                 default:
                     token.trigger('INVALID_DATA_RECEIVE', {"value": uint8array});
             }
-        };
+
+            token.sendQueue.shift(); // Remove function from queue
+            if (token.sendQueue.length > 0)  // If there's more functions queued
+                token.sendQueue[0]();  // Send next function off
+
+            };
         this._subscribe(token, cb)
     };
 
@@ -431,6 +436,14 @@
 
         if (data.length > 20) {
             AnyBoard.Logger.warn("cannot send data of length over 20.", this);
+            return;
+        }
+
+        if (token.sendQueue.length === 0) {  // this was first command
+            token.sendQueue.push(function(){ rfduinoBluetooth.send(token, data, win, fail); });
+        } else {
+            // send function will be handled by existing
+            token.sendQueue.push(function(){ rfduinoBluetooth.send(token, data, win, fail); });
             return;
         }
 

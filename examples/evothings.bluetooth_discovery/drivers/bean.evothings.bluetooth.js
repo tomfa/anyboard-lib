@@ -307,17 +307,14 @@
             if (!inc) return;
             var remains = "";
             var command;
-            var wait = 1000;
 
             var firstpos = inc.indexOf("##");
             if (firstpos === -1) {
                 COMMANDS.PRINT_WRITE(token, inc.substr(0, 12))
-                wait = 3200;
                 remains = inc.substr(12);
             } else if (firstpos !== 0) {
                 var textPart = inc.substr(0, Math.min(12, firstpos));
                 COMMANDS.PRINT_WRITE(token, textPart);
-                wait = 3200;
                 remains = inc.substr(Math.min(12, firstpos));
             } else {
                 command = inc.substr(0, 3);
@@ -326,12 +323,132 @@
                     commands[command]();
                 }
             }
-            setTimeout(function(){
-                run(remains);
-            }, wait);
+            run(remains);
         };
 
         run(string);
+    };
+    /**
+     * Reads a scratchBank on the LightBlue Bean
+     * @param {AnyBoard.BaseToken} token
+     * @param {number} scratchNumber which scratchBank to read from
+     * @param {function} win callback function to be executed with param Uint8Array once return
+     * @param {function} fail callback function to be executed upon error
+     */
+    beanBluetooth.readScratchBank = function(token, scratchNumber, win, fail) {
+        var uuidScratchCharacteristic = ['a495ff21-c5b1-4b44-b512-1370f02d74de',
+                'a495ff22-c5b1-4b44-b512-1370f02d74de',
+                'a495ff23-c5b1-4b44-b512-1370f02d74de',
+                'a495ff24-c5b1-4b44-b512-1370f02d74de',
+                'a495ff25-c5b1-4b44-b512-1370f02d74de'][scratchNumber - 1];
+        token.device.readCharacteristic(uuidScratchCharacteristic, win, fail)
+    };
+
+    /**
+     * Polls Bean to see if it is available to process new function
+     * - If data is received, it triggers an event on the token.
+     * - It sets of the next function in queue if one is available.
+     * - It calls itself if not completed, in order to check later
+     * - It calls itself if it sets of a new function
+     */
+    beanBluetooth.runSendQueueCheck = function(token) {
+
+        var triggerFunction = function(uint8array) {
+            var cmd = uint8array[0];
+            var strData;
+            switch (cmd) {
+                case self._CMD_CODE.GET_BATTERY_STATUS:
+                    strData = String.fromCharCode.apply(null, uint8array.subarray(1));
+                    token.trigger('GET_BATTERY_STATUS', {"value": strData});
+                    break;
+                case self._CMD_CODE.MOVE:
+                    token.trigger('MOVE', {"newTile": uint8array[1], "oldTile": uint8array[2]});
+                    break;
+                case self._CMD_CODE.GET_NAME:
+                    strData = String.fromCharCode.apply(null, uint8array.subarray(1));
+                    token.trigger('GET_NAME', {"value": strData});
+                    break;
+                case self._CMD_CODE.GET_VERSION:
+                    strData = String.fromCharCode.apply(null, uint8array.subarray(1));
+                    token.trigger('GET_VERSION', {"value": strData});
+                    break;
+                case self._CMD_CODE.GET_UUID:
+                    strData = String.fromCharCode.apply(null, uint8array.subarray(1));
+                    token.trigger('GET_UUID', {"value": strData});
+                    break;
+                case self._CMD_CODE.LED_BLINK:
+                    token.trigger('LED_BLINK');
+                    break;
+                case self._CMD_CODE.LED_OFF:
+                    token.trigger('LED_OFF');
+                    break;
+                case self._CMD_CODE.LED_ON:
+                    token.trigger('LED_ON');
+                    break;
+                case self._CMD_CODE.HAS_LED:
+                    token.trigger('HAS_LED', {"value": uint8array[1]});
+                    break;
+                case self._CMD_CODE.HAS_LED_COLOR:
+                    token.trigger('HAS_LED_COLOR', {"value": uint8array[1]});
+                    break;
+                case self._CMD_CODE.HAS_VIBRATION:
+                    token.trigger('HAS_VIBRATION', {"value": uint8array[1]});
+                    break;
+                case self._CMD_CODE.HAS_COLOR_DETECTION:
+                    token.trigger('HAS_COLOR_DETECTION', {"value": uint8array[1]});
+                    break;
+                case self._CMD_CODE.HAS_LED_SCREEN:
+                    token.trigger('HAS_LED_SCREEN', {"value": uint8array[1]});
+                    break;
+                case self._CMD_CODE.HAS_RFID:
+                    token.trigger('HAS_RFID', {"value": uint8array[1]});
+                    break;
+                case self._CMD_CODE.HAS_NFC:
+                    token.trigger('HAS_NFC', {"value": uint8array[1]});
+                    break;
+                case self._CMD_CODE.HAS_ACCELEROMETER:
+                    token.trigger('HAS_ACCELEROMETER', {"value": uint8array[1]});
+                    break;
+                case self._CMD_CODE.HAS_TEMPERATURE:
+                    token.trigger('HAS_TEMPERATURE', {"value": uint8array[1]});
+                    break;
+                default:
+                    token.trigger('INVALID_DATA_RECEIVE', {"value": uint8array});
+            }
+        };
+
+        (function(){
+            var logRef;
+            var log = function(){
+                window.clearTimeout(logRef);
+
+                // do potentially timeconsuming stuff
+                console.log(1);
+
+                logRef = window.setTimeout(log, 500)
+            };
+            log();
+        })();
+
+        var completeFunction = function(data) {
+            clearTimeout(token.lastSendReference);
+            if (data.hasOwnProperty(0) && data[0] != 0) {  // Some function has completed
+                triggerFunction(data);
+                token.sendQueue.shift(); // Remove first (completed) function from queue
+
+                if (token.sendQueue.length > 0) { // If there's more functions queued
+                    token.sendQueue[0]();  // Send next function off
+
+                    // Check for response for new function in 800 ms
+                    token.lastSendReference = setTimeout( function() { beanBluetooth.runSendQueueCheck(token); }, 800);
+                }
+            }
+            else {  // Check for response in 800 ms
+                token.lastSendReference = setTimeout( function() { beanBluetooth.runSendQueueCheck(token); }, 800);
+            }
+        };
+
+        this.readScratchBank(token, 2, completeFunction, completeFunction)
     };
 
     /**
@@ -344,7 +461,7 @@
     beanBluetooth.send = function(token, data, win, fail) {
         var self = this;
 
-        if(!(token.device.haveServices)) {
+        if (!(token.device.haveServices)) {
             this.getServices(token, function() {
                 self.send(token, data, win, fail);
             }, fail);
@@ -352,12 +469,13 @@
         }
 
         if (typeof data === 'string')
-            data = beanBluetooth._stringToUint8(data)
+            data = beanBluetooth._stringToUint8(data);
 
-        if(data.buffer) {
-            if(!(data instanceof Uint8Array))
+        if (data.buffer) {
+            if (!(data instanceof Uint8Array)) {
                 data = new Uint8Array(data.buffer);
-        } else if(data instanceof ArrayBuffer) {
+            }
+        } else if (data instanceof ArrayBuffer) {
             data = new Uint8Array(data);
         } else {
             AnyBoard.Logger.error("send data is not an ArrayBuffer.", this);
@@ -365,31 +483,23 @@
             return;
         }
 
-        if (token.device.singlePacketWrite && data.byteLength > 13) {
-            var pos = 0;
-            var win2 = function() {
-                if(pos < data.byteLength) {
-                    var len = Math.min(13, data.byteLength - pos);
-                    self.send(token, data.subarray(pos, pos+len), win2, fail);
-                    pos += len;
-                } else {
-                    win();
-                }
-            };
-            this.send(token, data.subarray(pos, pos+13), win2, fail);
-            pos = 13;
-            return;
+        if (data.byteLength > 13) {
+            AnyBoard.Logger.warn("cannot send data of length over 13 byte.", this);
         }
 
-        if(data.byteLength > 64) {
-            throw "serialWrite data exceeds Bean maximum.";
+
+        if (token.sendQueue.length === 0) {  // this was first command
+            token.sendQueue.push(function(){ beanBluetooth.send(token, data, win, fail); });
+            setTimeout( function() { beanBluetooth.runSendQueueCheck(token); }, 800);
+        } else {
+            // send function will be handled by existing
+            token.sendQueue.push(function(){ beanBluetooth.send(token, data, win, fail); });
+            return;
         }
 
         // 6 = length+reserved+messageId+crc.
         var gstPacketLength = data.byteLength + 6;
         var buffer = this._gtBuffer(token, gstPacketLength);
-
-        //evothings.printObject(buffer);
 
         // GST length
         buffer.append(data.byteLength + 2);
@@ -415,7 +525,7 @@
 
         var i = 0;
         var partWin = function() {
-            if(i == buffer.packetCount) {
+            if (i == buffer.packetCount) {
                 win();
             } else {
                 var packet = buffer.packet(i);
@@ -578,7 +688,8 @@
                 device.gettingServices = false;
                 AnyBoard.Logger.error('Could not fetch services for token ' + device.name + '. ' + errorCode, self);
                 fail && fail(errorCode);
-            });
+            }
+        );
     };
 
     beanBluetooth._scanError = function(errorCode) {
@@ -631,7 +742,7 @@
             buf: buf,
             append: function(b) {
                 // If this is the start of a GT packet, add the GT header.
-                if((pos % 20) == 0) {
+                if ((pos % 20) == 0) {
 
                     // Decrement the local packetCount. This should not affect the member packetCount.
                     buf[pos] = beanBluetooth._gtHeader(token, --packetCount, pos);
@@ -656,11 +767,11 @@
      */
     beanBluetooth._gtHeader = function(token, remain, pos) {
         var h = token.device.sendGtHeader + (remain);
-        if(remain == 0) {
+        if (remain == 0) {
             token.device.sendGtHeader = (token.device.sendGtHeader + 0x20) & 0xff;
-            if(token.device.sendGtHeader < 0x80) token.device.sendGtHeader = 0x80;
+            if (token.device.sendGtHeader < 0x80) token.device.sendGtHeader = 0x80;
         }
-        if(pos != 0) h &= 0x7f;
+        if (pos != 0) h &= 0x7f;
         return h;
     };
 
@@ -681,4 +792,5 @@
 
     // Set as default communication driver
     AnyBoard.TokenManager.setDriver(AnyBoard.Drivers.get('anyboard-bean-token'));
+
 })();
