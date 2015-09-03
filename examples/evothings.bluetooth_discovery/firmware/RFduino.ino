@@ -58,7 +58,7 @@ void setup() {
     pinMode(RED_LED_PIN, OUTPUT);
     pinMode(GREEN_LED_PIN, OUTPUT);
     pinMode(BLUE_LED_PIN, OUTPUT);
-
+    
     // Turn Off all LEDs initially
     digitalWrite(RED_LED_PIN, LOW);
     digitalWrite(GREEN_LED_PIN, LOW);
@@ -125,18 +125,19 @@ void loop()
 
 // Turns on the LED on a specific color: r=red, g=gree, etc..
 void ledOn(int r, int g, int b) {
-    if (r > 127) {
-        digitalWrite(RED_LED_PIN, HIGH);
-    } else {
+
+    if (r < 127) {
         digitalWrite(RED_LED_PIN, LOW);
+    } else {
+        digitalWrite(RED_LED_PIN, HIGH);
     }
-    if (g > 127) {
-        digitalWrite(GREEN_LED_PIN, HIGH);
+    if (g < 127) {
+        digitalWrite(GREEN_LED_PIN, LOW);
     } else {
         digitalWrite(GREEN_LED_PIN, HIGH);
     }
-    if (b > 127) {
-        digitalWrite(BLUE_LED_PIN, HIGH);
+    if (b < 127) {
+        digitalWrite(BLUE_LED_PIN, LOW);
     } else {
         digitalWrite(BLUE_LED_PIN, HIGH);
     }
@@ -170,7 +171,6 @@ void ledBlink(int r, int g, int b, int delayTime) {
     ledOn(r, g, b);
 }
 
-
 void RFduinoBLE_onAdvertisement()
 {
     digitalWrite(RED_LED_PIN, LOW);
@@ -181,7 +181,6 @@ void RFduinoBLE_onAdvertisement()
 void RFduinoBLE_onConnect()
 {
     connected = true;
-
 }
 
 void RFduinoBLE_onDisconnect()
@@ -190,7 +189,11 @@ void RFduinoBLE_onDisconnect()
 }
 
 void send_uint8(uint8_t *data, int length) {
-    RFduinoBLE.send((char*) data, length);
+    char charData[length];
+    for (i = 0; i < length; i++) {
+        charData[i] = data[i];
+    }
+    RFduinoBLE.send(charData, length);
 }
 
 void send_string(uint8_t command, char* string) {
@@ -225,6 +228,8 @@ void parse(uint8_t command) {
             send_string(GET_UUID, UUID);
             break;
         case LED_ON:
+            ledOn(getData[0], getData[1], getData[2]);
+            ledOff();
             ledOn(getData[0], getData[1], getData[2]);
             send_uint8(sendData, 1);
             break;

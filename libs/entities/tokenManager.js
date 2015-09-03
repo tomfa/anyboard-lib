@@ -76,6 +76,7 @@ AnyBoard.BaseToken = function(name, address, device, driver) {
     this.listeners = {};
     this.onceListeners = {};
     this.sendQueue = [];
+    this.cache = [];
     this.driver = driver;
 };
 
@@ -133,16 +134,17 @@ AnyBoard.BaseToken.prototype.disconnect = function() {
 AnyBoard.BaseToken.prototype.trigger = function(eventName, eventOptions) {
     AnyBoard.Logger.debug('' + this + ' triggered "' + eventName + '"');
     if (this.listeners[eventName])
-            for (var i in this.listeners[eventName]) {
-                if (this.listeners[eventName].hasOwnProperty(i))
-                    this.listeners[eventName][i](this, eventOptions);
-            }
-    if (this.onceListeners[eventName])
+        for (var i in this.listeners[eventName]) {
+            if (this.listeners[eventName].hasOwnProperty(i))
+                this.listeners[eventName][i](this, eventOptions);
+        }
+    if (this.onceListeners[eventName]) {
         for (var j in this.onceListeners[eventName]) {
             if (this.onceListeners[eventName].hasOwnProperty(j))
                 this.onceListeners[eventName][j](this, eventOptions);
         }
-
+        this.onceListeners[eventName] = [];
+    }
 };
 
 /**
@@ -315,12 +317,12 @@ AnyBoard.BaseToken.prototype.hasColorDetection = function(win, fail) {
  * @param {function} [win] callback function to be called upon successful execution
  * @param {function} [fail] callback function to be executed upon failure
  */
-AnyBoard.BaseToken.prototype.hasLedSceen = function(win, fail) {
+AnyBoard.BaseToken.prototype.hasLedScreen = function(win, fail) {
     if (!this.driver.hasOwnProperty('hasLedSceen')) {
         AnyBoard.Logger.debug('This token has not implemented hasLedSceen', this);
         fail && fail('This token has not implemented hasLedSceen');
     } else {
-        this.driver.hasLedSceen(this, function(data) { win && win(data.value); }, fail);
+        this.driver.hasLedScreen(this, function(data) { win && win(data.value); }, fail);
     }
 };
 

@@ -65,6 +65,26 @@
         }
     };
 
+    beanBluetooth._CMD_CODE = {
+        MOVE: 194,
+        GET_NAME: 32,
+        GET_VERSION: 33,
+        GET_UUID: 34,
+        GET_BATTERY_STATUS: 35,
+        LED_OFF: 128,
+        LED_ON: 129,
+        LED_BLINK: 130,
+        HAS_LED: 64,
+        HAS_LED_COLOR: 65,
+        HAS_VIBRATION: 66,
+        HAS_COLOR_DETECTION: 67,
+        HAS_LED_SCREEN: 68,
+        HAS_RFID: 71,
+        HAS_NFC: 72,
+        HAS_ACCELEROMETER: 73,
+        HAS_TEMPERATURE: 74
+    };
+
 
     // Internal mapping between color strings to Uint8 array of RGB colors
     beanBluetooth._COLORS = {

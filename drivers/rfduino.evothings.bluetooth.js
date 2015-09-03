@@ -11,7 +11,7 @@
         description: 'rfduino-driver based off evothings.ble library for Cordova-based apps',
         dependencies: 'evothings.ble',
         version: '0.1',
-        date: '2015-08-23',
+        date: '2015-09-03',
         type: ['bluetooth'],
         compatibility: [
             {
@@ -31,9 +31,10 @@
      * @constructor
      */
     rfduinoBluetooth._GenericSend = function(name, functionId, hasParams, useCache) {
+        var tmpId = functionId;
         var internalSend = function(token, data, win, fail) {
             AnyBoard.Logger.debug("Executing " + name, token);
-            if (useCache && token.cache[name]) {
+            if (useCache && token.cache.hasOwnProperty(name)) {
                 win && win(token.cache[name]);
                 return;
             }
@@ -42,8 +43,8 @@
                 data,
                 function(){
                     token.once(name,
-                        function(returnData) {
-                            if (useCache) {
+                        function(token, returnData) {
+                            if (useCache && returnData !== undefined) {
                                 token.cache[name] = returnData;
                             }
                             win && win(returnData);
@@ -54,21 +55,54 @@
             )
         };
         if (!hasParams) {
-            var data = new Uint8Array(1);
-            data[0] = functionId;
+            var newData = new Uint8Array(1);
+            newData[0] = tmpId;
             return function(token, win, fail) {
-                internalSend(token, data, win, fail);
+                internalSend(token, newData, win, fail);
             };
         }
         return function(token, data, win, fail) {
             var newData = new Uint8Array(data.length+1);
-            newData[0] = functionId;
+            newData[0] = tmpId;
             for (var index in data) {
                 if (data.hasOwnProperty(index))
                     newData[parseInt(index)+1] = data[index];
             }
-            internalSend(token, data, win, fail);
+            internalSend(token, newData, win, fail);
         }
+    };
+
+    // Internal mapping between command and uint8 (1-255) number that corresponds to that command
+    rfduinoBluetooth._CMD_CODE = {
+        MOVE: 194,
+        GET_NAME: 32,
+        GET_VERSION: 33,
+        GET_UUID: 34,
+        GET_BATTERY_STATUS: 35,
+        LED_OFF: 128,
+        LED_ON: 129,
+        LED_BLINK: 130,
+        HAS_LED: 64,
+        HAS_LED_COLOR: 65,
+        HAS_VIBRATION: 66,
+        HAS_COLOR_DETECTION: 67,
+        HAS_LED_SCREEN: 68,
+        HAS_RFID: 71,
+        HAS_NFC: 72,
+        HAS_ACCELEROMETER: 73,
+        HAS_TEMPERATURE: 74
+    };
+
+    // Internal mapping between color strings to Uint8 array of RGB colors
+    rfduinoBluetooth._COLORS = {
+        'red': new Uint8Array([255, 0, 0]),
+        'green': new Uint8Array([0, 255, 0]),
+        'blue': new Uint8Array([0, 0, 255]),
+        'white': new Uint8Array([255, 255, 255]),
+        'pink': new Uint8Array([255, 0, 255]),
+        'yellow': new Uint8Array([255, 255, 0]),
+        'aqua': new Uint8Array([0, 255, 255]),
+        'off': new Uint8Array([0, 0, 0])
     };
 
     // Internal mapping and generation of commands
@@ -76,15 +110,21 @@
     var HAS_PARAMS = true;
     var USE_CACHE = true;
     rfduinoBluetooth._COMMANDS = {
-
+        GET_NAME: rfduinoBluetooth._GenericSend(
+            "GET_NAME",
+            rfduinoBluetooth._CMD_CODE.GET_NAME,
+            NO_PARAMS,
+            USE_CACHE),
         GET_VERSION: rfduinoBluetooth._GenericSend(
             "GET_VERSION",
             rfduinoBluetooth._CMD_CODE.GET_VERSION,
-            NO_PARAMS),
+            NO_PARAMS,
+            USE_CACHE),
         GET_UUID: rfduinoBluetooth._GenericSend(
             "GET_UUID",
             rfduinoBluetooth._CMD_CODE.GET_UUID,
-            NO_PARAMS),
+            NO_PARAMS,
+            USE_CACHE),
         GET_BATTERY_STATUS: rfduinoBluetooth._GenericSend(
             "GET_BATTERY_STATUS",
             rfduinoBluetooth._CMD_CODE.GET_BATTERY_STATUS,
@@ -146,39 +186,6 @@
             rfduinoBluetooth._CMD_CODE.HAS_TEMPERATURE,
             NO_PARAMS,
             USE_CACHE)
-    };
-
-    // Internal mapping between command and uint8 (1-255) number that corresponds to that command
-    rfduinoBluetooth._CMD_CODE = {
-        MOVE: 194,
-        GET_NAME: 32,
-        GET_VERSION: 33,
-        GET_UUID: 34,
-        GET_BATTERY_STATUS: 35,
-        LED_OFF: 128,
-        LED_ON: 129,
-        LED_BLINK: 130,
-        HAS_LED: 64,
-        HAS_LED_COLOR: 65,
-        HAS_VIBRATION: 66,
-        HAS_COLOR_DETECTION: 67,
-        HAS_LED_SCREEN: 68,
-        HAS_RFID: 71,
-        HAS_NFC: 72,
-        HAS_ACCELEROMETER: 73,
-        HAS_TEMPERATURE: 74
-    };
-
-    // Internal mapping between color strings to Uint8 array of RGB colors
-    rfduinoBluetooth._COLORS = {
-        'red': new Uint8Array([255, 0, 0]),
-        'green': new Uint8Array([0, 255, 0]),
-        'blue': new Uint8Array([0, 0, 255]),
-        'white': new Uint8Array([255, 255, 255]),
-        'pink': new Uint8Array([255, 0, 255]),
-        'yellow': new Uint8Array([255, 255, 0]),
-        'aqua': new Uint8Array([0, 255, 255]),
-        'off': new Uint8Array([0, 0, 0])
     };
 
     /**
@@ -253,76 +260,82 @@
      * on the token class upon receiving data.
      */
     rfduinoBluetooth.initialize = function(token) {
-        var self = this;
         var cb = function(uint8array) {
             var cmd = uint8array[0];
-            var strData;
+            var strData = "";
+
             switch (cmd) {
-                case self._CMD_CODE.GET_BATTERY_STATUS:
-                    strData = String.fromCharCode.apply(null, uint8array.subarray(1));
+                case rfduinoBluetooth._CMD_CODE.GET_BATTERY_STATUS:
+                    for (var i = 1; i < uint8array.length; i++)
+                        strData += String.fromCharCode(uint8array[i])
                     token.trigger('GET_BATTERY_STATUS', {"value": strData});
                     break;
-                case self._CMD_CODE.MOVE:
-                    token.trigger('MOVE', {"newTile": uint8array[1], "oldTile": uint8array[2]});
+                case rfduinoBluetooth._CMD_CODE.MOVE:
+                    token.trigger('MOVE', {"value": uint8array[1], "newTile": uint8array[1], "oldTile": uint8array[2]});
                     break;
-                case self._CMD_CODE.GET_NAME:
-                    strData = String.fromCharCode.apply(null, uint8array.subarray(1));
+                case rfduinoBluetooth._CMD_CODE.GET_NAME:
+                    for (var i = 1; i < uint8array.length; i++)
+                        strData += String.fromCharCode(uint8array[i])
                     token.trigger('GET_NAME', {"value": strData});
                     break;
-                case self._CMD_CODE.GET_VERSION:
-                    strData = String.fromCharCode.apply(null, uint8array.subarray(1));
+                case rfduinoBluetooth._CMD_CODE.GET_VERSION:
+                    for (var i = 1; i < uint8array.length; i++)
+                        strData += String.fromCharCode(uint8array[i])
                     token.trigger('GET_VERSION', {"value": strData});
                     break;
-                case self._CMD_CODE.GET_UUID:
-                    strData = String.fromCharCode.apply(null, uint8array.subarray(1));
+                case rfduinoBluetooth._CMD_CODE.GET_UUID:
+                    for (var i = 1; i < uint8array.length; i++)
+                        strData += String.fromCharCode(uint8array[i])
                     token.trigger('GET_UUID', {"value": strData});
                     break;
-                case self._CMD_CODE.LED_BLINK:
+                case rfduinoBluetooth._CMD_CODE.LED_BLINK:
                     token.trigger('LED_BLINK');
                     break;
-                case self._CMD_CODE.LED_OFF:
+                case rfduinoBluetooth._CMD_CODE.LED_OFF:
                     token.trigger('LED_OFF');
                     break;
-                case self._CMD_CODE.LED_ON:
+                case rfduinoBluetooth._CMD_CODE.LED_ON:
                     token.trigger('LED_ON');
                     break;
-                case self._CMD_CODE.HAS_LED:
+                case rfduinoBluetooth._CMD_CODE.HAS_LED:
                     token.trigger('HAS_LED', {"value": uint8array[1]})
                     break;
-                case self._CMD_CODE.HAS_LED_COLOR:
+                case rfduinoBluetooth._CMD_CODE.HAS_LED_COLOR:
                     token.trigger('HAS_LED_COLOR', {"value": uint8array[1]})
                     break;
-                case self._CMD_CODE.HAS_VIBRATION:
+                case rfduinoBluetooth._CMD_CODE.HAS_VIBRATION:
                     token.trigger('HAS_VIBRATION', {"value": uint8array[1]})
                     break;
-                case self._CMD_CODE.HAS_COLOR_DETECTION:
+                case rfduinoBluetooth._CMD_CODE.HAS_COLOR_DETECTION:
                     token.trigger('HAS_COLOR_DETECTION', {"value": uint8array[1]})
                     break;
-                case self._CMD_CODE.HAS_LED_SCREEN:
+                case rfduinoBluetooth._CMD_CODE.HAS_LED_SCREEN:
                     token.trigger('HAS_LED_SCREEN', {"value": uint8array[1]})
                     break;
-                case self._CMD_CODE.HAS_RFID:
+                case rfduinoBluetooth._CMD_CODE.HAS_RFID:
                     token.trigger('HAS_RFID', {"value": uint8array[1]})
                     break;
-                case self._CMD_CODE.HAS_NFC:
+                case rfduinoBluetooth._CMD_CODE.HAS_NFC:
                     token.trigger('HAS_NFC', {"value": uint8array[1]})
                     break;
-                case self._CMD_CODE.HAS_ACCELEROMETER:
+                case rfduinoBluetooth._CMD_CODE.HAS_ACCELEROMETER:
                     token.trigger('HAS_ACCELEROMETER', {"value": uint8array[1]})
                     break;
-                case self._CMD_CODE.HAS_TEMPERATURE:
+                case rfduinoBluetooth._CMD_CODE.HAS_TEMPERATURE:
                     token.trigger('HAS_TEMPERATURE', {"value": uint8array[1]})
                     break;
                 default:
                     token.trigger('INVALID_DATA_RECEIVE', {"value": uint8array});
             }
+        };
 
-            token.sendQueue.shift(); // Remove function from queue
-            if (token.sendQueue.length > 0)  // If there's more functions queued
-                token.sendQueue[0]();  // Send next function off
+        token.sendQueue.shift(); // Remove function from queue
+        if (token.sendQueue.length > 0) {  // If there's more functions queued
+            token.randomToken = Math.random();
+            token.sendQueue[0]();  // Send next function off
+        }
 
-            };
-        this._subscribe(token, cb)
+        this._subscribe(token, cb);
     };
 
     rfduinoBluetooth.getName = function (token, win, fail) {
@@ -353,7 +366,7 @@
         this._COMMANDS.HAS_COLOR_DETECTION(token, win, fail);
     };
 
-    rfduinoBluetooth.hasLedSceen = function(token, win, fail) {
+    rfduinoBluetooth.hasLedScreen = function(token, win, fail) {
         this._COMMANDS.HAS_LED_SCREEN(token, win, fail);
     };
 
@@ -406,13 +419,33 @@
     };
 
     /**
-     * Send data to device
+     * Internal function to send data to the bean. No validation. No buffering
+     * @param token
+     * @param data
+     * @param win
+     * @param fail
+     */
+    rfduinoBluetooth.rawSend = function(token, data, win, fail) {
+
+        evothings.ble.writeCharacteristic(
+            token.device.deviceHandle,
+            token.device.serialChar,
+            data,
+            win,
+            fail
+        );
+    };
+
+    /**
+     * Throttles send functions to the bean. Uses buffer.
      * @param {AnyBoard.BaseToken} token token to send data to
      * @param {ArrayBuffer|Uint8Array|string} data data to be sent
      * @param {function} win function to be executed upon success
      * @param {function} fail function to be executed upon failure
      */
     rfduinoBluetooth.send = function(token, data, win, fail) {
+
+
         var self = this;
 
         if(!(token.device.haveServices)) {
@@ -440,20 +473,27 @@
         }
 
         if (token.sendQueue.length === 0) {  // this was first command
-            token.sendQueue.push(function(){ rfduinoBluetooth.send(token, data, win, fail); });
+            token.sendQueue.push(function(){ rfduinoBluetooth.rawSend(token, data, win, fail); });
+            rfduinoBluetooth.rawSend(token, data, win, fail);
         } else {
             // send function will be handled by existing
-            token.sendQueue.push(function(){ rfduinoBluetooth.send(token, data, win, fail); });
-            return;
+            token.sendQueue.push(function(){ rfduinoBluetooth.rawSend(token, data, win, fail); });
+
+            // Disregards existing queue if it takes more than 2000ms
+            var randomToken = Math.random();
+            token.randomToken = randomToken;
+
+            setTimeout(function() {
+                if (token.randomToken == randomToken) { // Queuehandler Hung up
+
+                    token.sendQueue.shift(); // Remove function from queue
+                    if (token.sendQueue.length > 0) {  // If there's more functions queued
+                        token.sendQueue[0]();  // Send next function off
+                    }
+                }
+            }, 2000);
         }
 
-        evothings.ble.writeCharacteristic(
-            token.device.deviceHandle,
-            token.device.serialChar,
-            data,
-            win,
-            fail
-        );
     };
 
 })();

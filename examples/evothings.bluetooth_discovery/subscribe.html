@@ -35,6 +35,7 @@
 	<script>
         var app = {
 		    devices: {},
+            hasSubscribed: false,
 
             // Discover bluetooth tokens in proximity
             discover: function() {
@@ -79,10 +80,13 @@
                     return;
                 // If already connected, attempt to send green led command
                 if (document.getElementById(tokenName).className == 'green') {
-                    token.on('MOVE', function(token, options){
-                        hyper.log('Moved from ' + options.oldTile);
-                        hyper.log('Moved to ' + options.newTile);
-                    });
+                    if (!this.hasSubscribed) {
+                        token.on('MOVE', function(token, options){
+                            hyper.log('Moved from ' + options.oldTile);
+                            hyper.log('Moved to ' + options.newTile);
+                        });
+                        this.hasSubscribed = true;
+                    }
                     return;
                 }
                 // Signal that we're attempting to connect
