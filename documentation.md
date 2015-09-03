@@ -54,14 +54,28 @@ Global variable AnyBoard.
     * [.disconnect()](#AnyBoard.BaseToken+disconnect)
     * [.trigger(eventName, eventOptions)](#AnyBoard.BaseToken+trigger)
     * [.on(eventName, callbackFunction)](#AnyBoard.BaseToken+on)
-    * [.sendBuffer(data, win, fail)](#AnyBoard.BaseToken+sendBuffer)
-    * [.sendString(data, win, fail)](#AnyBoard.BaseToken+sendString)
+    * [.once(eventName, callbackFunction)](#AnyBoard.BaseToken+once)
     * [.send(data, win, fail)](#AnyBoard.BaseToken+send)
+    * [.print(value, [win], [fail])](#AnyBoard.BaseToken+print)
+    * [.getFirmwareName([win], [fail])](#AnyBoard.BaseToken+getFirmwareName)
+    * [.getFirmwareVersion([win], [fail])](#AnyBoard.BaseToken+getFirmwareVersion)
+    * [.getFirmwareUUID([win], [fail])](#AnyBoard.BaseToken+getFirmwareUUID)
+    * [.hasLed([win], [fail])](#AnyBoard.BaseToken+hasLed)
+    * [.hasLedColor([win], [fail])](#AnyBoard.BaseToken+hasLedColor)
+    * [.hasVibration([win], [fail])](#AnyBoard.BaseToken+hasVibration)
+    * [.hasColorDetection([win], [fail])](#AnyBoard.BaseToken+hasColorDetection)
+    * [.hasLedSceen([win], [fail])](#AnyBoard.BaseToken+hasLedSceen)
+    * [.hasRfid([win], [fail])](#AnyBoard.BaseToken+hasRfid)
+    * [.hasNfc([win], [fail])](#AnyBoard.BaseToken+hasNfc)
+    * [.hasAccelometer([win], [fail])](#AnyBoard.BaseToken+hasAccelometer)
+    * [.hasTemperature([win], [fail])](#AnyBoard.BaseToken+hasTemperature)
+    * [.ledOn(value, [win], [fail])](#AnyBoard.BaseToken+ledOn)
+    * [.ledBlink(value, [win], [fail])](#AnyBoard.BaseToken+ledBlink)
+    * [.ledOff([win], [fail])](#AnyBoard.BaseToken+ledOff)
     * [.toString()](#AnyBoard.BaseToken+toString) ⇒ <code>string</code>
-  * [.DummyToken](#AnyBoard.DummyToken) ⇐ <code>BaseToken</code>
-    * [new AnyBoard.DummyToken(name, address)](#new_AnyBoard.DummyToken_new)
   * [.Drivers](#AnyBoard.Drivers)
     * [.get(name)](#AnyBoard.Drivers.get) ⇒ <code>[Driver](#AnyBoard.Driver)</code>
+    * [.getCompatibleDriver(type, compatibility)](#AnyBoard.Drivers.getCompatibleDriver) ⇒ <code>[Driver](#AnyBoard.Driver)</code>
   * [.TokenManager](#AnyBoard.TokenManager)
     * [.setDriver(driver)](#AnyBoard.TokenManager.setDriver)
     * [.scan(win, fail, timeout)](#AnyBoard.TokenManager.scan)
@@ -80,12 +94,13 @@ Global variable AnyBoard.
 
 | Name | Type | Description |
 | --- | --- | --- |
-| options | <code>object</code> | options for the driver |
-| options.name | <code>string</code> | name of the driver |
-| options.description | <code>string</code> | description of the driver |
-| options.version | <code>string</code> | version of the driver |
-| options.dependencies | <code>string</code> | (optional) What if anything the driver depends on. |
-| options.date | <code>string</code> | (optional) Date upon release/last build. |
+| name | <code>string</code> | name of the driver |
+| description | <code>string</code> | description of the driver |
+| version | <code>string</code> | version of the driver |
+| dependencies | <code>string</code> | (optional) What if anything the driver depends on. |
+| date | <code>string</code> | (optional) Date upon release/last build. |
+| type | <code>string</code> | Type of driver, e.g. "bluetooth" |
+| compatibility | <code>Array</code> &#124; <code>object</code> &#124; <code>string</code> | An object or string that can be used to deduce compatibiity, or      an array of different compatibilies. |
 | properties | <code>object</code> | dictionary that holds custom attributes |
 
 
@@ -104,9 +119,11 @@ Represents a single Driver, e.g. for spesific token or bluetooth on operating sy
 | options.name | <code>string</code> | name of the driver |
 | options.description | <code>string</code> | description of the driver |
 | options.version | <code>string</code> | version of the driver |
+| options.type | <code>string</code> | Type of driver, e.g. "bluetooth" |
+| options.compatibility | <code>Array</code> &#124; <code>object</code> &#124; <code>string</code> | An object or string that can be used to deduce compatibiity, or      an array of different compatibilies. |
 | options.dependencies | <code>string</code> | (optional) What if anything the driver depends on. |
 | options.date | <code>string</code> | (optional) Date upon release/last build. |
-| options.yourAttributeHere | <code>any</code> | custom attributes, as well as specified ones, are all placed in driver.properties. E.g. 'heat' would be placed in driver.properties.heat. |
+| options.yourAttributeHere | <code>any</code> | custom attributes, as well as specified ones, are all placed in      driver.properties. E.g. 'heat' would be placed in driver.properties.heat. |
 
 <a name="AnyBoard.Driver+toString"></a>
 #### driver.toString() ⇒ <code>string</code>
@@ -546,9 +563,13 @@ Returns the common resources and minimum amount between a dictionary of resource
 
 | Name | Type | Description |
 | --- | --- | --- |
+| name | <code>string</code> | name of the token |
+| address | <code>string</code> | address of the token found when scanned |
 | connected | <code>boolean</code> | whether or not the token is connected |
 | device | <code>object</code> | driver spesific data. |
 | listeners | <code>object</code> | functions to be execute upon certain triggered events |
+| onceListeners | <code>object</code> | functions to be execute upon next triggering of certain events |
+| sendQueue | <code>object</code> | sending to Pawn is being held here until available |
 | driver | <code>[Driver](#AnyBoard.Driver)</code> | driver that handles communication |
 
 
@@ -559,9 +580,24 @@ Returns the common resources and minimum amount between a dictionary of resource
   * [.disconnect()](#AnyBoard.BaseToken+disconnect)
   * [.trigger(eventName, eventOptions)](#AnyBoard.BaseToken+trigger)
   * [.on(eventName, callbackFunction)](#AnyBoard.BaseToken+on)
-  * [.sendBuffer(data, win, fail)](#AnyBoard.BaseToken+sendBuffer)
-  * [.sendString(data, win, fail)](#AnyBoard.BaseToken+sendString)
+  * [.once(eventName, callbackFunction)](#AnyBoard.BaseToken+once)
   * [.send(data, win, fail)](#AnyBoard.BaseToken+send)
+  * [.print(value, [win], [fail])](#AnyBoard.BaseToken+print)
+  * [.getFirmwareName([win], [fail])](#AnyBoard.BaseToken+getFirmwareName)
+  * [.getFirmwareVersion([win], [fail])](#AnyBoard.BaseToken+getFirmwareVersion)
+  * [.getFirmwareUUID([win], [fail])](#AnyBoard.BaseToken+getFirmwareUUID)
+  * [.hasLed([win], [fail])](#AnyBoard.BaseToken+hasLed)
+  * [.hasLedColor([win], [fail])](#AnyBoard.BaseToken+hasLedColor)
+  * [.hasVibration([win], [fail])](#AnyBoard.BaseToken+hasVibration)
+  * [.hasColorDetection([win], [fail])](#AnyBoard.BaseToken+hasColorDetection)
+  * [.hasLedSceen([win], [fail])](#AnyBoard.BaseToken+hasLedSceen)
+  * [.hasRfid([win], [fail])](#AnyBoard.BaseToken+hasRfid)
+  * [.hasNfc([win], [fail])](#AnyBoard.BaseToken+hasNfc)
+  * [.hasAccelometer([win], [fail])](#AnyBoard.BaseToken+hasAccelometer)
+  * [.hasTemperature([win], [fail])](#AnyBoard.BaseToken+hasTemperature)
+  * [.ledOn(value, [win], [fail])](#AnyBoard.BaseToken+ledOn)
+  * [.ledBlink(value, [win], [fail])](#AnyBoard.BaseToken+ledBlink)
+  * [.ledOff([win], [fail])](#AnyBoard.BaseToken+ledOff)
   * [.toString()](#AnyBoard.BaseToken+toString) ⇒ <code>string</code>
 
 <a name="new_AnyBoard.BaseToken_new"></a>
@@ -612,7 +648,7 @@ Trigger an event on a token
 
 <a name="AnyBoard.BaseToken+on"></a>
 #### baseToken.on(eventName, callbackFunction)
-Adds a callbackFunction to be executed when event is triggered
+Adds a callbackFunction to be executed always when event is triggered
 
 **Kind**: instance method of <code>[BaseToken](#AnyBoard.BaseToken)</code>  
 
@@ -621,67 +657,227 @@ Adds a callbackFunction to be executed when event is triggered
 | eventName | <code>string</code> | name of event to listen to |
 | callbackFunction | <code>function</code> | function to be executed |
 
-<a name="AnyBoard.BaseToken+sendBuffer"></a>
-#### baseToken.sendBuffer(data, win, fail)
-Sends data to token over serial BlueTooth
+<a name="AnyBoard.BaseToken+once"></a>
+#### baseToken.once(eventName, callbackFunction)
+Adds a callbackFunction to be executed next time an event is triggered
 
 **Kind**: instance method of <code>[BaseToken](#AnyBoard.BaseToken)</code>  
 
 | Param | Type | Description |
 | --- | --- | --- |
-| data | <code>ArrayBuffer</code> &#124; <code>Uint8Array</code> | data to be sent |
-| win | <code>function</code> | function to be executed upon success |
-| fail | <code>function</code> | function to be executed upon failure |
-
-<a name="AnyBoard.BaseToken+sendString"></a>
-#### baseToken.sendString(data, win, fail)
-Sends data to token over 8bit unsigned BlueTooth
-
-**Kind**: instance method of <code>[BaseToken](#AnyBoard.BaseToken)</code>  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| data | <code>sendString</code> | binary array of data to be sent |
-| win | <code>function</code> | function to be executed upon success |
-| fail | <code>function</code> | function to be executed upon failure |
+| eventName | <code>string</code> | name of event to listen to |
+| callbackFunction | <code>function</code> | function to be executed |
 
 <a name="AnyBoard.BaseToken+send"></a>
 #### baseToken.send(data, win, fail)
-Sends data. if data parameter is Uint8Array, uses sendBinary(). Else sendSerial().
+Sends raw data to the token.
 
 **Kind**: instance method of <code>[BaseToken](#AnyBoard.BaseToken)</code>  
 
 | Param | Type | Description |
 | --- | --- | --- |
-| data | <code>object</code> | data to be sent |
+| data | <code>Uint8Array</code> &#124; <code>ArrayBuffer</code> &#124; <code>String</code> | data to be sent |
 | win | <code>function</code> | function to be executed upon success |
 | fail | <code>function</code> | function to be executed upon error |
+
+<a name="AnyBoard.BaseToken+print"></a>
+#### baseToken.print(value, [win], [fail])
+Prints to Token
+
+String can have special tokens to signify some printer command, e.g. ##n = newLine
+Refer to the individual driver for token spesific implementation and capabilites
+
+**Kind**: instance method of <code>[BaseToken](#AnyBoard.BaseToken)</code>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| value | <code>string</code> |  |
+| [win] | <code>function</code> | callback function to be called upon successful execution |
+| [fail] | <code>function</code> | callback function to be executed upon failure |
+
+<a name="AnyBoard.BaseToken+getFirmwareName"></a>
+#### baseToken.getFirmwareName([win], [fail])
+Gets the name of the firmware type of the token
+
+**Kind**: instance method of <code>[BaseToken](#AnyBoard.BaseToken)</code>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| [win] | <code>function</code> | callback function to be called upon successful execution |
+| [fail] | <code>function</code> | callback function to be executed upon failure |
+
+<a name="AnyBoard.BaseToken+getFirmwareVersion"></a>
+#### baseToken.getFirmwareVersion([win], [fail])
+Gets the version of the firmware type of the token
+
+**Kind**: instance method of <code>[BaseToken](#AnyBoard.BaseToken)</code>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| [win] | <code>function</code> | callback function to be called upon successful execution |
+| [fail] | <code>function</code> | callback function to be executed upon failure |
+
+<a name="AnyBoard.BaseToken+getFirmwareUUID"></a>
+#### baseToken.getFirmwareUUID([win], [fail])
+Gets a uniquie ID the firmware of the token
+
+**Kind**: instance method of <code>[BaseToken](#AnyBoard.BaseToken)</code>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| [win] | <code>function</code> | callback function to be called upon successful execution |
+| [fail] | <code>function</code> | callback function to be executed upon failure |
+
+<a name="AnyBoard.BaseToken+hasLed"></a>
+#### baseToken.hasLed([win], [fail])
+Checks whether or not the token has simple LED
+
+**Kind**: instance method of <code>[BaseToken](#AnyBoard.BaseToken)</code>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| [win] | <code>function</code> | callback function to be called upon successful execution |
+| [fail] | <code>function</code> | callback function to be executed upon failure |
+
+<a name="AnyBoard.BaseToken+hasLedColor"></a>
+#### baseToken.hasLedColor([win], [fail])
+Checks whether or not the token has colored LEDs
+
+**Kind**: instance method of <code>[BaseToken](#AnyBoard.BaseToken)</code>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| [win] | <code>function</code> | callback function to be called upon successful execution |
+| [fail] | <code>function</code> | callback function to be executed upon failure |
+
+<a name="AnyBoard.BaseToken+hasVibration"></a>
+#### baseToken.hasVibration([win], [fail])
+Checks whether or not the token has vibration
+
+**Kind**: instance method of <code>[BaseToken](#AnyBoard.BaseToken)</code>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| [win] | <code>function</code> | callback function to be called upon successful execution |
+| [fail] | <code>function</code> | callback function to be executed upon failure |
+
+<a name="AnyBoard.BaseToken+hasColorDetection"></a>
+#### baseToken.hasColorDetection([win], [fail])
+Checks whether or not the token has ColorDetection
+
+**Kind**: instance method of <code>[BaseToken](#AnyBoard.BaseToken)</code>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| [win] | <code>function</code> | callback function to be called upon successful execution |
+| [fail] | <code>function</code> | callback function to be executed upon failure |
+
+<a name="AnyBoard.BaseToken+hasLedSceen"></a>
+#### baseToken.hasLedSceen([win], [fail])
+Checks whether or not the token has LedSceen
+
+**Kind**: instance method of <code>[BaseToken](#AnyBoard.BaseToken)</code>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| [win] | <code>function</code> | callback function to be called upon successful execution |
+| [fail] | <code>function</code> | callback function to be executed upon failure |
+
+<a name="AnyBoard.BaseToken+hasRfid"></a>
+#### baseToken.hasRfid([win], [fail])
+Checks whether or not the token has RFID reader
+
+**Kind**: instance method of <code>[BaseToken](#AnyBoard.BaseToken)</code>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| [win] | <code>function</code> | callback function to be called upon successful execution |
+| [fail] | <code>function</code> | callback function to be executed upon failure |
+
+<a name="AnyBoard.BaseToken+hasNfc"></a>
+#### baseToken.hasNfc([win], [fail])
+Checks whether or not the token has NFC reader
+
+**Kind**: instance method of <code>[BaseToken](#AnyBoard.BaseToken)</code>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| [win] | <code>function</code> | callback function to be called upon successful execution |
+| [fail] | <code>function</code> | callback function to be executed upon failure |
+
+<a name="AnyBoard.BaseToken+hasAccelometer"></a>
+#### baseToken.hasAccelometer([win], [fail])
+Checks whether or not the token has Accelometer
+
+**Kind**: instance method of <code>[BaseToken](#AnyBoard.BaseToken)</code>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| [win] | <code>function</code> | callback function to be called upon successful execution |
+| [fail] | <code>function</code> | callback function to be executed upon failure |
+
+<a name="AnyBoard.BaseToken+hasTemperature"></a>
+#### baseToken.hasTemperature([win], [fail])
+Checks whether or not the token has temperature measurement
+
+**Kind**: instance method of <code>[BaseToken](#AnyBoard.BaseToken)</code>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| [win] | <code>function</code> | callback function to be called upon successful execution |
+| [fail] | <code>function</code> | callback function to be executed upon failure |
+
+<a name="AnyBoard.BaseToken+ledOn"></a>
+#### baseToken.ledOn(value, [win], [fail])
+Sets color on token
+
+**Kind**: instance method of <code>[BaseToken](#AnyBoard.BaseToken)</code>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| value | <code>string</code> &#124; <code>Array</code> | string with color name or array of [red, green, blue] values 0-255 |
+| [win] | <code>function</code> | callback function to be called upon successful execution |
+| [fail] | <code>function</code> | callback function to be executed upon |
+
+<a name="AnyBoard.BaseToken+ledBlink"></a>
+#### baseToken.ledBlink(value, [win], [fail])
+Sets color on token
+
+**Kind**: instance method of <code>[BaseToken](#AnyBoard.BaseToken)</code>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| value | <code>string</code> &#124; <code>Array</code> | string with color name or array of [red, green, blue] values 0-255 |
+| [win] | <code>function</code> | callback function to be called upon successful execution |
+| [fail] | <code>function</code> | callback function to be executed upon |
+
+<a name="AnyBoard.BaseToken+ledOff"></a>
+#### baseToken.ledOff([win], [fail])
+Turns LED off
+
+**Kind**: instance method of <code>[BaseToken](#AnyBoard.BaseToken)</code>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| [win] | <code>function</code> | callback function to be called upon successful execution |
+| [fail] | <code>function</code> | callback function to be executed upon |
 
 <a name="AnyBoard.BaseToken+toString"></a>
 #### baseToken.toString() ⇒ <code>string</code>
 Representational string of class instance.
 
 **Kind**: instance method of <code>[BaseToken](#AnyBoard.BaseToken)</code>  
-<a name="AnyBoard.DummyToken"></a>
-### AnyBoard.DummyToken ⇐ <code>BaseToken</code>
-**Kind**: static class of <code>[AnyBoard](#AnyBoard)</code>  
-**Extends:** <code>BaseToken</code>  
-<a name="new_AnyBoard.DummyToken_new"></a>
-#### new AnyBoard.DummyToken(name, address)
-A dummy token that prints to AnyBoard.Logger instead of attempting to communicate with a physical token
-
-
-| Param | Type | Description |
-| --- | --- | --- |
-| name | <code>string</code> | (dummy) name of token |
-| address | <code>string</code> | (dummy) address of the token |
-
 <a name="AnyBoard.Drivers"></a>
 ### AnyBoard.Drivers
 **Kind**: static property of <code>[AnyBoard](#AnyBoard)</code>  
+
+* [.Drivers](#AnyBoard.Drivers)
+  * [.get(name)](#AnyBoard.Drivers.get) ⇒ <code>[Driver](#AnyBoard.Driver)</code>
+  * [.getCompatibleDriver(type, compatibility)](#AnyBoard.Drivers.getCompatibleDriver) ⇒ <code>[Driver](#AnyBoard.Driver)</code>
+
 <a name="AnyBoard.Drivers.get"></a>
 #### Drivers.get(name) ⇒ <code>[Driver](#AnyBoard.Driver)</code>
-Returns deck with given name
+Returns driver with given name
 
 **Kind**: static method of <code>[Drivers](#AnyBoard.Drivers)</code>  
 **Returns**: <code>[Driver](#AnyBoard.Driver)</code> - driver with given name (or undefined if non-existent)  
@@ -689,6 +885,18 @@ Returns deck with given name
 | Param | Type | Description |
 | --- | --- | --- |
 | name | <code>string</code> | name of driver |
+
+<a name="AnyBoard.Drivers.getCompatibleDriver"></a>
+#### Drivers.getCompatibleDriver(type, compatibility) ⇒ <code>[Driver](#AnyBoard.Driver)</code>
+Returns driver of certain type that has a certain compatibility
+
+**Kind**: static method of <code>[Drivers](#AnyBoard.Drivers)</code>  
+**Returns**: <code>[Driver](#AnyBoard.Driver)</code> - compatible driver (or undefined if non-existent)  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| type | <code>string</code> | name of driver |
+| compatibility | <code>string</code> &#124; <code>object</code> | name of driver |
 
 <a name="AnyBoard.TokenManager"></a>
 ### AnyBoard.TokenManager
