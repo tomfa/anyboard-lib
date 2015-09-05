@@ -55,6 +55,7 @@
             };
         }
         return function(token, data, win, fail) {
+            if (typeof data === 'string') data = beanBluetooth._stringToUint8(data);
             var newData = new Uint8Array(data.length+1);
             newData[0] = functionId;
             for (var index in data) {
@@ -82,7 +83,13 @@
         HAS_RFID: 71,
         HAS_NFC: 72,
         HAS_ACCELEROMETER: 73,
-        HAS_TEMPERATURE: 74
+        HAS_TEMPERATURE: 74,
+        HAS_PRINT: 75,
+        PRINT_FEED: 137,
+        PRINT_JUSTIFY: 138,
+        PRINT_SET_SIZE: 139,
+        PRINT_WRITE: 140,
+        PRINT_NEWLINE: 141
     };
 
 
@@ -181,29 +188,28 @@
             USE_CACHE),
         HAS_PRINT: beanBluetooth._GenericSend(
             "HAS_PRINT",
-            74,
+            beanBluetooth._CMD_CODE.HAS_PRINT,
             NO_PARAMS,
-            USE_CACHE
-        ),
+            USE_CACHE),
         PRINT_FEED: beanBluetooth._GenericSend(
             "PRINT_FEED",
-            137,
+            beanBluetooth._CMD_CODE.PRINT_FEED,
             NO_PARAMS),
         PRINT_JUSTIFY: beanBluetooth._GenericSend(
             "PRINT_JUSTIFY",
-            138,
-            true),
+            beanBluetooth._CMD_CODE.PRINT_JUSTIFY,
+            HAS_PARAMS),
         PRINT_SET_SIZE: beanBluetooth._GenericSend(
             "PRINT_SET_SIZE",
-            139,
-            true),
+            beanBluetooth._CMD_CODE.PRINT_SET_SIZE,
+            HAS_PARAMS),
         PRINT_WRITE: beanBluetooth._GenericSend(
             "PRINT_WRITE",
-            140,
-            true),
+            beanBluetooth._CMD_CODE.PRINT_WRITE,
+            HAS_PARAMS),
         PRINT_NEWLINE: beanBluetooth._GenericSend(
             "PRINT_NEWLINE",
-            141,
+            beanBluetooth._CMD_CODE.PRINT_NEWLINE,
             NO_PARAMS)
     };
     /**
@@ -319,30 +325,44 @@
     };
 
     beanBluetooth.print = function (token, string, win, fail) {
+        if (token._isPrinting) {
+            setTimeout(
+                function(){beanBluetooth.print(token, string, win, fail)}
+                , 3000
+            );
+            return;
+        }
+        token._isPrinting = true;
         var commands = {
-            "##l": function() {COMMANDS.PRINT_JUSTIFY(token, 'l')} ,
-            "##c": function() {COMMANDS.PRINT_JUSTIFY(token, 'c')} ,
-            "##r": function() {COMMANDS.PRINT_JUSTIFY(token, 'r')} ,
-            "##L": function() {COMMANDS.PRINT_SET_SIZE(token, 'L')} ,
-            "##S": function() {COMMANDS.PRINT_SET_SIZE(token, 'S')} ,
-            "##M": function() {COMMANDS.PRINT_SET_SIZE(token, 'M')} ,
-            "##f": function() {COMMANDS.PRINT_FEED(token)},
-            "##n": function() {COMMANDS.PRINT_NEWLINE(token)}
+            "##l": function() {beanBluetooth._COMMANDS.PRINT_JUSTIFY(token, 'l')} ,
+            "##c": function() {beanBluetooth._COMMANDS.PRINT_JUSTIFY(token, 'c')} ,
+            "##r": function() {beanBluetooth._COMMANDS.PRINT_JUSTIFY(token, 'r')} ,
+            "##L": function() {beanBluetooth._COMMANDS.PRINT_SET_SIZE(token, 'L')} ,
+            "##S": function() {beanBluetooth._COMMANDS.PRINT_SET_SIZE(token, 'S')} ,
+            "##M": function() {beanBluetooth._COMMANDS.PRINT_SET_SIZE(token, 'M')} ,
+            "##f": function() {beanBluetooth._COMMANDS.PRINT_FEED(token)},
+            "##n": function() {beanBluetooth._COMMANDS.PRINT_NEWLINE(token)}
         };
 
         var run = function(inc) {
-            if (!inc) return;
+            if (!inc) {
+                token._isPrinting = false;
+                win && win();
+                return;
+            }
             var remains = "";
             var command;
+            var sleep = 800;
 
             var firstpos = inc.indexOf("##");
             if (firstpos === -1) {
-                COMMANDS.PRINT_WRITE(token, inc.substr(0, 12))
+                beanBluetooth._COMMANDS.PRINT_WRITE(token, inc.substr(0, 12));
                 remains = inc.substr(12);
+                sleep = 2000;
             } else if (firstpos !== 0) {
-                var textPart = inc.substr(0, Math.min(12, firstpos));
-                COMMANDS.PRINT_WRITE(token, textPart);
+                beanBluetooth._COMMANDS.PRINT_WRITE(token, inc.substr(0, Math.min(12, firstpos)));
                 remains = inc.substr(Math.min(12, firstpos));
+                sleep = 2000;
             } else {
                 command = inc.substr(0, 3);
                 remains = inc.substr(3);
@@ -350,7 +370,9 @@
                     commands[command]();
                 }
             }
-            run(remains);
+            setTimeout(function(){
+                run(remains);
+            }, sleep)
         };
 
         run(string);
@@ -377,106 +399,6 @@
     };
 
     /**
-     * Polls Bean to see if it is available to process new function
-     * - If data is received, it triggers an event on the token.
-     * - It sets of the next function in queue if one is available.
-     * - It calls itself if not completed, in order to check later
-     * - It calls itself if it sets of a new function
-     */
-    beanBluetooth.runSendQueueCheck = function(token) {
-
-        var triggerFunction = function(uint8array) {
-            var cmd = uint8array[0];
-            var strData = "";
-            var i;
-            switch (cmd) {
-                case beanBluetooth._CMD_CODE.GET_BATTERY_STATUS:
-                    for (var i = 1; i < uint8array.length; i++)
-                        strData += String.fromCharCode(uint8array[i])
-                    token.trigger('GET_BATTERY_STATUS', {"value": strData});
-                    break;
-                case beanBluetooth._CMD_CODE.MOVE:
-                    token.trigger('MOVE', {"value": uint8array[1], "newTile": uint8array[1], "oldTile": uint8array[2]});
-                    break;
-                case beanBluetooth._CMD_CODE.GET_NAME:
-                    for (var i = 1; i < uint8array.length; i++)
-                        strData += String.fromCharCode(uint8array[i])
-                    token.trigger('GET_NAME', {"value": strData});
-                    break;
-                case beanBluetooth._CMD_CODE.GET_VERSION:
-                    for (var i = 1; i < uint8array.length; i++)
-                        strData += String.fromCharCode(uint8array[i])
-                    token.trigger('GET_VERSION', {"value": strData});
-                    break;
-                case beanBluetooth._CMD_CODE.GET_UUID:
-                    for (var i = 1; i < uint8array.length; i++)
-                        strData += String.fromCharCode(uint8array[i])
-                    token.trigger('GET_UUID', {"value": strData});
-                    break;
-                case beanBluetooth._CMD_CODE.LED_BLINK:
-                    token.trigger('LED_BLINK');
-                    break;
-                case beanBluetooth._CMD_CODE.LED_OFF:
-                    token.trigger('LED_OFF');
-                    break;
-                case beanBluetooth._CMD_CODE.LED_ON:
-                    token.trigger('LED_ON');
-                    break;
-                case beanBluetooth._CMD_CODE.HAS_LED:
-                    token.trigger('HAS_LED', {"value": uint8array[1]})
-                    break;
-                case beanBluetooth._CMD_CODE.HAS_LED_COLOR:
-                    token.trigger('HAS_LED_COLOR', {"value": uint8array[1]})
-                    break;
-                case beanBluetooth._CMD_CODE.HAS_VIBRATION:
-                    token.trigger('HAS_VIBRATION', {"value": uint8array[1]})
-                    break;
-                case beanBluetooth._CMD_CODE.HAS_COLOR_DETECTION:
-                    token.trigger('HAS_COLOR_DETECTION', {"value": uint8array[1]})
-                    break;
-                case beanBluetooth._CMD_CODE.HAS_LED_SCREEN:
-                    token.trigger('HAS_LED_SCREEN', {"value": uint8array[1]})
-                    break;
-                case beanBluetooth._CMD_CODE.HAS_RFID:
-                    token.trigger('HAS_RFID', {"value": uint8array[1]})
-                    break;
-                case beanBluetooth._CMD_CODE.HAS_NFC:
-                    token.trigger('HAS_NFC', {"value": uint8array[1]})
-                    break;
-                case beanBluetooth._CMD_CODE.HAS_ACCELEROMETER:
-                    token.trigger('HAS_ACCELEROMETER', {"value": uint8array[1]})
-                    break;
-                case beanBluetooth._CMD_CODE.HAS_TEMPERATURE:
-                    token.trigger('HAS_TEMPERATURE', {"value": uint8array[1]})
-                    break;
-                default:
-                    token.trigger('INVALID_DATA_RECEIVE', {"value": uint8array});
-            }
-        };
-
-        var completeFunction = function(data) {
-            clearTimeout(token.lastSendReference);
-            data = new Uint8Array(data)
-            if (data.hasOwnProperty(0) && data[0] != 0) {  // Some function has completed
-                triggerFunction(data); // Signal of event
-                token.sendQueue.shift(); // Remove first (completed) function from queue
-
-                if (token.sendQueue.length > 0) { // If there's more functions queued
-                    token.sendQueue[0]();  // Send next function off
-
-                    // Check for response for new function in 800 ms
-                    token.lastSendReference = setTimeout( function() { beanBluetooth.runSendQueueCheck(token); }, 800);
-                }
-            }
-            else {  // Check for response in 800 ms
-                token.lastSendReference = setTimeout( function() { beanBluetooth.runSendQueueCheck(token); }, 800);
-            }
-        };
-
-        this.readScratchBank(token, 2, completeFunction, completeFunction)
-    };
-
-    /**
      * Sending data to bean.
      *
      * See https://github.com/PunchThrough/bean-documentation/blob/master/app_message_types.md
@@ -489,7 +411,6 @@
      * @param fail
      */
     beanBluetooth.rawSend = function(token, data, win, fail) {
-
         // 6 = length+reserved+messageId+crc.
         var gstPacketLength = data.byteLength + 6;
         var buffer = this._gtBuffer(token, gstPacketLength);
@@ -568,15 +489,29 @@
             AnyBoard.Logger.warn("cannot send data of length over 13 byte.", this);
         }
 
-        beanBluetooth.rawSend(token, data, win, fail);
+        if (token.sendQueue.length === 0) {  // this was first command
+            token.sendQueue.push(function(){ beanBluetooth.rawSend(token, data, win, fail); });
+            beanBluetooth.rawSend(token, data, win, fail);
 
-        //if (token.sendQueue.length === 0) {  // this was first command
-        //    beanBluetooth.rawSend(token, data, win, fail);
-        //    token.sendQueue.push(function(){ beanBluetooth.rawSend(token, data, win, fail); });
-        //    setTimeout( function() { beanBluetooth.runSendQueueCheck(token); }, 800);
-        //} else {
-        //    token.sendQueue.push(function(){ beanBluetooth.rawSend(token, data, win, fail); });
-        //}
+        } else {
+            token.sendQueue.push(function(){ beanBluetooth.rawSend(token, data, win, fail); });
+
+            // Disregards existing queue if it takes more than 2000ms
+            var randomToken = Math.random();
+            token.randomToken = randomToken;
+
+
+            setTimeout(function() {
+                if (token.randomToken == randomToken) { // Queuehandler Hung up
+
+                    token.sendQueue.shift(); // Remove function from queue
+                    if (token.sendQueue.length > 0) {  // If there's more functions queued
+                        token.sendQueue[0]();  // Send next function off
+                    }
+                }
+            }, 2000)
+        }
+
     };
 
     /**
@@ -929,6 +864,24 @@
                 case beanBluetooth._CMD_CODE.HAS_TEMPERATURE:
                     token.trigger('HAS_TEMPERATURE', {"value": uint8array[1]})
                     break;
+                case beanBluetooth._CMD_CODE.HAS_PRINT:
+                    token.trigger('HAS_PRINT', {"value": uint8array[1]})
+                    break;
+                case beanBluetooth._CMD_CODE.PRINT_FEED:
+                    token.trigger('PRINT_FEED', {"value": uint8array[1]})
+                    break;
+                case beanBluetooth._CMD_CODE.PRINT_JUSTIFY:
+                    token.trigger('PRINT_JUSTIFY', {"value": uint8array[1]})
+                    break;
+                case beanBluetooth._CMD_CODE.PRINT_SET_SIZE:
+                    token.trigger('PRINT_SET_SIZE', {"value": uint8array[1]})
+                    break;
+                case beanBluetooth._CMD_CODE.PRINT_WRITE:
+                    token.trigger('PRINT_WRITE', {"value": uint8array[1]})
+                    break;
+                case beanBluetooth._CMD_CODE.PRINT_NEWLINE:
+                    token.trigger('PRINT_NEWLINE', {"value": uint8array[1]})
+                    break;
                 default:
                     token.trigger('INVALID_DATA_RECEIVE', {"value": uint8array});
             }
@@ -939,7 +892,6 @@
                 token.sendQueue[0]();  // Send next function off
             }
         };
-
 
         this._subscribe(token, cb);
     };

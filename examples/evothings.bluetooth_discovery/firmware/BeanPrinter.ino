@@ -55,8 +55,8 @@ const uint8_t HAS_LED_SCREEN       = 68;
 const uint8_t HAS_RFID             = 71;
 const uint8_t HAS_NFC              = 72;
 const uint8_t HAS_ACCELEROMETER    = 73;
-const uint8_t HAS_PRINT            = 74;
-const uint8_t HAS_TEMPERATURE      = 75;
+const uint8_t HAS_TEMPERATURE      = 74;
+const uint8_t HAS_PRINT            = 75;
 const uint8_t LED_OFF              = 128;
 const uint8_t LED_ON               = 129;
 const uint8_t LED_BLINK            = 130;
@@ -109,8 +109,7 @@ void loop() {
 }
 
 void send_uint8(uint8_t *data, int length) {
-    // Serial.write(data, length); // Can't find out how to read programatically
-    sendData[length] = data[length];
+    Serial.write(data, length);
 }
 
 void send_string(uint8_t command, char* string) {
@@ -125,6 +124,7 @@ void send_string(uint8_t command, char* string) {
 void parse(uint8_t command) {
     memset(sendData, 0, sizeof(sendData));
     sendData[0] = command;
+
     switch (command) {
         case GET_NAME:
             send_string(GET_NAME, NAME);
