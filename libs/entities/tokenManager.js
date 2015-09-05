@@ -136,12 +136,12 @@ AnyBoard.BaseToken.prototype.trigger = function(eventName, eventOptions) {
     if (this.listeners[eventName])
         for (var i in this.listeners[eventName]) {
             if (this.listeners[eventName].hasOwnProperty(i))
-                this.listeners[eventName][i](this, eventOptions);
+                this.listeners[eventName][i](eventOptions);
         }
     if (this.onceListeners[eventName]) {
         for (var j in this.onceListeners[eventName]) {
             if (this.onceListeners[eventName].hasOwnProperty(j))
-                this.onceListeners[eventName][j](this, eventOptions);
+                this.onceListeners[eventName][j](eventOptions);
         }
         this.onceListeners[eventName] = [];
     }
@@ -224,7 +224,8 @@ AnyBoard.BaseToken.prototype.getFirmwareName = function(win, fail) {
         AnyBoard.Logger.warn('This token has not implemented getName', this);
         fail && fail('This token has not implemented getName');
     } else {
-        this.driver.getName(this, function(data){ win && win(data.value); }, fail);
+        this.driver.getName(this, function(data){
+            win && win(data.value); }, fail);
     }
 };
 
@@ -238,7 +239,8 @@ AnyBoard.BaseToken.prototype.getFirmwareVersion = function(win, fail) {
         AnyBoard.Logger.warn('This token has not implemented getVersion', this);
         fail && fail('This token has not implemented getVersion');
     } else {
-        this.driver.getVersion(this, function(data){ win && win(data.value); }, fail);
+        this.driver.getVersion(this, function(data){
+            win && win(data.value); }, fail);
     }
 };
 

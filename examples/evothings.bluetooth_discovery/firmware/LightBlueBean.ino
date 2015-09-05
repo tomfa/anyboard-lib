@@ -14,6 +14,7 @@ String beanName = "AnyBoard Bean Pawn";
 const int RED_LED_PIN   = 2;
 const int GREEN_LED_PIN = 3;
 const int BLUE_LED_PIN  = 4;
+const uint8_t sendDataScratch = 2;
 const uint8_t ledScratch = 3;
 const uint8_t temperatureScratch = 4;
 const uint8_t accelerationScratch = 5;
