@@ -24,12 +24,13 @@
 	<script src="cordova.js"></script>
 
     <!-- AnyBoard libraries -->
-	<script src="libs/AnyBoard.min.js"></script>
+    <script src="dist/AnyBoard.min.js"></script>
 
     <!-- Bluetooth driver and dependencies-->
     <script src="libs/evothings/evothings.js"></script>
     <script src="libs/evothings/easyble/easyble.js"></script>
-	<script src="drivers/bean.evothings.bluetooth.js"></script>
+    <script src="drivers/discovery.evothings.bluetooth.js"></script>
+    <script src="drivers/bean.evothings.bluetooth.js"></script>
     <script src="drivers/rfduino.evothings.bluetooth.js"></script>
 
 	<script>
@@ -61,27 +62,30 @@
 
                     // Add listener to be executed if the token connects
                     token.on('connect', function() {
-                        document.getElementById(token.name).className = 'green';})
+                        document.getElementById(token.name).className = 'green';
+                    });
 
                     // Add listener to be executed if the token disconnects
                     token.on('disconnect', function() {
                         document.getElementById(token.name).className = 'red';
-                    })
+                    });
                 }
-
             },
 
             // Attempts to connect to token.
             connect: function(tokenName) {
                 var token = this.devices[tokenName];
+
                 // If already connecting, stop
                 if (document.getElementById(tokenName).className == 'blue')
                     return;
+
                 // If already connected, attempt to print
                 if (document.getElementById(tokenName).className == 'green') {
                     this.print(token);
                     return;
                 }
+
                 // Signal that we're attempting to connect
                 document.getElementById(tokenName).className = 'blue';
 
@@ -102,14 +106,17 @@
 <body ontouchstart="">
 	<h1>AnyToken Library Demo</h1>
     <div>
-        <p>Demo of AnyToken library for printing
+        <p>
+            Demo of AnyToken library for printing
         </p>
-    <p>
-    Click on the black button to discover devices. Devices will pop up as new grey buttons with their name on it.
-    Click the name button to attempt to connect. It will turn <em>blue</em> to signal connection is pending, and <em>green</em> when connected. <em>Red</em> signals it being/having disconnected.
-    </p>
+        <p>
+            Click on the black button to discover devices. Devices will pop up as new grey buttons with their name on it.
+            Click the name button to attempt to connect. It will turn <em>blue</em> to signal connection is pending, and <em>green</em> when connected. <em>Red</em> signals it being/having disconnected.
+        </p>
 
-        <p><em>Click a bean with updated firmware (firmware/BeanPrinter) in order to send a (complex) string for printing</em></p>
+        <p>
+            <em>Click a bean with updated firmware (firmware/BeanPrinter) in order to send a (complex) string for printing</em>
+        </p>
 	</div>
 
 	<button type="button" class="black" onclick="app.discover()">

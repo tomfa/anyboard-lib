@@ -64,7 +64,7 @@ Global variable AnyBoard.
     * [.hasLedColor([win], [fail])](#AnyBoard.BaseToken+hasLedColor)
     * [.hasVibration([win], [fail])](#AnyBoard.BaseToken+hasVibration)
     * [.hasColorDetection([win], [fail])](#AnyBoard.BaseToken+hasColorDetection)
-    * [.hasLedSceen([win], [fail])](#AnyBoard.BaseToken+hasLedSceen)
+    * [.hasLedScreen([win], [fail])](#AnyBoard.BaseToken+hasLedScreen)
     * [.hasRfid([win], [fail])](#AnyBoard.BaseToken+hasRfid)
     * [.hasNfc([win], [fail])](#AnyBoard.BaseToken+hasNfc)
     * [.hasAccelometer([win], [fail])](#AnyBoard.BaseToken+hasAccelometer)
@@ -590,7 +590,7 @@ Returns the common resources and minimum amount between a dictionary of resource
   * [.hasLedColor([win], [fail])](#AnyBoard.BaseToken+hasLedColor)
   * [.hasVibration([win], [fail])](#AnyBoard.BaseToken+hasVibration)
   * [.hasColorDetection([win], [fail])](#AnyBoard.BaseToken+hasColorDetection)
-  * [.hasLedSceen([win], [fail])](#AnyBoard.BaseToken+hasLedSceen)
+  * [.hasLedScreen([win], [fail])](#AnyBoard.BaseToken+hasLedScreen)
   * [.hasRfid([win], [fail])](#AnyBoard.BaseToken+hasRfid)
   * [.hasNfc([win], [fail])](#AnyBoard.BaseToken+hasNfc)
   * [.hasAccelometer([win], [fail])](#AnyBoard.BaseToken+hasAccelometer)
@@ -772,8 +772,8 @@ Checks whether or not the token has ColorDetection
 | [win] | <code>function</code> | callback function to be called upon successful execution |
 | [fail] | <code>function</code> | callback function to be executed upon failure |
 
-<a name="AnyBoard.BaseToken+hasLedSceen"></a>
-#### baseToken.hasLedSceen([win], [fail])
+<a name="AnyBoard.BaseToken+hasLedScreen"></a>
+#### baseToken.hasLedScreen([win], [fail])
 Checks whether or not the token has LedSceen
 
 **Kind**: instance method of <code>[BaseToken](#AnyBoard.BaseToken)</code>  

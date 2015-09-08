@@ -1,8 +1,22 @@
-// Token's firmware working copy
-// Code based on RFDUINO hardware, uses C char arrays
+/*
+ * AnyBoard Pawn firmware
+ * Code based on RFduino (http://www.rfduino.com/) and
+ * AdaFruit Color Sensor TCS34725 (https://www.adafruit.com/products/1334)
+ *
+ * Dependencies: RFduinoBLE.h and Wire.h (https://github.com/RFduino/RFduino)
+ *               Adafruit_TCS34725.h (https://github.com/adafruit/Adafruit_TCS34725)
+ *
+ * Reference: https://cdn.sparkfun.com/datasheets/Dev/RFduino/rfduino.ble_.programming.reference.pdf
+ *
+ * The bean parses incoming arrays of uint8 (numbers 0-255) over bluetooth.
+ *      [cmd, data, data, data etc...]
+ *
+ * If the cmd matches one of the COMMANDS specified, it will execute that command and respond back
+ * Else it will respond 0 back
+ *
+ */
 
-#include <ArduinoJson.h>
-#include <RFduinoBLE.h>
+#include <RFduinoBLE.h>  //
 #include <Wire.h>
 #include "Adafruit_TCS34725.h"
 #include <string.h>
@@ -26,6 +40,7 @@ uint16_t r, g, b, color, colorTemp, lux;
 
 /* Initialise color sensor with default values (int time = 2.4ms, gain = 1x) */
 // Adafruit_TCS34725 tcs = Adafruit_TCS34725();
+
 /* Initialise color sensor with specific int time and gain values */
 Adafruit_TCS34725 tcs = Adafruit_TCS34725(TCS34725_INTEGRATIONTIME_700MS, TCS34725_GAIN_1X);
 
@@ -74,23 +89,23 @@ void setup() {
     RFduinoBLE.begin();
 }
 
-void loop()
-{   
-    //Read color codes, based on the code in https://learn.adafruit.com/adafruit-color-sensors/programming
+// Loops and reads color. Sends signal to client if detecting a changed color
+void loop() {
+    // Read color codes, based on the code in https://learn.adafruit.com/adafruit-color-sensors/programming
 
     tcs.getRawData(&r, &g, &b, &color);
     colorTemp = tcs.calculateColorTemperature(r, g, b);
 
-    //Color hex translation to sector IDs
-    // Sector_NAMES     Sector_ID                    Color_ID (approx value given by the sensor)
-    // START             1            12228
-    // STOP             2            5737
-    // A                3            18330
-    // B                4            9560
-    // C                5            8550
-    // D                6            6806
-    // E                7            5920
-    // F                8            15454
+    // Color hex translation to sector IDs
+    // Sector_NAMES     Sector_ID       Color_ID (approx value given by the sensor)
+    // START            1               12228
+    // STOP             2               5737
+    // A                3               18330
+    // B                4               9560
+    // C                5               8550
+    // D                6               6806
+    // E                7               5920
+    // F                8               15454
 
     if (color > 12000 && color < 13000)
         current_sector_ID = 1;
@@ -109,23 +124,21 @@ void loop()
     else if (color > 15000 && color < 16000)
         current_sector_ID = 8;
 
-
-      //Sends sectors ID of the sector that has been left and the sector that has been reached in formatted JSON
+    // Sends sectors ID of the sector that has been left and the sector that has been reached
     if (current_sector_ID != last_sector_ID) {
         sendData[0] = MOVE;
         sendData[1] = current_sector_ID;
         sendData[2] = last_sector_ID;
         RFduinoBLE.send((char*) sendData, 3);
 
-        //Update sector_ID variables
+        // Update sector_ID variables
         last_sector_ID = current_sector_ID;
     }
     delay(300);
 }
 
-// Turns on the LED on a specific color: r=red, g=gree, etc..
+// Turns on LED
 void ledOn(int r, int g, int b) {
-
     if (r < 127) {
         digitalWrite(RED_LED_PIN, LOW);
     } else {
@@ -143,10 +156,12 @@ void ledOn(int r, int g, int b) {
     }
 }
 
+// Turns off LED
 void ledOff() {
     ledOn(0,0,0);
 }
 
+// Blinks LED
 void ledBlink(int r, int g, int b, int delayTime) {
     ledOn(r, g, b);
     delay(delayTime*10);
@@ -171,23 +186,24 @@ void ledBlink(int r, int g, int b, int delayTime) {
     ledOn(r, g, b);
 }
 
-void RFduinoBLE_onAdvertisement()
-{
+// Code that executes everytime the radio advertises
+void RFduinoBLE_onAdvertisement() {
     digitalWrite(RED_LED_PIN, LOW);
     digitalWrite(GREEN_LED_PIN, LOW);
     digitalWrite(BLUE_LED_PIN, LOW);
 }
 
-void RFduinoBLE_onConnect()
-{
+// Code that executes everytime token is being connected to
+void RFduinoBLE_onConnect() {
     connected = true;
 }
 
-void RFduinoBLE_onDisconnect()
-{
+// Code that executes everytime token is being disconnected from
+void RFduinoBLE_onDisconnect() {
     connected = false;
 }
 
+// Sends data to the connected client
 void send_uint8(uint8_t *data, int length) {
     char charData[length];
     for (i = 0; i < length; i++) {
@@ -196,6 +212,7 @@ void send_uint8(uint8_t *data, int length) {
     RFduinoBLE.send(charData, length);
 }
 
+// Sends data (uint8 + String) to the connected client
 void send_string(uint8_t command, char* string) {
     len = strlen(string);
     sendData[0] = command;
@@ -205,18 +222,33 @@ void send_string(uint8_t command, char* string) {
     send_uint8(sendData, len+1);
 }
 
+// Code to run upon receiving data over bluetooth
 void RFduinoBLE_onReceive(char *data, int length) {
+
+    // Stores the first integer to cmd variable
     cmd = data[0];
-    getData[20] = {0};
+
+    // Resets the incoming data array
+    memset(getData, 0, sizeof(getData));
+
+    // Stores the rest of the incoming data in getData array
     for (i = 1; i < length; i++) {
         getData[i-1] = data[i];
     }
+
+    // Executes the command
     parse(cmd);
 }
 
+// Executes command
 void parse(uint8_t command) {
-    sendData[20] = {0};
+
+    // Resets the outcoming data array
+    memset(sendData, 0, sizeof(sendData));
+
+    // Sets the command as the first data to send
     sendData[0] = command;
+
     switch (command) {
         case GET_NAME:
             send_string(GET_NAME, NAME);
@@ -228,8 +260,6 @@ void parse(uint8_t command) {
             send_string(GET_UUID, UUID);
             break;
         case LED_ON:
-            ledOn(getData[0], getData[1], getData[2]);
-            ledOff();
             ledOn(getData[0], getData[1], getData[2]);
             send_uint8(sendData, 1);
             break;

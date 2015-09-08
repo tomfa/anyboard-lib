@@ -7,7 +7,7 @@
 	<meta name="viewport" content="width=device-width, user-scalable=no
 		initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0" />
 
-	<title>AnyToken Subscribe Demo</title>
+	<title>AnyToken Color Detection Demo</title>
 
 	<style>
 		@import 'ui/css/evothings-app.css';
@@ -24,12 +24,13 @@
 	<script src="cordova.js"></script>
 
     <!-- AnyBoard libraries -->
-	<script src="libs/AnyBoard.min.js"></script>
+    <script src="dist/AnyBoard.min.js"></script>
 
     <!-- Bluetooth driver and dependencies-->
     <script src="libs/evothings/evothings.js"></script>
     <script src="libs/evothings/easyble/easyble.js"></script>
-	<script src="drivers/bean.evothings.bluetooth.js"></script>
+    <script src="drivers/discovery.evothings.bluetooth.js"></script>
+    <script src="drivers/bean.evothings.bluetooth.js"></script>
     <script src="drivers/rfduino.evothings.bluetooth.js"></script>
 
 	<script>
@@ -75,12 +76,16 @@
             // Attempts to connect to token.
             connect: function(tokenName) {
                 var token = this.devices[tokenName];
+
                 // If already connecting, stop
                 if (document.getElementById(tokenName).className == 'blue')
                     return;
+
                 // If already connected, attempt to send green led command
                 if (document.getElementById(tokenName).className == 'green') {
                     if (!this.hasSubscribed) {
+
+                        // Add listener to be executed if the token signals a move
                         token.on('MOVE', function(token, options){
                             hyper.log('Moved from ' + options.oldTile);
                             hyper.log('Moved to ' + options.newTile);
@@ -103,14 +108,16 @@
 <body ontouchstart="">
 	<h1>AnyToken Subscribe Demo</h1>
     <div>
-        <p>Demo of AnyToken library intended for rfduino, displaying the color reading in action.
+        <p>
+            Demo of AnyToken library intended for rfduino, displaying the color reading in action.
         </p>
-    <p>
-    Click on the black button to discover devices. Devices will pop up as new grey buttons with their name on it.
-    Click the name button to attempt to connect. It will turn <em>blue</em> to signal connection is pending, and <em>green</em> when connected. (<em>Red</em> signals it being/having disconnected.)
-    </p>
-
-        <p>Click a rfduino with updated firmware (irmware/RFduino.ino) in order to subscribe to its 'MOVE' events. Logging using hyper.log shows previous and current tile on change.</p>
+        <p>
+            Click on the black button to discover devices. Devices will pop up as new grey buttons with their name on it.
+            Click the name button to attempt to connect. It will turn <em>blue</em> to signal connection is pending, and <em>green</em> when connected. (<em>Red</em> signals it being/having disconnected.)
+        </p>
+        <p>
+            Click a rfduino with updated firmware (irmware/RFduino.ino) in order to subscribe to its 'MOVE' events. Logging using hyper.log shows previous and current color id when changed.
+        </p>
 	</div>
 
 	<button type="button" class="black" onclick="app.discover()">

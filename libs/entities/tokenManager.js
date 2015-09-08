@@ -18,12 +18,10 @@ AnyBoard.TokenManager.setDriver = function(driver) {
     (driver.connect && typeof driver.connect === 'function') || AnyBoard.Logger.warn('Could not find connect() on given driver.', this);
     (driver.disconnect && typeof driver.disconnect === 'function') || AnyBoard.Logger.warn('Could not find disconnect() on given driver', this);
     (driver.scan && typeof driver.scan === 'function') || AnyBoard.Logger.warn('Could not find scan() on given driver', this);
-    (driver.send && typeof driver.send === 'function') || AnyBoard.Logger.warn('Could not find send() on given driver', this);
 
     if ((!this.driver) || (driver.connect && typeof driver.connect === 'function' &&
         driver.disconnect && typeof driver.disconnect === 'function' &&
-        driver.scan && typeof driver.scan === 'function' &&
-        driver.send && typeof driver.send === 'function'))
+        driver.scan && typeof driver.scan === 'function'))
 
         this.driver = driver;
 };

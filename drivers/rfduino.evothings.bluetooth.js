@@ -1,13 +1,20 @@
 "use strict";
 
-/**
- * Driver for evothings.ble based on cordova
- * requires evothings.ble
+/*
+ * anyboard-rfduino-token
+ *
+ * Driver for communicating with AnyBoard Token 1.0 (RFduino) hardware (http://www.rfduino.com/))
+ * Supports RfduinoToken.ino firmware
+ *
+ * Dependencies:
+ *      AnyBoard (...)
+ *      cordova.js (https://cordova.apache.org/)
+ *      evothings.ble (https://github.com/evothings/cordova-ble)
  */
 
 (function(){
     var rfduinoBluetooth = new AnyBoard.Driver({
-        name: 'anyboard-ble-rfduino',
+        name: 'anyboard-rfduino-token',
         description: 'rfduino-driver based off evothings.ble library for Cordova-based apps',
         dependencies: 'evothings.ble',
         version: '0.1',
@@ -21,14 +28,18 @@
         ]
     });
 
-    /**
-     * Internal generic function that returns a function
-     * @param {string} name name of function, so it can be recognized
-     * @param {number} functionId the id of the function call
-     * @param {boolean} hasParams whether or not the function should accept Uint8Array data
-     * @param {boolean} [useCache] whether or not to cache the answer (will not change during run)
-     * @returns {Function} function
-     * @constructor
+    /*
+     * Internal method that generates a send function.
+     * @param {string} name name of functionality. This is what will be used as cache entry, in logs,
+     * @param {number} functionId The integer representation of the function, which will be sent as a command to
+     *      the token. For instance, ledOn is 129.
+     * @param {boolean} [hasParams=false] Whether or not this function accepts data to be sent to the token.
+     *      For instance, ledOn takes parameters for color, while ledOff does not.
+     * @param {boolean} [useCache=false] Whether or not cache should be used in this function.
+     *      If cache is used, function will not send more than one request, no matter how many
+     *      times this function is called. Used for getting token name and functionality (not changing pr token)
+     * @returns {Function} A function that can be called to send a command to the token
+     * @private
      */
     rfduinoBluetooth._GenericSend = function(name, functionId, hasParams, useCache) {
         var tmpId = functionId;
@@ -72,7 +83,7 @@
         }
     };
 
-    // Internal mapping between command and uint8 (1-255) number that corresponds to that command
+    /* Internal mapping from commands to uint8 representations */
     rfduinoBluetooth._CMD_CODE = {
         MOVE: 194,
         GET_NAME: 32,
@@ -93,7 +104,7 @@
         HAS_TEMPERATURE: 74
     };
 
-    // Internal mapping between color strings to Uint8 array of RGB colors
+    /* Internal mapping between color strings to Uint8 array of RGB colors */
     rfduinoBluetooth._COLORS = {
         'red': new Uint8Array([255, 0, 0]),
         'green': new Uint8Array([0, 255, 0]),
@@ -105,7 +116,7 @@
         'off': new Uint8Array([0, 0, 0])
     };
 
-    // Internal mapping and generation of commands
+    /* Internal mapping and generation of commands */
     var NO_PARAMS = false;
     var HAS_PARAMS = true;
     var USE_CACHE = true;
@@ -189,6 +200,24 @@
     };
 
     /**
+     * Attempts to connect to a device and retrieves available services.
+     *
+     * @param {AnyBoard.BaseToken} token token to be connected to
+     * @param {function} win function to be executed upon success
+     * @param {function} fail function to be executed upon failure
+     */
+    rfduinoBluetooth.connect = function (token, win, fail) {
+        var self = this;
+
+        token.device.connect(function(device) {
+            self.getServices(token, win, fail);
+        }, function(errorCode) {
+            token.device.haveServices = false;
+            fail && fail(errorCode);
+        });
+    };
+
+    /**
      * Disconnects from device
      * @param {AnyBoard.BaseToken} token
      */
@@ -230,11 +259,9 @@
             });
 
     };
-    /**
-     * Internal method that unsubscribes from updates from this token
-     * @param token
-     * @param win
-     * @param fail
+
+    /*
+     * Not used method stub. Should be functional
      */
     rfduinoBluetooth._unsubscribe = function(token, win, fail)
     {
@@ -260,11 +287,11 @@
      * on the token class upon receiving data.
      */
     rfduinoBluetooth.initialize = function(token) {
-        var cb = function(uint8array) {
-            var cmd = uint8array[0];
+        var handleReceiveUpdateFromToken = function(uint8array) {
+            var command = uint8array[0];
             var strData = "";
 
-            switch (cmd) {
+            switch (command) {
                 case rfduinoBluetooth._CMD_CODE.GET_BATTERY_STATUS:
                     for (var i = 1; i < uint8array.length; i++)
                         strData += String.fromCharCode(uint8array[i])
@@ -327,15 +354,15 @@
                 default:
                     token.trigger('INVALID_DATA_RECEIVE', {"value": uint8array});
             }
+
+            token.sendQueue.shift(); // Remove function from queue
+            if (token.sendQueue.length > 0) {  // If there's more functions queued
+                token.randomToken = Math.random();
+                token.sendQueue[0]();  // Send next function off
+            }
         };
 
-        token.sendQueue.shift(); // Remove function from queue
-        if (token.sendQueue.length > 0) {  // If there's more functions queued
-            token.randomToken = Math.random();
-            token.sendQueue[0]();  // Send next function off
-        }
-
-        this._subscribe(token, cb);
+        this._subscribe(token, handleReceiveUpdateFromToken);
     };
 
     rfduinoBluetooth.getName = function (token, win, fail) {
@@ -390,7 +417,7 @@
         value = value || 'white';
 
         if (typeof value === 'string' && value in this._COLORS) {
-            this._COMMANDS.LED_ON(token, this._COLORS[value], win, fail);
+            rfduinoBluetooth.ledOn(token, this._COLORS[value], win, fail);
         } else if ((value instanceof Array || value instanceof Uint8Array) && value.length === 3) {
             this._COMMANDS.LED_ON(token, new Uint8Array([value[0], value[1], value[2]]), win, fail);
         } else {
@@ -419,14 +446,14 @@
     };
 
     /**
-     * Internal function to send data to the bean. No validation. No buffering
-     * @param token
-     * @param data
-     * @param win
-     * @param fail
+     * Internal method. Raw sending of data to bean. Does not employ throttling/queueing, nor validates send data.
+     *
+     * @param {AnyBoard.BaseToken} token token that should be sent to
+     * @param {Uint8Array} data data that should be sent to token
+     * @param {Function} win function to be called upon success of sending data
+     * @param {Function} fail function to be called upon failure of sending data
      */
     rfduinoBluetooth.rawSend = function(token, data, win, fail) {
-
         evothings.ble.writeCharacteristic(
             token.device.deviceHandle,
             token.device.serialChar,
@@ -437,15 +464,14 @@
     };
 
     /**
-     * Throttles send functions to the bean. Uses buffer.
+     * Sends data to device. Uses throttling.
+     *
      * @param {AnyBoard.BaseToken} token token to send data to
-     * @param {ArrayBuffer|Uint8Array|string} data data to be sent
-     * @param {function} win function to be executed upon success
-     * @param {function} fail function to be executed upon failure
+     * @param {ArrayBuffer|Uint8Array|String} data data to be sent (max 13 byte)
+     * @param {function} [win] function to be executed upon success
+     * @param {function} [fail] function to be executed upon failure
      */
     rfduinoBluetooth.send = function(token, data, win, fail) {
-
-
         var self = this;
 
         if(!(token.device.haveServices)) {

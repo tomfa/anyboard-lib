@@ -24,11 +24,12 @@
 	<script src="cordova.js"></script>
 
     <!-- AnyBoard libraries -->
-	<script src="libs/AnyBoard.min.js"></script>
+	<script src="dist/AnyBoard.js"></script>
 
     <!-- Bluetooth driver and dependencies-->
     <script src="libs/evothings/evothings.js"></script>
     <script src="libs/evothings/easyble/easyble.js"></script>
+    <script src="drivers/discovery.evothings.bluetooth.js"></script>
 	<script src="drivers/bean.evothings.bluetooth.js"></script>
     <script src="drivers/rfduino.evothings.bluetooth.js"></script>
 
@@ -74,9 +75,11 @@
             // Attempts to connect to token.
             connect: function(tokenName) {
                 var token = this.devices[tokenName];
+
                 // If already connecting, stop
                 if (document.getElementById(tokenName).className == 'blue')
                     return;
+
                 // If already connected, attempt to send green led command
                 if (document.getElementById(tokenName).className == 'green') {
                     this.sendGreenLed(token);
@@ -89,9 +92,26 @@
                 token.connect();
             },
 
-            // Send green led command. Will only work on LightBlue Bean with a certain hardware.
+            // Send green led command. Works on every token with a AnyBoard compatible driver and firmware.
             sendGreenLed: function(token) {
-                token.ledOn("green", function(data){hyper.log(data)},function(data){hyper.log(data)});
+
+                // Function to be executed when LED is successfully turned on
+                var completedFunction = function(data){
+                    hyper.log("We happily set the LED on the token! :D");
+                    hyper.log(data)
+                };
+
+                // Function to be executed upon failure of LED
+                var errorCallback = function(errorMsg) {
+                    hyper.log("Failed to send LED command to token");
+                    hyper.log(errorMsg);
+                };
+
+                // Turns on token led.
+                token.ledOn("green", // Instead of "green" color, on could also use array, e.g. [0, 255, 0]
+                    completedFunction,  // function to be executed when token signals
+                    errorCallback  // function to be executed in case of failure to send command to token
+                );
             }
 
 	    };
@@ -102,14 +122,17 @@
 <body ontouchstart="">
 	<h1>AnyToken LED Demo</h1>
     <div>
-        <p>Demo of AnyToken library that makes use of: 1) Custom Bluetooth Driver, 2) Token discovery, 3) Token connecting, 4) AnyBoard Token listener
+        <p>
+            Demo of AnyToken library that makes use of: 1) Custom Bluetooth Driver, 2) Token discovery, 3) Token connecting, 4) AnyBoard Token listener
         </p>
-    <p>
-    Click on the black button to discover devices. Devices will pop up as new grey buttons with their name on it.
-    Click the name button to attempt to connect. It will turn <em>blue</em> to signal connection is pending, and <em>green</em> when connected. <em>Red</em> signals it being/having disconnected.
-    </p>
+        <p>
+            Click on the black button to discover devices. Devices will pop up as new grey buttons with their name on it.
+            Click the name button to attempt to connect. It will turn <em>blue</em> to signal connection is pending, and <em>green</em> when connected. <em>Red</em> signals it being/having disconnected.
+        </p>
 
-        <p><em>PS: Clicking a green token will attempt to send {"device":"LED","event":"on","color":"green"} to the token. This is adapted to work with LightBlue Bean with a certain firmware, and might not work.</em></p>
+        <p>
+            <em>PS: Clicking a green token will attempt to send {"device":"LED","event":"on","color":"green"} to the token. This is adapted to work with LightBlue Bean with a certain firmware, and might not work.</em>
+        </p>
 	</div>
 
 	<button type="button" class="black" onclick="app.discover()">
