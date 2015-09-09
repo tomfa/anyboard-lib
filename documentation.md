@@ -1,3 +1,27 @@
+## Members
+<dl>
+<dt><a href="#AnyBoard">AnyBoard</a> : <code>object</code></dt>
+<dd><p>Global variable AnyBoard.</p>
+</dd>
+</dl>
+## Functions
+<dl>
+<dt><a href="#onScanWinCallback">onScanWinCallback(token)</a></dt>
+<dd><p>Callback</p>
+</dd>
+<dt><a href="#onScanFailCallback">onScanFailCallback(errorCode)</a></dt>
+<dd><p>Callback</p>
+</dd>
+</dl>
+## Typedefs
+<dl>
+<dt><a href="#onPlayCallback">onPlayCallback</a> : <code>function</code></dt>
+<dd><p>This callback is displayed as used of the Deck class.</p>
+</dd>
+<dt><a href="#onDrawCallback">onDrawCallback</a> : <code>function</code></dt>
+<dd><p>This callback is displayed as part of the Deck class.</p>
+</dd>
+</dl>
 <a name="AnyBoard"></a>
 ## AnyBoard : <code>object</code>
 Global variable AnyBoard.
@@ -13,36 +37,41 @@ Global variable AnyBoard.
     * _instance_
       * [.shuffle()](#AnyBoard.Deck+shuffle)
       * [.initiate(jsonDeck)](#AnyBoard.Deck+initiate)
-      * [.refill(newDeck)](#AnyBoard.Deck+refill)
+      * [.refill([newDeck])](#AnyBoard.Deck+refill)
       * [.onPlay(func)](#AnyBoard.Deck+onPlay)
-      * [.onDraw(func)](#AnyBoard.Deck+onDraw)
+      * [.onDraw(callback)](#AnyBoard.Deck+onDraw)
+      * [.toString()](#AnyBoard.Deck+toString) ⇒ <code>string</code>
     * _static_
       * [.get(name)](#AnyBoard.Deck.get) ⇒ <code>[Deck](#AnyBoard.Deck)</code>
   * [.Card](#AnyBoard.Card)
     * [new AnyBoard.Card(deck, options)](#new_AnyBoard.Card_new)
-    * [.get(cardTitleOrID)](#AnyBoard.Card.get) ⇒ <code>[Card](#AnyBoard.Card)</code>
+    * _instance_
+      * [.toString()](#AnyBoard.Card+toString) ⇒ <code>string</code>
+    * _static_
+      * [.get(cardTitleOrID)](#AnyBoard.Card.get) ⇒ <code>[Card](#AnyBoard.Card)</code>
   * [.Dices](#AnyBoard.Dices)
-    * [new AnyBoard.Dices(eyes, numOfDice)](#new_AnyBoard.Dices_new)
+    * [new AnyBoard.Dices([eyes], [numOfDice])](#new_AnyBoard.Dices_new)
     * [.roll()](#AnyBoard.Dices+roll) ⇒ <code>number</code>
     * [.rollEach()](#AnyBoard.Dices+rollEach) ⇒ <code>Array</code>
   * [.Player](#AnyBoard.Player)
-    * [new AnyBoard.Player(name, options)](#new_AnyBoard.Player_new)
+    * [new AnyBoard.Player(name, [options])](#new_AnyBoard.Player_new)
     * _instance_
-      * [.pay(resources, receivingPlayer)](#AnyBoard.Player+pay) ⇒ <code>boolean</code>
-      * [.trade(giveResources, receiveResources, player)](#AnyBoard.Player+trade) ⇒ <code>boolean</code>
+      * [.pay(resources, [receivingPlayer])](#AnyBoard.Player+pay) ⇒ <code>boolean</code>
+      * [.trade(giveResources, receiveResources, [player])](#AnyBoard.Player+trade) ⇒ <code>boolean</code>
       * [.recieve(resourceSet)](#AnyBoard.Player+recieve)
-      * [.draw(deck, options)](#AnyBoard.Player+draw) ⇒ <code>[Card](#AnyBoard.Card)</code>
-      * [.play(card, customOptions)](#AnyBoard.Player+play) ⇒ <code>boolean</code>
+      * [.draw(deck, [options])](#AnyBoard.Player+draw) ⇒ <code>[Card](#AnyBoard.Card)</code>
+      * [.play(card, [customOptions])](#AnyBoard.Player+play) ⇒ <code>boolean</code>
+      * [.toString()](#AnyBoard.Player+toString) ⇒ <code>string</code>
     * _static_
       * [.get(name)](#AnyBoard.Player.get) ⇒ <code>[Player](#AnyBoard.Player)</code>
   * [.Hand](#AnyBoard.Hand)
     * [new AnyBoard.Hand(player, options)](#new_AnyBoard.Hand_new)
-    * [.has(card, amount)](#AnyBoard.Hand+has) ⇒ <code>boolean</code>
+    * [.has(card, [amount])](#AnyBoard.Hand+has) ⇒ <code>boolean</code>
   * [.Resource](#AnyBoard.Resource)
-    * [new AnyBoard.Resource(name, properties)](#new_AnyBoard.Resource_new)
+    * [new AnyBoard.Resource(name, [properties])](#new_AnyBoard.Resource_new)
     * [.get(name)](#AnyBoard.Resource.get) ⇒ <code>[Resource](#AnyBoard.Resource)</code>
   * [.ResourceSet](#AnyBoard.ResourceSet)
-    * [new AnyBoard.ResourceSet(resources, allowNegative)](#new_AnyBoard.ResourceSet_new)
+    * [new AnyBoard.ResourceSet([resources], [allowNegative])](#new_AnyBoard.ResourceSet_new)
     * [.contains(reqResource)](#AnyBoard.ResourceSet+contains) ⇒ <code>boolean</code>
     * [.add(resourceSet)](#AnyBoard.ResourceSet+add)
     * [.subtract(resourceSet)](#AnyBoard.ResourceSet+subtract) ⇒ <code>boolean</code>
@@ -52,7 +81,7 @@ Global variable AnyBoard.
     * [.isConnected()](#AnyBoard.BaseToken+isConnected) ⇒ <code>boolean</code>
     * [.connect(win, fail)](#AnyBoard.BaseToken+connect) ⇒ <code>boolean</code>
     * [.disconnect()](#AnyBoard.BaseToken+disconnect)
-    * [.trigger(eventName, eventOptions)](#AnyBoard.BaseToken+trigger)
+    * [.trigger(eventName, [eventOptions])](#AnyBoard.BaseToken+trigger)
     * [.on(eventName, callbackFunction)](#AnyBoard.BaseToken+on)
     * [.once(eventName, callbackFunction)](#AnyBoard.BaseToken+once)
     * [.send(data, win, fail)](#AnyBoard.BaseToken+send)
@@ -73,19 +102,18 @@ Global variable AnyBoard.
     * [.ledBlink(value, [win], [fail])](#AnyBoard.BaseToken+ledBlink)
     * [.ledOff([win], [fail])](#AnyBoard.BaseToken+ledOff)
     * [.toString()](#AnyBoard.BaseToken+toString) ⇒ <code>string</code>
-  * [.Drivers](#AnyBoard.Drivers)
-    * [.get(name)](#AnyBoard.Drivers.get) ⇒ <code>[Driver](#AnyBoard.Driver)</code>
+  * [.Drivers](#AnyBoard.Drivers) : <code>Object</code>
+    * [.get(name)](#AnyBoard.Drivers.get) ⇒ <code>[Driver](#AnyBoard.Driver)</code> &#124; <code>undefined</code>
     * [.getCompatibleDriver(type, compatibility)](#AnyBoard.Drivers.getCompatibleDriver) ⇒ <code>[Driver](#AnyBoard.Driver)</code>
   * [.TokenManager](#AnyBoard.TokenManager)
     * [.setDriver(driver)](#AnyBoard.TokenManager.setDriver)
     * [.scan(win, fail, timeout)](#AnyBoard.TokenManager.scan)
     * [.get(address)](#AnyBoard.TokenManager.get) ⇒ <code>[BaseToken](#AnyBoard.BaseToken)</code>
   * [.Logger](#AnyBoard.Logger)
-    * [.message(level, message, sender)](#AnyBoard.Logger.message)
-    * [.warn(message, sender)](#AnyBoard.Logger.warn)
-    * [.error(message, sender)](#AnyBoard.Logger.error)
-    * [.log(message, sender)](#AnyBoard.Logger.log)
-    * [.debug(message, sender)](#AnyBoard.Logger.debug)
+    * [.warn(message, [sender])](#AnyBoard.Logger.warn)
+    * [.error(message, [sender])](#AnyBoard.Logger.error)
+    * [.log(message, [sender])](#AnyBoard.Logger.log)
+    * [.debug(message, [sender])](#AnyBoard.Logger.debug)
 
 <a name="AnyBoard.Driver"></a>
 ### AnyBoard.Driver
@@ -97,9 +125,9 @@ Global variable AnyBoard.
 | name | <code>string</code> | name of the driver |
 | description | <code>string</code> | description of the driver |
 | version | <code>string</code> | version of the driver |
-| dependencies | <code>string</code> | (optional) What if anything the driver depends on. |
-| date | <code>string</code> | (optional) Date upon release/last build. |
-| type | <code>string</code> | Type of driver, e.g. "bluetooth" |
+| dependencies | <code>string</code> | Text describing what, if anything, the driver depends on. |
+| date | <code>string</code> | Date upon release/last build. |
+| type | <code>Array</code> | Array of string describing    Type of driver, e.g. "bluetooth" |
 | compatibility | <code>Array</code> &#124; <code>object</code> &#124; <code>string</code> | An object or string that can be used to deduce compatibiity, or      an array of different compatibilies. |
 | properties | <code>object</code> | dictionary that holds custom attributes |
 
@@ -120,9 +148,9 @@ Represents a single Driver, e.g. for spesific token or bluetooth on operating sy
 | options.description | <code>string</code> | description of the driver |
 | options.version | <code>string</code> | version of the driver |
 | options.type | <code>string</code> | Type of driver, e.g. "bluetooth" |
-| options.compatibility | <code>Array</code> &#124; <code>object</code> &#124; <code>string</code> | An object or string that can be used to deduce compatibiity, or      an array of different compatibilies. |
-| options.dependencies | <code>string</code> | (optional) What if anything the driver depends on. |
-| options.date | <code>string</code> | (optional) Date upon release/last build. |
+| options.compatibility | <code>Array</code> &#124; <code>object</code> &#124; <code>string</code> | An object or string that can be used to deduce compatibiity, or      an array of different compatibilies. How this is used is determined by the set standard driver on TokenManager      that handles scanning for and connecting to tokens. |
+| [options.dependencies] | <code>string</code> | (optional) What if anything the driver depends on. |
+| [options.date] | <code>string</code> | (optional) Date upon release/last build. |
 | options.yourAttributeHere | <code>any</code> | custom attributes, as well as specified ones, are all placed in      driver.properties. E.g. 'heat' would be placed in driver.properties.heat. |
 
 <a name="AnyBoard.Driver+toString"></a>
@@ -138,13 +166,13 @@ Returns a short description of the Driver instance
 | Name | Type | Description |
 | --- | --- | --- |
 | name | <code>string</code> | name of Deck. |
-| cards | <code>Array</code> | complete set of cards in the deck |
-| pile | <code>Array</code> | remaining cards in this pile |
-| usedPile | <code>Array</code> | cards played from this deck |
+| cards | <code>[Array.&lt;Card&gt;](#AnyBoard.Card)</code> | complete set of cards in the deck |
+| pile | <code>Array.&lt;Object&gt;</code> | remaining cards in this pile |
+| usedPile | <code>Array.&lt;Object&gt;</code> | cards played from this deck |
 | autoUsedRefill | <code>boolean</code> | *(default: true)* whether or not to automatically refill pile from usedPile when empty. Is ignored if autoNewRefill is true. |
-| autoNewRefill | <code>boolean</code> | *(default: false)* whether or not to automatically refill pile with a new deck when empty. |
-| playListeners | <code>Array</code> | holds functions to be called when cards in this deck are played |
-| drawListeners | <code>Array</code> | holds functions to be called when cards in this deck are drawn |
+| autoNewRefill | <code>boolean</code> | *(default: false)* whether or not to automatically refill pile with a whole new deck when empty. |
+| playListeners | <code>Array.&lt;function()&gt;</code> | holds functions to be called when cards in this deck are played |
+| drawListeners | <code>Array.&lt;function()&gt;</code> | holds functions to be called when cards in this deck are drawn |
 
 
 * [.Deck](#AnyBoard.Deck)
@@ -152,9 +180,10 @@ Returns a short description of the Driver instance
   * _instance_
     * [.shuffle()](#AnyBoard.Deck+shuffle)
     * [.initiate(jsonDeck)](#AnyBoard.Deck+initiate)
-    * [.refill(newDeck)](#AnyBoard.Deck+refill)
+    * [.refill([newDeck])](#AnyBoard.Deck+refill)
     * [.onPlay(func)](#AnyBoard.Deck+onPlay)
-    * [.onDraw(func)](#AnyBoard.Deck+onDraw)
+    * [.onDraw(callback)](#AnyBoard.Deck+onDraw)
+    * [.toString()](#AnyBoard.Deck+toString) ⇒ <code>string</code>
   * _static_
     * [.get(name)](#AnyBoard.Deck.get) ⇒ <code>[Deck](#AnyBoard.Deck)</code>
 
@@ -166,12 +195,13 @@ Represents a Deck of Cards
 | Param | Type | Description |
 | --- | --- | --- |
 | name | <code>string</code> | name of Deck. This name can be used to retrieve the deck via AnyBoard.Deck.all[name]. |
-| jsonDeck | <code>object</code> | loaded JSON file. See [examples-folder](./examples) for JSON format and loading. |
+| jsonDeck | <code>object</code> | loaded JSON file. See [examples/deck-loading/](./examples/deck-loading) for JSON format and loading. |
 
 <a name="AnyBoard.Deck+shuffle"></a>
 #### deck.shuffle()
 Shuffles the pile of undrawn cards   .
-Pile is automatically shuffled upon construction, and upon initiate(). New cards added upon refill() are also automatically shuffled.
+Pile is automatically shuffled upon construction, and upon initiate().
+New cards added upon refill() are also automatically shuffled.
 
 **Kind**: instance method of <code>[Deck](#AnyBoard.Deck)</code>  
 <a name="AnyBoard.Deck+initiate"></a>
@@ -186,14 +216,14 @@ Is automatically called upon constructing a deck.
 | jsonDeck | <code>object</code> | loaded json file. See [examples-folder](./examples) for example of json file and loading |
 
 <a name="AnyBoard.Deck+refill"></a>
-#### deck.refill(newDeck)
+#### deck.refill([newDeck])
 Manually refills the pile. This is not necessary if autoUsedRefill or autoNewRefill property of deck is true.
 
 **Kind**: instance method of <code>[Deck](#AnyBoard.Deck)</code>  
 
-| Param | Type | Description |
-| --- | --- | --- |
-| newDeck | <code>boolean</code> | *(default: false)* True if to refill with a new deck. False if to refill with played cards (from usedPile) |
+| Param | Type | Default | Description |
+| --- | --- | --- | --- |
+| [newDeck] | <code>boolean</code> | <code>false</code> | *(optional, default: false)* True if to refill with a new deck. False if to refill with played cards (from usedPile) |
 
 <a name="AnyBoard.Deck+onPlay"></a>
 #### deck.onPlay(func)
@@ -203,18 +233,23 @@ Adds functions to be executed upon all Cards in this Deck.
 
 | Param | Type | Description |
 | --- | --- | --- |
-| func | <code>function</code> | function to be executed with the 3 parameters AnyBoard.Card, AnyBoard.Player, (options) when cards are played |
+| func | <code>[onPlayCallback](#onPlayCallback)</code> | callback function to be executed upon play of card from this deck |
 
 <a name="AnyBoard.Deck+onDraw"></a>
-#### deck.onDraw(func)
+#### deck.onDraw(callback)
 Adds functions to be executed upon draw of Card from this Deck
 
 **Kind**: instance method of <code>[Deck](#AnyBoard.Deck)</code>  
 
 | Param | Type | Description |
 | --- | --- | --- |
-| func | <code>function</code> | function to be executed with the 3 parameters AnyBoard.Card, AnyBoard.Player, (options) when cards are drawn |
+| callback | <code>[onDrawCallback](#onDrawCallback)</code> | function to be executed with the 3 parameters AnyBoard.Card, AnyBoard.Player, (options) when cards are drawn |
 
+<a name="AnyBoard.Deck+toString"></a>
+#### deck.toString() ⇒ <code>string</code>
+Sting representation of a dek
+
+**Kind**: instance method of <code>[Deck](#AnyBoard.Deck)</code>  
 <a name="AnyBoard.Deck.get"></a>
 #### Deck.get(name) ⇒ <code>[Deck](#AnyBoard.Deck)</code>
 Returns deck with given name
@@ -241,13 +276,16 @@ Returns deck with given name
 | type | <code>string</code> | type of the card, not used by AnyBoard FrameWork |
 | amount | <code>number</code> | amount of this card its deck |
 | deck | <code>[Deck](#AnyBoard.Deck)</code> | deck that this card belongs to |
-| playListeneres | <code>Array</code> | functions to be called upon play of this spesific card (in addition to playListeners on its belonging deck) |
+| playListeneres | <code>Array</code> | holds functions to be called upon play of this spesific card (in addition to playListeners on its belonging deck) |
 | properties | <code>object</code> | dictionary that holds custom attributes |
 
 
 * [.Card](#AnyBoard.Card)
   * [new AnyBoard.Card(deck, options)](#new_AnyBoard.Card_new)
-  * [.get(cardTitleOrID)](#AnyBoard.Card.get) ⇒ <code>[Card](#AnyBoard.Card)</code>
+  * _instance_
+    * [.toString()](#AnyBoard.Card+toString) ⇒ <code>string</code>
+  * _static_
+    * [.get(cardTitleOrID)](#AnyBoard.Card.get) ⇒ <code>[Card](#AnyBoard.Card)</code>
 
 <a name="new_AnyBoard.Card_new"></a>
 #### new AnyBoard.Card(deck, options)
@@ -255,19 +293,24 @@ Represents a single Card (AnyBoard.Card)
 Read from JSON file provided to Deck class.
 
 
-| Param | Type | Description |
-| --- | --- | --- |
-| deck | <code>[Deck](#AnyBoard.Deck)</code> | deck to which the card belongs |
-| options | <code>object</code> | options for the card |
-| options.title | <code>string</code> | title of the card. |
-| options.description | <code>string</code> | description for the Card |
-| options.color | <code>string</code> | (optional) color of the Card |
-| options.category | <code>string</code> | (optional) category of the card, not used by AnyBoard FrameWork |
-| options.value | <code>number</code> | (optional) value of the card, not used by AnyBoard FrameWork |
-| options.type | <code>string</code> | (optional) type of the card, not used by AnyBoard FrameWork |
-| options.amount | <code>number</code> | (default: 1) amount of this card in the deck |
-| options.yourAttributeHere | <code>any</code> | custom attributes, as well as specified ones, are all placed in card.properties. E.g. 'heat' would be placed in card.properties.heat. |
+| Param | Type | Default | Description |
+| --- | --- | --- | --- |
+| deck | <code>[Deck](#AnyBoard.Deck)</code> |  | deck to which the card belongs |
+| options | <code>object</code> |  | options for the card |
+| options.title | <code>string</code> |  | title of the card. |
+| options.description | <code>string</code> |  | description for the Card |
+| [options.color] | <code>string</code> |  | *(optional)* color of the Card |
+| [options.category] | <code>string</code> |  | *(optional)* category of the card, not used by AnyBoard FrameWork |
+| [options.value] | <code>number</code> |  | *(optional)* value of the card, not used by AnyBoard FrameWork |
+| [options.type] | <code>string</code> |  | *(optional)* type of the card, not used by AnyBoard FrameWork |
+| [options.amount] | <code>number</code> | <code>1</code> | *(optional, default: 1)* amount of this card in the deck |
+| [options.yourAttributeHere] | <code>any</code> |  | custom attributes, as well as specified ones, are all placed in card.properties. E.g. 'heat' would be placed in card.properties.heat. |
 
+<a name="AnyBoard.Card+toString"></a>
+#### card.toString() ⇒ <code>string</code>
+Returns a string representation of the card.
+
+**Kind**: instance method of <code>[Card](#AnyBoard.Card)</code>  
 <a name="AnyBoard.Card.get"></a>
 #### Card.get(cardTitleOrID) ⇒ <code>[Card](#AnyBoard.Card)</code>
 Returns card with given id
@@ -284,19 +327,19 @@ Returns card with given id
 **Kind**: static class of <code>[AnyBoard](#AnyBoard)</code>  
 
 * [.Dices](#AnyBoard.Dices)
-  * [new AnyBoard.Dices(eyes, numOfDice)](#new_AnyBoard.Dices_new)
+  * [new AnyBoard.Dices([eyes], [numOfDice])](#new_AnyBoard.Dices_new)
   * [.roll()](#AnyBoard.Dices+roll) ⇒ <code>number</code>
   * [.rollEach()](#AnyBoard.Dices+rollEach) ⇒ <code>Array</code>
 
 <a name="new_AnyBoard.Dices_new"></a>
-#### new AnyBoard.Dices(eyes, numOfDice)
+#### new AnyBoard.Dices([eyes], [numOfDice])
 Represents a set of game dices that can be rolled to retrieve a random result.
 
 
-| Param | Type | Description |
-| --- | --- | --- |
-| eyes | <code>number</code> | *(default 6)* number of max eyes on a roll with this dice |
-| numOfDice | <code>number</code> | *(default: 1)* number of dices |
+| Param | Type | Default | Description |
+| --- | --- | --- | --- |
+| [eyes] | <code>number</code> | <code>6</code> | *(optional, default: 6)* number of max eyes on a roll with this dice |
+| [numOfDice] | <code>number</code> | <code>1</code> | *(optional, default: 1)* number of dices |
 
 <a name="AnyBoard.Dices+roll"></a>
 #### dices.roll() ⇒ <code>number</code>
@@ -318,61 +361,62 @@ Roll the dices and returns an array of results for each dice
 | Name | Type | Description |
 | --- | --- | --- |
 | hand | <code>[Hand](#AnyBoard.Hand)</code> | hand of cards (Quests) |
-| faction | <code>string</code> | faction (Special abilities or perks) |
+| faction | <code>string</code> | faction (Sp[ecial abilities or perks) |
 | class | <code>string</code> | class (Special abilities or perks) |
 | holds | <code>[ResourceSet](#AnyBoard.ResourceSet)</code> | the resources belonging to this player |
 | color | <code>string</code> | color representation of player |
 
 
 * [.Player](#AnyBoard.Player)
-  * [new AnyBoard.Player(name, options)](#new_AnyBoard.Player_new)
+  * [new AnyBoard.Player(name, [options])](#new_AnyBoard.Player_new)
   * _instance_
-    * [.pay(resources, receivingPlayer)](#AnyBoard.Player+pay) ⇒ <code>boolean</code>
-    * [.trade(giveResources, receiveResources, player)](#AnyBoard.Player+trade) ⇒ <code>boolean</code>
+    * [.pay(resources, [receivingPlayer])](#AnyBoard.Player+pay) ⇒ <code>boolean</code>
+    * [.trade(giveResources, receiveResources, [player])](#AnyBoard.Player+trade) ⇒ <code>boolean</code>
     * [.recieve(resourceSet)](#AnyBoard.Player+recieve)
-    * [.draw(deck, options)](#AnyBoard.Player+draw) ⇒ <code>[Card](#AnyBoard.Card)</code>
-    * [.play(card, customOptions)](#AnyBoard.Player+play) ⇒ <code>boolean</code>
+    * [.draw(deck, [options])](#AnyBoard.Player+draw) ⇒ <code>[Card](#AnyBoard.Card)</code>
+    * [.play(card, [customOptions])](#AnyBoard.Player+play) ⇒ <code>boolean</code>
+    * [.toString()](#AnyBoard.Player+toString) ⇒ <code>string</code>
   * _static_
     * [.get(name)](#AnyBoard.Player.get) ⇒ <code>[Player](#AnyBoard.Player)</code>
 
 <a name="new_AnyBoard.Player_new"></a>
-#### new AnyBoard.Player(name, options)
+#### new AnyBoard.Player(name, [options])
 Represents a Player (AnyBoard.Player)
 
 
 | Param | Type | Description |
 | --- | --- | --- |
 | name | <code>string</code> | name of the player |
-| options | <code>object</code> | *(optional)* options for the player |
-| options.color | <code>string</code> | *(optional)* color representing the player |
-| options.faction | <code>string</code> | *(optional)* faction representing the player |
-| options.class | <code>string</code> | *(optional)* class representing the player |
-| options.yourAttributeHere | <code>any</code> | custom attributes, as well as specified ones, are all placed in player.properties. E.g. 'age' would be placed in player.properties.age. |
+| [options] | <code>object</code> | options for the player |
+| [options.color] | <code>string</code> | color representing the player |
+| [options.faction] | <code>string</code> | faction representing the player |
+| [options.class] | <code>string</code> | class representing the player |
+| [options.yourAttributeHere] | <code>any</code> | custom attributes, as well as specified ones, are all placed in player.properties. E.g. 'age' would be placed in player.properties.age. |
 
 <a name="AnyBoard.Player+pay"></a>
-#### player.pay(resources, receivingPlayer) ⇒ <code>boolean</code>
+#### player.pay(resources, [receivingPlayer]) ⇒ <code>boolean</code>
 Take resources from this player and give to receivingPlayer.
 
 **Kind**: instance method of <code>[Player](#AnyBoard.Player)</code>  
-**Returns**: <code>boolean</code> - whether or not transaction was completed (fale if Player don't hold enough resources)  
+**Returns**: <code>boolean</code> - whether or not transaction was completed (false if Player don't hold enough resources)  
 
 | Param | Type | Description |
 | --- | --- | --- |
 | resources | <code>[ResourceSet](#AnyBoard.ResourceSet)</code> | dictionary of resources |
-| receivingPlayer | <code>[Player](#AnyBoard.Player)</code> | *(optional)* Who shall receive the resources. Omit if not to anyone |
+| [receivingPlayer] | <code>[Player](#AnyBoard.Player)</code> | Who shall receive the resources. Omit if not to anyone (e.g. give to "the bank") |
 
 <a name="AnyBoard.Player+trade"></a>
-#### player.trade(giveResources, receiveResources, player) ⇒ <code>boolean</code>
+#### player.trade(giveResources, receiveResources, [player]) ⇒ <code>boolean</code>
 Trade resources between players/game
 
 **Kind**: instance method of <code>[Player](#AnyBoard.Player)</code>  
-**Returns**: <code>boolean</code> - false if any of the players doesn't hold enough resources  
+**Returns**: <code>boolean</code> - whether or not transaction was completed (false if Player don't hold enough resources)  
 
 | Param | Type | Description |
 | --- | --- | --- |
 | giveResources | <code>[ResourceSet](#AnyBoard.ResourceSet)</code> | resources this player shall give |
 | receiveResources | <code>[ResourceSet](#AnyBoard.ResourceSet)</code> | resources this player receieves |
-| player | <code>[Player](#AnyBoard.Player)</code> | *(optional)* Who shall be traded with. Omit if not to a player, but to game. |
+| [player] | <code>[Player](#AnyBoard.Player)</code> | *(optional)* Who shall be traded with. Omit if not to a player, but to "the bank". |
 
 <a name="AnyBoard.Player+recieve"></a>
 #### player.recieve(resourceSet)
@@ -385,7 +429,7 @@ Receive resource from bank/game. Use pay() when receiving from players.
 | resourceSet | <code>[ResourceSet](#AnyBoard.ResourceSet)</code> | resources to be added to this players bank |
 
 <a name="AnyBoard.Player+draw"></a>
-#### player.draw(deck, options) ⇒ <code>[Card](#AnyBoard.Card)</code>
+#### player.draw(deck, [options]) ⇒ <code>[Card](#AnyBoard.Card)</code>
 Draws a card from a deck and puts it in the hand of the player
 
 **Kind**: instance method of <code>[Player](#AnyBoard.Player)</code>  
@@ -394,20 +438,25 @@ Draws a card from a deck and puts it in the hand of the player
 | Param | Type | Description |
 | --- | --- | --- |
 | deck | <code>[Deck](#AnyBoard.Deck)</code> | deck to be drawn from |
-| options | <code>object</code> | *(optional)* parameters to be sent to the drawListeners on the deck |
+| [options] | <code>object</code> | *(optional)* parameters to be sent to the drawListeners on the deck |
 
 <a name="AnyBoard.Player+play"></a>
-#### player.play(card, customOptions) ⇒ <code>boolean</code>
+#### player.play(card, [customOptions]) ⇒ <code>boolean</code>
 Plays a card from the hand. If the hand does not contain the card, the card is not played and the hand unchanged.
 
 **Kind**: instance method of <code>[Player](#AnyBoard.Player)</code>  
-**Returns**: <code>boolean</code> - isPlayed whether or not the card was played  
+**Returns**: <code>boolean</code> - whether or not the card was played  
 
 | Param | Type | Description |
 | --- | --- | --- |
 | card | <code>[Card](#AnyBoard.Card)</code> | card to be played |
-| customOptions | <code>object</code> | *(optional)* custom options that the play should be played with |
+| [customOptions] | <code>object</code> | *(optional)* custom options that the play should be played with |
 
+<a name="AnyBoard.Player+toString"></a>
+#### player.toString() ⇒ <code>string</code>
+Returns a string representation of the player
+
+**Kind**: instance method of <code>[Player](#AnyBoard.Player)</code>  
 <a name="AnyBoard.Player.get"></a>
 #### Player.get(name) ⇒ <code>[Player](#AnyBoard.Player)</code>
 Returns player with given name
@@ -425,7 +474,7 @@ Returns player with given name
 
 * [.Hand](#AnyBoard.Hand)
   * [new AnyBoard.Hand(player, options)](#new_AnyBoard.Hand_new)
-  * [.has(card, amount)](#AnyBoard.Hand+has) ⇒ <code>boolean</code>
+  * [.has(card, [amount])](#AnyBoard.Hand+has) ⇒ <code>boolean</code>
 
 <a name="new_AnyBoard.Hand_new"></a>
 #### new AnyBoard.Hand(player, options)
@@ -438,16 +487,16 @@ Represents a Hand of a player, containing cards.
 | options | <code>object</code> | *(optional)* custom properties added to this hand |
 
 <a name="AnyBoard.Hand+has"></a>
-#### hand.has(card, amount) ⇒ <code>boolean</code>
+#### hand.has(card, [amount]) ⇒ <code>boolean</code>
 Checks whether or not a player has an amount card in this hand.
 
 **Kind**: instance method of <code>[Hand](#AnyBoard.Hand)</code>  
 **Returns**: <code>boolean</code> - hasCard whether or not the player has that amount or more of that card in this hand  
 
-| Param | Type | Description |
-| --- | --- | --- |
-| card | <code>[Card](#AnyBoard.Card)</code> | card to be checked if is in hand |
-| amount | <code>number</code> | (default: 1)* amount of card to be checked if is in hand |
+| Param | Type | Default | Description |
+| --- | --- | --- | --- |
+| card | <code>[Card](#AnyBoard.Card)</code> |  | card to be checked if is in hand |
+| [amount] | <code>number</code> | <code>1</code> | (default: 1)* amount of card to be checked if is in hand |
 
 <a name="AnyBoard.Resource"></a>
 ### AnyBoard.Resource
@@ -457,22 +506,22 @@ Checks whether or not a player has an amount card in this hand.
 | Name | Type | Description |
 | --- | --- | --- |
 | name | <code>string</code> | name of resource |
-| properties | <code>string</code> | *(optional)* custom options added to resource |
+| properties | <code>string</code> | custom options added to resource |
 
 
 * [.Resource](#AnyBoard.Resource)
-  * [new AnyBoard.Resource(name, properties)](#new_AnyBoard.Resource_new)
+  * [new AnyBoard.Resource(name, [properties])](#new_AnyBoard.Resource_new)
   * [.get(name)](#AnyBoard.Resource.get) ⇒ <code>[Resource](#AnyBoard.Resource)</code>
 
 <a name="new_AnyBoard.Resource_new"></a>
-#### new AnyBoard.Resource(name, properties)
+#### new AnyBoard.Resource(name, [properties])
 Represents a simple resource (AnyBoard.Resource)
 
 
 | Param | Type | Description |
 | --- | --- | --- |
 | name | <code>string</code> | name representing the resource |
-| properties | <code>object</code> | custom properties of this resource |
+| [properties] | <code>object</code> | *(optional)* custom properties of this resource |
 
 <a name="AnyBoard.Resource.get"></a>
 #### Resource.get(name) ⇒ <code>[Resource](#AnyBoard.Resource)</code>
@@ -490,28 +539,28 @@ Returns resource with given name
 **Kind**: static class of <code>[AnyBoard](#AnyBoard)</code>  
 **Properties**
 
-| Name | Type | Description |
-| --- | --- | --- |
-| resources | <code>object</code> | *(optional)* a set of initially contained resources |
-| allowNegative | <code>boolean</code> | *(default: false)*  whether or not to allow being subtracted resources to below 0 (dept) |
+| Name | Type | Default | Description |
+| --- | --- | --- | --- |
+| resources | <code>object</code> |  | *(optional)* a set of initially contained resources |
+| allowNegative | <code>boolean</code> | <code>false</code> | *(optional, default: false)*  whether or not to allow being subtracted resources to below 0 (dept) |
 
 
 * [.ResourceSet](#AnyBoard.ResourceSet)
-  * [new AnyBoard.ResourceSet(resources, allowNegative)](#new_AnyBoard.ResourceSet_new)
+  * [new AnyBoard.ResourceSet([resources], [allowNegative])](#new_AnyBoard.ResourceSet_new)
   * [.contains(reqResource)](#AnyBoard.ResourceSet+contains) ⇒ <code>boolean</code>
   * [.add(resourceSet)](#AnyBoard.ResourceSet+add)
   * [.subtract(resourceSet)](#AnyBoard.ResourceSet+subtract) ⇒ <code>boolean</code>
   * [.similarities(resourceSet)](#AnyBoard.ResourceSet+similarities) ⇒ <code>object</code>
 
 <a name="new_AnyBoard.ResourceSet_new"></a>
-#### new AnyBoard.ResourceSet(resources, allowNegative)
-Creates a ResourceSet (AnyBoard.ResourceSet)
+#### new AnyBoard.ResourceSet([resources], [allowNegative])
+Creates a ResourceSet
 
 
-| Param | Type | Description |
-| --- | --- | --- |
-| resources | <code>object</code> | *(optional)* a set of initially contained resources |
-| allowNegative | <code>boolean</code> | *(default: false)*  whether or not to allow being subtracted resources to below 0 (dept) |
+| Param | Type | Default | Description |
+| --- | --- | --- | --- |
+| [resources] | <code>object</code> |  | *(optional)* a set of initially contained resources |
+| [allowNegative] | <code>boolean</code> | <code>false</code> | *(optional, default: false)*  whether or not to allow being subtracted resources to below 0 (dept) |
 
 <a name="AnyBoard.ResourceSet+contains"></a>
 #### resourceSet.contains(reqResource) ⇒ <code>boolean</code>
@@ -578,7 +627,7 @@ Returns the common resources and minimum amount between a dictionary of resource
   * [.isConnected()](#AnyBoard.BaseToken+isConnected) ⇒ <code>boolean</code>
   * [.connect(win, fail)](#AnyBoard.BaseToken+connect) ⇒ <code>boolean</code>
   * [.disconnect()](#AnyBoard.BaseToken+disconnect)
-  * [.trigger(eventName, eventOptions)](#AnyBoard.BaseToken+trigger)
+  * [.trigger(eventName, [eventOptions])](#AnyBoard.BaseToken+trigger)
   * [.on(eventName, callbackFunction)](#AnyBoard.BaseToken+on)
   * [.once(eventName, callbackFunction)](#AnyBoard.BaseToken+once)
   * [.send(data, win, fail)](#AnyBoard.BaseToken+send)
@@ -620,6 +669,7 @@ Returns whether or not the token is connected
 **Returns**: <code>boolean</code> - true if connected, else false  
 <a name="AnyBoard.BaseToken+connect"></a>
 #### baseToken.connect(win, fail) ⇒ <code>boolean</code>
+TODO: Add callbacks to JSDoc
 Attempts to connect to token.
 
 **Kind**: instance method of <code>[BaseToken](#AnyBoard.BaseToken)</code>  
@@ -636,7 +686,7 @@ Disconnects from the token.
 
 **Kind**: instance method of <code>[BaseToken](#AnyBoard.BaseToken)</code>  
 <a name="AnyBoard.BaseToken+trigger"></a>
-#### baseToken.trigger(eventName, eventOptions)
+#### baseToken.trigger(eventName, [eventOptions])
 Trigger an event on a token
 
 **Kind**: instance method of <code>[BaseToken](#AnyBoard.BaseToken)</code>  
@@ -644,10 +694,11 @@ Trigger an event on a token
 | Param | Type | Description |
 | --- | --- | --- |
 | eventName | <code>string</code> | name of event |
-| eventOptions | <code>object</code> | dictionary of parameters and values |
+| [eventOptions] | <code>object</code> | dictionary of parameters and values |
 
 <a name="AnyBoard.BaseToken+on"></a>
 #### baseToken.on(eventName, callbackFunction)
+TODO: Add callbacks to JSDoc
 Adds a callbackFunction to be executed always when event is triggered
 
 **Kind**: instance method of <code>[BaseToken](#AnyBoard.BaseToken)</code>  
@@ -659,6 +710,7 @@ Adds a callbackFunction to be executed always when event is triggered
 
 <a name="AnyBoard.BaseToken+once"></a>
 #### baseToken.once(eventName, callbackFunction)
+TODO: Add callbacks to JSDoc
 Adds a callbackFunction to be executed next time an event is triggered
 
 **Kind**: instance method of <code>[BaseToken](#AnyBoard.BaseToken)</code>  
@@ -670,7 +722,8 @@ Adds a callbackFunction to be executed next time an event is triggered
 
 <a name="AnyBoard.BaseToken+send"></a>
 #### baseToken.send(data, win, fail)
-Sends raw data to the token.
+TODO: Add callbacks to JSDoc
+Sends data to the token. Uses either own driver, or (if not set) TokenManager driver
 
 **Kind**: instance method of <code>[BaseToken](#AnyBoard.BaseToken)</code>  
 
@@ -684,7 +737,7 @@ Sends raw data to the token.
 #### baseToken.print(value, [win], [fail])
 Prints to Token
 
-String can have special tokens to signify some printer command, e.g. ##n = newLine
+String can have special tokens to signify some printer command, e.g. ##n = newLine.
 Refer to the individual driver for token spesific implementation and capabilites
 
 **Kind**: instance method of <code>[BaseToken](#AnyBoard.BaseToken)</code>  
@@ -868,27 +921,45 @@ Representational string of class instance.
 
 **Kind**: instance method of <code>[BaseToken](#AnyBoard.BaseToken)</code>  
 <a name="AnyBoard.Drivers"></a>
-### AnyBoard.Drivers
+### AnyBoard.Drivers : <code>Object</code>
+Manager of drivers.
+
 **Kind**: static property of <code>[AnyBoard](#AnyBoard)</code>  
 
-* [.Drivers](#AnyBoard.Drivers)
-  * [.get(name)](#AnyBoard.Drivers.get) ⇒ <code>[Driver](#AnyBoard.Driver)</code>
+* [.Drivers](#AnyBoard.Drivers) : <code>Object</code>
+  * [.get(name)](#AnyBoard.Drivers.get) ⇒ <code>[Driver](#AnyBoard.Driver)</code> &#124; <code>undefined</code>
   * [.getCompatibleDriver(type, compatibility)](#AnyBoard.Drivers.getCompatibleDriver) ⇒ <code>[Driver](#AnyBoard.Driver)</code>
 
 <a name="AnyBoard.Drivers.get"></a>
-#### Drivers.get(name) ⇒ <code>[Driver](#AnyBoard.Driver)</code>
+#### Drivers.get(name) ⇒ <code>[Driver](#AnyBoard.Driver)</code> &#124; <code>undefined</code>
 Returns driver with given name
 
 **Kind**: static method of <code>[Drivers](#AnyBoard.Drivers)</code>  
-**Returns**: <code>[Driver](#AnyBoard.Driver)</code> - driver with given name (or undefined if non-existent)  
+**Returns**: <code>[Driver](#AnyBoard.Driver)</code> &#124; <code>undefined</code> - driver with given name (or undefined if non-existent)  
 
 | Param | Type | Description |
 | --- | --- | --- |
 | name | <code>string</code> | name of driver |
 
+**Example**  
+```js
+var discoveryBluetooth = new AnyBoard.Driver({
+        name: 'theTardisMachine',
+        description: 'bla bla',
+        version: '1.0',
+        type: ['bluetooth-discovery', 'bluetooth'],
+        compatibility: ['tardis', 'pancakes']
+    });
+
+// Returns undefined
+var driver = AnyBoard.Drivers.get("non-existant-driver")
+
+// Returns driver
+AnyBoard.Drivers.get("theTardisMachine")
+```
 <a name="AnyBoard.Drivers.getCompatibleDriver"></a>
 #### Drivers.getCompatibleDriver(type, compatibility) ⇒ <code>[Driver](#AnyBoard.Driver)</code>
-Returns driver of certain type that has a certain compatibility
+Returns first driver of certain type that matches the given compatibility.
 
 **Kind**: static method of <code>[Drivers](#AnyBoard.Drivers)</code>  
 **Returns**: <code>[Driver](#AnyBoard.Driver)</code> - compatible driver (or undefined if non-existent)  
@@ -898,9 +969,28 @@ Returns driver of certain type that has a certain compatibility
 | type | <code>string</code> | name of driver |
 | compatibility | <code>string</code> &#124; <code>object</code> | name of driver |
 
+**Example**  
+```js
+var discoveryBluetooth = new AnyBoard.Driver({
+        name: 'theTardisMachine',
+        description: 'bla bla',
+        version: '1.0',
+        type: ['bluetooth-discovery', 'bluetooth'],
+        compatibility: ['tardis', {"show": "Doctor Who"}]
+    });
+
+// Returns undefined (right type, wrong compatibility)
+var driver = AnyBoard.Drivers.getCompatibleDriver('bluetooth, 'weirdCompatibility')
+
+// Returns undefined (wrong type, right compatibility)
+var driver = AnyBoard.Drivers.getCompatibleDriver('HTTP, {"service": "iCanTypeAnyThingHere"})
+
+// Returns discoveryBluetooth driver
+var driver = AnyBoard.Drivers.getCompatibleDriver('bluetooth', 'tardis')
+```
 <a name="AnyBoard.TokenManager"></a>
 ### AnyBoard.TokenManager
-A token manager.
+A token manager. Holds all tokens. Discovers and connects to them.
 
 **Kind**: static property of <code>[AnyBoard](#AnyBoard)</code>  
 **Properties**
@@ -908,7 +998,7 @@ A token manager.
 | Name | Type | Description |
 | --- | --- | --- |
 | tokens | <code>object</code> | dictionary of connect tokens that maps id to object |
-| driver | <code>[Driver](#AnyBoard.Driver)</code> | driver for comm. Set with setDriver(driver); |
+| driver | <code>[Driver](#AnyBoard.Driver)</code> | driver for communication with tokens. Set with setDriver(driver); |
 
 
 * [.TokenManager](#AnyBoard.TokenManager)
@@ -934,8 +1024,8 @@ Scans for tokens nearby and stores in discoveredTokens property
 
 | Param | Type | Description |
 | --- | --- | --- |
-| win | <code>function</code> | function to be executed when devices are found (called for each device found) |
-| fail | <code>function</code> | function to be executed upon failure |
+| win | <code>[onScanWinCallback](#onScanWinCallback)</code> | function to be executed when devices are found (called for each device found) |
+| fail | <code>[onScanFailCallback](#onScanFailCallback)</code> | function to be executed upon failure |
 | timeout | <code>number</code> | amount of milliseconds to scan before stopping |
 
 <a name="AnyBoard.TokenManager.get"></a>
@@ -951,40 +1041,30 @@ Returns a token handled by this TokenManager
 
 <a name="AnyBoard.Logger"></a>
 ### AnyBoard.Logger
+Logger handles logging. Will log using hyper.log if hyper is present (when using Evothings).
+Will then log all events, regardless of severity
+
 **Kind**: static property of <code>[AnyBoard](#AnyBoard)</code>  
 **Properties**
 
 | Name | Type | Description |
 | --- | --- | --- |
-| threshold | <code>number</code> | *(default: 10)* sets a threshold on whether or not to log an event. debugLevel will be used instead if threshold is lower. |
-| debugLevel | <code>number</code> | *(default: 0)* sets a threshold for when a log should be considered a debug log event. |
-| normalLevel | <code>number</code> | *(default: 10)* sets a threshold for when a log should be considered a normal log event. |
-| warningLevel | <code>number</code> | *(default: 20)* sets a threshold for when a log should be considered a warning. |
-| errorLevel | <code>number</code> | *(default: 30)* sets a threshold for when a log should be considered a fatal error. |
+| threshold | <code>number</code> | *(default: 10)* sets a threshold on whether or not to log an event.      At 10, AnyBoard will log all normal logs, warning logs, and erros, but ignore debug logs.      At 0, will also log debug events. At 20, only warning and error. At 30 only error events. |
+| debugLevel | <code>number</code> | *(value: 0)* sets a threshold for when a log should be considered a debug log event. |
+| normalLevel | <code>number</code> | *(value: 10)* sets a threshold for when a log should be considered a normal log event. |
+| warningLevel | <code>number</code> | *(value: 20)* sets a threshold for when a log should be considered a warning. |
+| errorLevel | <code>number</code> | *(value: 30)* sets a threshold for when a log should be considered a fatal error. |
 | loggerObject | <code>function</code> | *(default: console)* logging method. Must have implemented .debug(), .log(), .warn() and .error() |
 
 
 * [.Logger](#AnyBoard.Logger)
-  * [.message(level, message, sender)](#AnyBoard.Logger.message)
-  * [.warn(message, sender)](#AnyBoard.Logger.warn)
-  * [.error(message, sender)](#AnyBoard.Logger.error)
-  * [.log(message, sender)](#AnyBoard.Logger.log)
-  * [.debug(message, sender)](#AnyBoard.Logger.debug)
-
-<a name="AnyBoard.Logger.message"></a>
-#### Logger.message(level, message, sender)
-logs if threshold <= level parameter
-
-**Kind**: static method of <code>[Logger](#AnyBoard.Logger)</code>  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| level | <code>number</code> | of severity |
-| message | <code>string</code> | event to be logged |
-| sender | <code>object</code> | *(optional)* sender of the message |
+  * [.warn(message, [sender])](#AnyBoard.Logger.warn)
+  * [.error(message, [sender])](#AnyBoard.Logger.error)
+  * [.log(message, [sender])](#AnyBoard.Logger.log)
+  * [.debug(message, [sender])](#AnyBoard.Logger.debug)
 
 <a name="AnyBoard.Logger.warn"></a>
-#### Logger.warn(message, sender)
+#### Logger.warn(message, [sender])
 logs a warning. Ignored if threshold > this.warningLevel (default: 20)
 
 **Kind**: static method of <code>[Logger](#AnyBoard.Logger)</code>  
@@ -992,10 +1072,10 @@ logs a warning. Ignored if threshold > this.warningLevel (default: 20)
 | Param | Type | Description |
 | --- | --- | --- |
 | message | <code>string</code> | event to be logged |
-| sender | <code>object</code> | *(optional)* sender of the message |
+| [sender] | <code>object</code> | *(optional)* sender of the message |
 
 <a name="AnyBoard.Logger.error"></a>
-#### Logger.error(message, sender)
+#### Logger.error(message, [sender])
 logs an error. Will never be ignored.
 
 **Kind**: static method of <code>[Logger](#AnyBoard.Logger)</code>  
@@ -1003,10 +1083,10 @@ logs an error. Will never be ignored.
 | Param | Type | Description |
 | --- | --- | --- |
 | message | <code>string</code> | event to be logged |
-| sender | <code>object</code> | *(optional)* sender of the message |
+| [sender] | <code>object</code> | *(optional)* sender of the message |
 
 <a name="AnyBoard.Logger.log"></a>
-#### Logger.log(message, sender)
+#### Logger.log(message, [sender])
 logs a normal event. Ignored if threshold > this.normalLevel (default: 10)
 
 **Kind**: static method of <code>[Logger](#AnyBoard.Logger)</code>  
@@ -1014,10 +1094,10 @@ logs a normal event. Ignored if threshold > this.normalLevel (default: 10)
 | Param | Type | Description |
 | --- | --- | --- |
 | message | <code>string</code> | event to be logged |
-| sender | <code>object</code> | *(optional)* sender of the message |
+| [sender] | <code>object</code> | *(optional)* sender of the message |
 
 <a name="AnyBoard.Logger.debug"></a>
-#### Logger.debug(message, sender)
+#### Logger.debug(message, [sender])
 logs debugging information. Ignored if threshold > this.debugLevel (default: 0)
 
 **Kind**: static method of <code>[Logger](#AnyBoard.Logger)</code>  
@@ -1025,5 +1105,49 @@ logs debugging information. Ignored if threshold > this.debugLevel (default: 0)
 | Param | Type | Description |
 | --- | --- | --- |
 | message | <code>string</code> | event to be logged |
-| sender | <code>object</code> | *(optional)* sender of the message |
+| [sender] | <code>object</code> | *(optional)* sender of the message |
+
+<a name="onScanWinCallback"></a>
+## onScanWinCallback(token)
+Callback
+
+**Kind**: global function  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| token | <code>[BaseToken](#AnyBoard.BaseToken)</code> | token that is returned upon scanning. |
+
+<a name="onScanFailCallback"></a>
+## onScanFailCallback(errorCode)
+Callback
+
+**Kind**: global function  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| errorCode | <code>string</code> | ErrorCode cast upon scanning for devices |
+
+<a name="onPlayCallback"></a>
+## onPlayCallback : <code>function</code>
+This callback is displayed as used of the Deck class.
+
+**Kind**: global typedef  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| card | <code>[Card](#AnyBoard.Card)</code> | that is played |
+| player | <code>[Player](#AnyBoard.Player)</code> | that played the card |
+| [options] | <code>object</code> | custom options as extra parameter when play was called |
+
+<a name="onDrawCallback"></a>
+## onDrawCallback : <code>function</code>
+This callback is displayed as part of the Deck class.
+
+**Kind**: global typedef  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| card | <code>[Card](#AnyBoard.Card)</code> | that is played |
+| player | <code>[Player](#AnyBoard.Player)</code> | that played the card |
+| [options] | <code>object</code> | custom options as extra parameter when play was called |
 

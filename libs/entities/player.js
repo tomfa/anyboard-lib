@@ -1,13 +1,13 @@
 /** Represents a Player (AnyBoard.Player)
  * @constructor
  * @param {string} name name of the player
- * @param {object} options *(optional)* options for the player
- * @param {string} options.color *(optional)* color representing the player
- * @param {string} options.faction *(optional)* faction representing the player
- * @param {string} options.class *(optional)* class representing the player
- * @param {any} options.yourAttributeHere custom attributes, as well as specified ones, are all placed in player.properties. E.g. 'age' would be placed in player.properties.age.
+ * @param {object} [options] options for the player
+ * @param {string} [options.color] color representing the player
+ * @param {string} [options.faction] faction representing the player
+ * @param {string} [options.class] class representing the player
+ * @param {any} [options.yourAttributeHere] custom attributes, as well as specified ones, are all placed in player.properties. E.g. 'age' would be placed in player.properties.age.
  * @property {AnyBoard.Hand} hand hand of cards (Quests)
- * @property {string} faction faction (Special abilities or perks)
+ * @property {string} faction faction (Sp[ecial abilities or perks)
  * @property {string} class class (Special abilities or perks)
  * @property {AnyBoard.ResourceSet} holds the resources belonging to this player
  * @property {string} color color representation of player
@@ -45,8 +45,8 @@ AnyBoard.Player.get = function(name) {
 /**
  * Take resources from this player and give to receivingPlayer.
  * @param {AnyBoard.ResourceSet} resources dictionary of resources
- * @param {AnyBoard.Player} receivingPlayer *(optional)* Who shall receive the resources. Omit if not to anyone
- * @returns {boolean} whether or not transaction was completed (fale if Player don't hold enough resources)
+ * @param {AnyBoard.Player} [receivingPlayer] Who shall receive the resources. Omit if not to anyone (e.g. give to "the bank")
+ * @returns {boolean} whether or not transaction was completed (false if Player don't hold enough resources)
  */
 AnyBoard.Player.prototype.pay = function(resources, receivingPlayer) {
     if (!this.bank.contains(resources)) {
@@ -65,8 +65,8 @@ AnyBoard.Player.prototype.pay = function(resources, receivingPlayer) {
  * Trade resources between players/game
  * @param {AnyBoard.ResourceSet} giveResources resources this player shall give
  * @param {AnyBoard.ResourceSet} receiveResources resources this player receieves
- * @param {AnyBoard.Player} player *(optional)* Who shall be traded with. Omit if not to a player, but to game.
- * @returns {boolean} false if any of the players doesn't hold enough resources
+ * @param {AnyBoard.Player} [player] *(optional)* Who shall be traded with. Omit if not to a player, but to "the bank".
+ * @returns {boolean} whether or not transaction was completed (false if Player don't hold enough resources)
  */
 AnyBoard.Player.prototype.trade = function(giveResources, receiveResources, player) {
     var similarities = giveResources.similarities(receiveResources);
@@ -102,7 +102,7 @@ AnyBoard.Player.prototype.recieve = function(resourceSet) {
 /**
  * Draws a card from a deck and puts it in the hand of the player
  * @param {AnyBoard.Deck} deck deck to be drawn from
- * @param {object} options *(optional)* parameters to be sent to the drawListeners on the deck
+ * @param {object} [options] *(optional)* parameters to be sent to the drawListeners on the deck
  * @returns {AnyBoard.Card} card that is drawn
  */
 AnyBoard.Player.prototype.draw = function(deck, options) {
@@ -120,8 +120,8 @@ AnyBoard.Player.prototype.draw = function(deck, options) {
 /**
  * Plays a card from the hand. If the hand does not contain the card, the card is not played and the hand unchanged.
  * @param {AnyBoard.Card} card card to be played
- * @param {object} customOptions *(optional)* custom options that the play should be played with
- * @returns {boolean} isPlayed whether or not the card was played
+ * @param {object} [customOptions] *(optional)* custom options that the play should be played with
+ * @returns {boolean} whether or not the card was played
  */
 AnyBoard.Player.prototype.play = function(card, customOptions) {
     AnyBoard.Logger.debug('' + this.name + " playes card " + card.title, this);
@@ -134,6 +134,10 @@ AnyBoard.Player.prototype.play = function(card, customOptions) {
     return true;
 };
 
+/**
+ * Returns a string representation of the player
+ * @returns {string}
+ */
 AnyBoard.Player.prototype.toString = function() {
     return 'Player: ' + this.name;
 };
@@ -154,7 +158,7 @@ AnyBoard.Hand = function(player, options) {
 /**
  * Checks whether or not a player has an amount card in this hand.
  * @param {AnyBoard.Card} card card to be checked if is in hand
- * @param {number} amount (default: 1)* amount of card to be checked if is in hand
+ * @param {number} [amount=1] (default: 1)* amount of card to be checked if is in hand
  * @returns {boolean} hasCard whether or not the player has that amount or more of that card in this hand
  */
 AnyBoard.Hand.prototype.has = function(card, amount) {
@@ -168,7 +172,7 @@ AnyBoard.Hand.prototype.has = function(card, amount) {
 };
 
 /*
- * NB: Helpfunction! Use player.draw(deck) instead.
+ * Internal function! Use player.draw(deck) instead.
  * Adds a card to the hand of a player
  * @param {AnyBoard.Card} card card to be added to this hand
  */

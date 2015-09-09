@@ -2,9 +2,9 @@
  * Represents a simple resource (AnyBoard.Resource)
  * @constructor
  * @param {string} name name representing the resource
- * @param {object} properties custom properties of this resource
+ * @param {object} [properties] *(optional)* custom properties of this resource
  * @property {string} name name of resource
- * @property {string} properties *(optional)* custom options added to resource
+ * @property {string} properties custom options added to resource
  */
 AnyBoard.Resource = function(name, properties) {
     AnyBoard.Logger.debug("Adding new Resource " + name);
@@ -30,11 +30,11 @@ AnyBoard.Resource.get = function(name) {
 };
 
 /**
- * Creates a ResourceSet (AnyBoard.ResourceSet)
- * @param {object} resources *(optional)* a set of initially contained resources
- * @param {boolean} allowNegative *(default: false)*  whether or not to allow being subtracted resources to below 0 (dept)
- * @property {object} resources *(optional)* a set of initially contained resources
- * @property {boolean} allowNegative *(default: false)*  whether or not to allow being subtracted resources to below 0 (dept)
+ * Creates a ResourceSet
+ * @param {object} [resources] *(optional)* a set of initially contained resources
+ * @param {boolean} [allowNegative=false] *(optional, default: false)*  whether or not to allow being subtracted resources to below 0 (dept)
+ * @property {object} [resources] *(optional)* a set of initially contained resources
+ * @property {boolean} [allowNegative=false] *(optional, default: false)*  whether or not to allow being subtracted resources to below 0 (dept)
  * @constructor
  */
 AnyBoard.ResourceSet = function(resources, allowNegative) {

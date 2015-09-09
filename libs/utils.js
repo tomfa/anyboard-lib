@@ -1,26 +1,58 @@
-AnyBoard._isFunction = function(obj) {
+/**
+ * Internal methods to evaluate if obj is a function
+ * @param obj
+ * @returns {boolean}
+ * @private
+ */
+AnyBoard.Utils._isFunction = function(obj) {
     return typeof obj == 'function' || false;
 };
 
-AnyBoard._isObject = function(obj) {
+/**
+ * Internal methods to evaluate if obj is an object
+ * @param obj
+ * @returns {boolean}
+ * @private
+ */
+AnyBoard.Utils._isObject = function(obj) {
     var type = typeof obj;
     return type === 'function' || type === 'object' && !!obj;
 };
 
-AnyBoard._has = function(obj, key) {
+/**
+ * Internal methods to evaluate if obj has a certain key
+ * @param obj
+ * @param key
+ * @returns {boolean|*}
+ * @private
+ */
+AnyBoard.Utils._has = function(obj, key) {
     return obj != null && hasOwnProperty.call(obj, key);
 };
 
-AnyBoard._keys = function(obj) {
-    if (!AnyBoard._isObject(obj)) return [];
+/**
+ * Internal methods that returns the keys of obj
+ * @param obj
+ * @returns {Array}
+ * @private
+ */
+AnyBoard.Utils._keys = function(obj) {
+    if (!AnyBoard.Utils._isObject(obj)) return [];
     if (Object.keys) return Object.keys(obj);
     var keys = [];
-    for (var key in obj) if (AnyBoard._has(obj, key)) keys.push(key);
+    for (var key in obj) if (AnyBoard.Utils._has(obj, key)) keys.push(key);
     return keys;
 };
 
-// Internal recursive comparison function for `isEqual`.
-AnyBoard._isEqual = function (a, b, aStack, bStack) {
+/**
+ * Returns whether or not two objects are equal. Works with objects, dictionaries, and arrays as well.
+ * @param {object|Array|String|number|boolean} a item to compare
+ * @param {object|Array|String|number|boolean} b item to compare against a
+ * @param {Array} [aStack] *(optional)* array of items to further compare
+ * @param {Array} [bStack] *(optional)* array of items to further compare
+ * @returns {boolean} whether or not the items were equal
+ */
+AnyBoard.Utils.isEqual = function (a, b, aStack, bStack) {
     // Identical objects are equal. `0 === -0`, but they aren't identical.
     // See the [Harmony `egal` proposal](http://wiki.ecmascript.org/doku.php?id=harmony:egal).
     if (a === b) return a !== 0 || 1 / a === 1 / b;
@@ -31,11 +63,19 @@ AnyBoard._isEqual = function (a, b, aStack, bStack) {
     // Exhaust primitive checks
     var type = typeof a;
     if (type !== 'function' && type !== 'object' && typeof b !== 'object') return false;
-    return AnyBoard._deepEq(a, b, aStack, bStack);
+    return AnyBoard.Utils._deepEq(a, b, aStack, bStack);
 };
 
-// Internal recursive comparison function for `isEqual`.
-AnyBoard._deepEq = function (a, b, aStack, bStack) {
+/**
+ * Evaluates deep equality between two objects
+ * @param {object|Array|String|number|boolean} a item to compare
+ * @param {object|Array|String|number|boolean} b item to compare against a
+ * @param {Array} [aStack] *(optional)* array of items to further compare
+ * @param {Array} [bStack] *(optional)* array of items to further compare
+ * @returns {boolean} whether or not the two items were equal
+ * @private
+ */
+AnyBoard.Utils._deepEq = function (a, b, aStack, bStack) {
     // Compare `[[Class]]` names.
     var className = toString.call(a);
     if (className !== toString.call(b)) return false;
@@ -67,8 +107,8 @@ AnyBoard._deepEq = function (a, b, aStack, bStack) {
         // Objects with different constructors are not equivalent, but `Object`s or `Array`s
         // from different frames are.
         var aCtor = a.constructor, bCtor = b.constructor;
-        if (aCtor !== bCtor && !(AnyBoard._isFunction(aCtor) && aCtor instanceof aCtor &&
-            AnyBoard._isFunction(bCtor) && bCtor instanceof bCtor)
+        if (aCtor !== bCtor && !(AnyBoard.Utils._isFunction(aCtor) && aCtor instanceof aCtor &&
+            AnyBoard.Utils._isFunction(bCtor) && bCtor instanceof bCtor)
             && ('constructor' in a && 'constructor' in b)) {
             return false;
         }
@@ -98,18 +138,18 @@ AnyBoard._deepEq = function (a, b, aStack, bStack) {
         if (length !== b.length) return false;
         // Deep compare the contents, ignoring non-numeric properties.
         while (length--) {
-            if (!AnyBoard._isEqual(a[length], b[length], aStack, bStack)) return false;
+            if (!AnyBoard.Utils.isEqual(a[length], b[length], aStack, bStack)) return false;
         }
     } else {
         // Deep compare objects.
-        var keys = AnyBoard._keys(a), key;
+        var keys = AnyBoard.Utils._keys(a), key;
         length = keys.length;
         // Ensure that both objects contain the same number of properties before comparing deep equality.
-        if (AnyBoard._keys(b).length !== length) return false;
+        if (AnyBoard.Utils._keys(b).length !== length) return false;
         while (length--) {
             // Deep compare each member
             key = keys[length];
-            if (!(AnyBoard._has(b, key) && AnyBoard._isEqual(a[key], b[key], aStack, bStack))) return false;
+            if (!(AnyBoard.Utils._has(b, key) && AnyBoard.Utils.isEqual(a[key], b[key], aStack, bStack))) return false;
         }
     }
     // Remove the first object from the stack of traversed objects.

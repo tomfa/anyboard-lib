@@ -1,7 +1,7 @@
 /** Represents a set of game dices that can be rolled to retrieve a random result.
  * @constructor
- * @param {number} eyes *(default 6)* number of max eyes on a roll with this dice
- * @param {number} numOfDice *(default: 1)* number of dices
+ * @param {number} [eyes=6] *(optional, default: 6)* number of max eyes on a roll with this dice
+ * @param {number} [numOfDice=1] *(optional, default: 1)* number of dices
  *
  */
 AnyBoard.Dices = function (eyes, numOfDice) {

@@ -78,7 +78,7 @@ module.exports = function(grunt) {
         },
         jsdoc2md: {
             oneOutputFile: {
-                src: "dist/*.js",
+                src: "dist/AnyBoard.js",
                 dest: "documentation.md"
             }
             //separateOutputFilePerInput: {

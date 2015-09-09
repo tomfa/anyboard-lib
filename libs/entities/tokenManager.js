@@ -1,8 +1,8 @@
 /**
- * A token manager.
+ * A token manager. Holds all tokens. Discovers and connects to them.
  * @static
  * @property {object} tokens dictionary of connect tokens that maps id to object
- * @property {AnyBoard.Driver} driver driver for comm. Set with setDriver(driver);
+ * @property {AnyBoard.Driver} driver driver for communication with tokens. Set with setDriver(driver);
  */
 AnyBoard.TokenManager = {
     tokens: {},
@@ -28,8 +28,8 @@ AnyBoard.TokenManager.setDriver = function(driver) {
 
 /**
  * Scans for tokens nearby and stores in discoveredTokens property
- * @param {function} win function to be executed when devices are found (called for each device found)
- * @param {function} fail function to be executed upon failure
+ * @param {onScanWinCallback} win function to be executed when devices are found (called for each device found)
+ * @param {onScanFailCallback} fail function to be executed upon failure
  * @param {number} timeout amount of milliseconds to scan before stopping
  */
 AnyBoard.TokenManager.scan = function(win, fail, timeout) {
@@ -40,6 +40,18 @@ AnyBoard.TokenManager.scan = function(win, fail, timeout) {
         },
         fail, timeout)
 };
+
+/**
+ * Callback
+ * @param {AnyBoard.BaseToken} token token that is returned upon scanning.
+ */
+var onScanWinCallback = function(token) {};
+
+/**
+ * Callback
+ * @param {string} errorCode ErrorCode cast upon scanning for devices
+ */
+var onScanFailCallback = function(errorCode) {};
 
 /**
  * Returns a token handled by this TokenManager
@@ -86,7 +98,7 @@ AnyBoard.BaseToken.prototype.isConnected = function() {
     return this.connected;
 };
 
-/**
+/** TODO: Add callbacks to JSDoc
  * Attempts to connect to token.
  * @param {function} win function to be executed upon success
  * @param {function} fail function to be executed upon failure
@@ -114,6 +126,11 @@ AnyBoard.BaseToken.prototype.connect = function(win, fail) {
 };
 
 /**
+ * Callback
+ * @param {AnyBoard.BaseToken} token token that is returned upon scanning.
+ */
+
+/**
  * Disconnects from the token.
  */
 AnyBoard.BaseToken.prototype.disconnect = function() {
@@ -127,7 +144,7 @@ AnyBoard.BaseToken.prototype.disconnect = function() {
 /**
  * Trigger an event on a token
  * @param {string} eventName name of event
- * @param {object} eventOptions dictionary of parameters and values
+ * @param {object} [eventOptions] dictionary of parameters and values
  */
 AnyBoard.BaseToken.prototype.trigger = function(eventName, eventOptions) {
     AnyBoard.Logger.debug('' + this + ' triggered "' + eventName + '"');
@@ -145,7 +162,7 @@ AnyBoard.BaseToken.prototype.trigger = function(eventName, eventOptions) {
     }
 };
 
-/**
+/** TODO: Add callbacks to JSDoc
  * Adds a callbackFunction to be executed always when event is triggered
  * @param {string} eventName name of event to listen to
  * @param {function} callbackFunction function to be executed
@@ -157,7 +174,7 @@ AnyBoard.BaseToken.prototype.on = function(eventName, callbackFunction) {
     this.listeners[eventName].push(callbackFunction);
 };
 
-/**
+/** TODO: Add callbacks to JSDoc
  * Adds a callbackFunction to be executed next time an event is triggered
  * @param {string} eventName name of event to listen to
  * @param {function} callbackFunction function to be executed
@@ -169,8 +186,8 @@ AnyBoard.BaseToken.prototype.once = function(eventName, callbackFunction) {
     this.onceListeners[eventName].push(callbackFunction);
 };
 
-/**
- * Sends raw data to the token.
+/** TODO: Add callbacks to JSDoc
+ * Sends data to the token. Uses either own driver, or (if not set) TokenManager driver
  * @param {Uint8Array|ArrayBuffer|String} data data to be sent
  * @param {function} win function to be executed upon success
  * @param {function} fail function to be executed upon error
@@ -196,7 +213,7 @@ AnyBoard.BaseToken.prototype.send = function(data, win, fail) {
 /**
  * Prints to Token
  *
- * String can have special tokens to signify some printer command, e.g. ##n = newLine
+ * String can have special tokens to signify some printer command, e.g. ##n = newLine.
  * Refer to the individual driver for token spesific implementation and capabilites
  *
  * @param {string} value

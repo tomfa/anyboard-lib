@@ -2,15 +2,15 @@
  *
  * @constructor
  * @param {string} name name of Deck. This name can be used to retrieve the deck via AnyBoard.Deck.all[name].
- * @param {object} jsonDeck loaded JSON file. See [examples-folder](./examples) for JSON format and loading.
+ * @param {object} jsonDeck loaded JSON file. See [examples/deck-loading/](./examples/deck-loading) for JSON format and loading.
  * @property {string} name name of Deck.
- * @property {Array} cards complete set of cards in the deck
- * @property {Array} pile remaining cards in this pile
- * @property {Array} usedPile cards played from this deck
+ * @property {Array.<AnyBoard.Card>} cards complete set of cards in the deck
+ * @property {Array.<Object>} pile remaining cards in this pile
+ * @property {Array.<Object>} usedPile cards played from this deck
  * @property {boolean} autoUsedRefill *(default: true)* whether or not to automatically refill pile from usedPile when empty. Is ignored if autoNewRefill is true.
- * @property {boolean} autoNewRefill *(default: false)* whether or not to automatically refill pile with a new deck when empty.
- * @property {Array} playListeners holds functions to be called when cards in this deck are played
- * @property {Array} drawListeners holds functions to be called when cards in this deck are drawn
+ * @property {boolean} autoNewRefill *(default: false)* whether or not to automatically refill pile with a whole new deck when empty.
+ * @property {Array.<Function>} playListeners holds functions to be called when cards in this deck are played
+ * @property {Array.<Function>} drawListeners holds functions to be called when cards in this deck are drawn
  */
 AnyBoard.Deck = function (name, jsonDeck) {
     AnyBoard.Logger.debug("Adding new Deck " + name)
@@ -45,7 +45,8 @@ AnyBoard.Deck.get = function(name) {
 
 /**
  * Shuffles the pile of undrawn cards   .
- * Pile is automatically shuffled upon construction, and upon initiate(). New cards added upon refill() are also automatically shuffled.
+ * Pile is automatically shuffled upon construction, and upon initiate().
+ * New cards added upon refill() are also automatically shuffled.
  */
 AnyBoard.Deck.prototype.shuffle = function() {
     for(var j, x, i = this.pile.length; i; j = Math.floor(Math.random() * i), x = this.pile[--i], this.pile[i] = this.pile[j], this.pile[j] = x);
@@ -72,7 +73,8 @@ AnyBoard.Deck.prototype.initiate = function(jsonDeck) {
 
 /**
  * Manually refills the pile. This is not necessary if autoUsedRefill or autoNewRefill property of deck is true.
- * @param {boolean} newDeck *(default: false)* True if to refill with a new deck. False if to refill with played cards (from usedPile)
+ * @param {boolean} [newDeck=false] *(optional, default: false)* True if to refill with a new deck.
+ * False if to refill with played cards (from usedPile)
  */
 AnyBoard.Deck.prototype.refill = function(newDeck) {
     AnyBoard.Logger.debug("Refilling Deck " + this.name + " with " + (newDeck ? "new cards" : "used pile."));
@@ -88,11 +90,11 @@ AnyBoard.Deck.prototype.refill = function(newDeck) {
 };
 
 /*
- * NB: Helpfunction! Use player.draw(deck) instead.
+ * Internal function! Use player.draw(deck) instead.
  * Draws a card from the deck.
  * Refills pile if autoNewRefill or autoUsedRefill is true.
  * @param {AnyBoard.Player} player player that draws the card
- * @param {object} options *(optional)* custom options sent to drawListeners
+ * @param {object} [options] *(optional)* custom options sent to drawListeners
  * @returns {AnyBoard.Card} card card that is drawn, or undefined if pile is empty and autoRefill properties are false.
  */
 AnyBoard.Deck.prototype._draw = function(player, options) {
@@ -105,7 +107,7 @@ AnyBoard.Deck.prototype._draw = function(player, options) {
     }
     var card = this.pile.pop();
     if (!card) {
-        // out of cards
+        // out of cards. Could potentially trigger an event.
     }
     for (var func in this.drawListeners) {
         if (this.drawListeners.hasOwnProperty(func))
@@ -116,7 +118,7 @@ AnyBoard.Deck.prototype._draw = function(player, options) {
 
 /**
  * Adds functions to be executed upon all Cards in this Deck.
- * @param {function} func function to be executed with the 3 parameters AnyBoard.Card, AnyBoard.Player, (options) when cards are played
+ * @param {onPlayCallback} func callback function to be executed upon play of card from this deck
  */
 AnyBoard.Deck.prototype.onPlay = function(func) {
     AnyBoard.Logger.debug("Adds function to playListener of deck " + this.name);
@@ -124,18 +126,38 @@ AnyBoard.Deck.prototype.onPlay = function(func) {
 };
 
 /**
- * Adds functions to be executed upon draw of Card from this Deck
- * @param {function} func function to be executed with the 3 parameters AnyBoard.Card, AnyBoard.Player, (options) when cards are drawn
+ * This callback is displayed as used of the Deck class.
+ * @callback onPlayCallback
+ * @param {AnyBoard.Card} card that is played
+ * @param {AnyBoard.Player} player that played the card
+ * @param {object} [options] custom options as extra parameter when play was called
  */
-AnyBoard.Deck.prototype.onDraw = function(func) {
+var onPlayCallback = function (card, player, options) {};
+
+/**
+ * This callback is displayed as part of the Deck class.
+ * @callback onDrawCallback
+ * @param {AnyBoard.Card} card that is played
+ * @param {AnyBoard.Player} player that played the card
+ * @param {object} [options] custom options as extra parameter when play was called
+ */
+
+/**
+ * Adds functions to be executed upon draw of Card from this Deck
+ * @param {onDrawCallback} callback function to be executed with the 3 parameters AnyBoard.Card, AnyBoard.Player, (options) when cards are drawn
+ */
+AnyBoard.Deck.prototype.onDraw = function(callback) {
     AnyBoard.Logger.debug("Adds function to drawListener of deck " + this.name);
     this.drawListeners.push(func);
 };
 
+/**
+ * Sting representation of a dek
+ * @returns {string}
+ */
 AnyBoard.Deck.prototype.toString = function() {
     return 'Deck: ' + this.name;
-}
-
+};
 
 /** Represents a single Card (AnyBoard.Card)
  * Read from JSON file provided to Deck class.
@@ -144,12 +166,12 @@ AnyBoard.Deck.prototype.toString = function() {
  * @param {object} options options for the card
  * @param {string} options.title title of the card.
  * @param {string} options.description description for the Card
- * @param {string} options.color (optional) color of the Card
- * @param {string} options.category (optional) category of the card, not used by AnyBoard FrameWork
- * @param {number} options.value (optional) value of the card, not used by AnyBoard FrameWork
- * @param {string} options.type (optional) type of the card, not used by AnyBoard FrameWork
- * @param {number} options.amount (default: 1) amount of this card in the deck
- * @param {any} options.yourAttributeHere custom attributes, as well as specified ones, are all placed in card.properties. E.g. 'heat' would be placed in card.properties.heat.
+ * @param {string} [options.color] *(optional)* color of the Card
+ * @param {string} [options.category] *(optional)* category of the card, not used by AnyBoard FrameWork
+ * @param {number} [options.value] *(optional)* value of the card, not used by AnyBoard FrameWork
+ * @param {string} [options.type] *(optional)* type of the card, not used by AnyBoard FrameWork
+ * @param {number} [options.amount=1] *(optional, default: 1)* amount of this card in the deck
+ * @param {any} [options.yourAttributeHere] custom attributes, as well as specified ones, are all placed in card.properties. E.g. 'heat' would be placed in card.properties.heat.
  * @property {string} title title of the card.
  * @property {string} description description for the Card
  * @property {string} color color of the Card
@@ -158,7 +180,7 @@ AnyBoard.Deck.prototype.toString = function() {
  * @property {string} type type of the card, not used by AnyBoard FrameWork
  * @property {number} amount amount of this card its deck
  * @property {AnyBoard.Deck} deck deck that this card belongs to
- * @property {Array} playListeneres functions to be called upon play of this spesific card (in addition to playListeners on its belonging deck)
+ * @property {Array} playListeneres holds functions to be called upon play of this spesific card (in addition to playListeners on its belonging deck)
  * @property {object} properties dictionary that holds custom attributes
  */
 AnyBoard.Card = function (deck, options) {
@@ -182,12 +204,16 @@ AnyBoard.Card = function (deck, options) {
     AnyBoard.Card.allTitle[this.title] = this;
 };
 
+// Provides a unique ID for each card. Could be clojured inside the constructor instead of leaving it hanging out here.
 AnyBoard.Card.COUNTER = 0;
 AnyBoard.Card.AUTO_INC = function() {
     return ++AnyBoard.Card.COUNTER;
 };
 
+// Internal: Holds all cards by id
 AnyBoard.Card.all = {};
+
+// Internal: Holds all cards by title
 AnyBoard.Card.allTitle = {};
 
 /**
@@ -202,7 +228,7 @@ AnyBoard.Card.get = function(cardTitleOrID) {
 };
 
 /*
- * NB: Helpfunction! Use player.play(card) instead.
+ * Internal function! Use player.play(card) instead.
  * Call in order to play a card. This will ensure any listeners are informed of the play and put the card in the usedPile of its belonging deck.
  * @param {AnyBoard.Player} player the player that does the play
  * @param {object} options custom options/properties
@@ -215,6 +241,11 @@ AnyBoard.Card.prototype._play = function(player, options) {
     this.deck.usedPile.push(this);
 };
 
+
+/**
+ * Returns a string representation of the card.
+ * @returns {string}
+ */
 AnyBoard.Card.prototype.toString = function() {
     return 'Card: ' + this.title + ', id: ' + this.id;
 };

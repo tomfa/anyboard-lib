@@ -1,5 +1,6 @@
 /**
- * @static {object}
+ * Manager of drivers.
+ * @type {Object}
  */
 AnyBoard.Drivers = {
     drivers: {}
@@ -7,6 +8,9 @@ AnyBoard.Drivers = {
 
 /**
  * Returns driver with given name
+ * @example
+ * // returns 3
+ * globalNS.method(5, 15);
  * @param {string} name name of driver
  * @returns {AnyBoard.Driver} driver with given name (or undefined if non-existent)
  */
@@ -15,7 +19,7 @@ AnyBoard.Drivers.get = function(name) {
 };
 
 /**
- * Returns driver of certain type that has a certain compatibility
+ * Returns first driver of certain type that matches the given compatibility.
  * @param {string} type name of driver
  * @param {string|object} compatibility name of driver
  * @returns {AnyBoard.Driver} compatible driver (or undefined if non-existent)
@@ -31,10 +35,10 @@ AnyBoard.Drivers.getCompatibleDriver = function(type, compatibility) {
         if (driver.compatibility instanceof Array) {
             for (var index in driver.compatibility) {
                 if (driver.compatibility.hasOwnProperty(index))
-                    if (AnyBoard._isEqual(compatibility, driver.compatibility[index]))
+                    if (AnyBoard.Utils.isEqual(compatibility, driver.compatibility[index]))
                         return driver;
             }
-        } else if (AnyBoard._isEqual(compatibility, driver.compatibility)) {
+        } else if (AnyBoard.Utils.isEqual(compatibility, driver.compatibility)) {
             return driver;
         }
 
@@ -42,8 +46,8 @@ AnyBoard.Drivers.getCompatibleDriver = function(type, compatibility) {
     return undefined;
 };
 
-/*
- * Help function. Drivers added with this function are retrievable with get function.
+/**
+ * Internal function. Drivers added with this function are retrievable with get function.
  * New drivers are added automatically upon construction with new AnyBoard.Driver(...)
  * @param {function} driver driver to be added
  * @private
@@ -74,24 +78,25 @@ AnyBoard.Drivers.toString = function() {
  * @param {string} options.version version of the driver
  * @param {string} options.type Type of driver, e.g. "bluetooth"
  * @param {Array|object|string} options.compatibility An object or string that can be used to deduce compatibiity, or
- *      an array of different compatibilies.
- * @param {string} options.dependencies (optional) What if anything the driver depends on.
- * @param {string} options.date (optional) Date upon release/last build.
+ *      an array of different compatibilies. How this is used is determined by the set standard driver on TokenManager
+ *      that handles scanning for and connecting to tokens.
+ * @param {string} [options.dependencies] (optional) What if anything the driver depends on.
+ * @param {string} [options.date] (optional) Date upon release/last build.
  * @param {any} options.yourAttributeHere custom attributes, as well as specified ones, are all placed in
  *      driver.properties. E.g. 'heat' would be placed in driver.properties.heat.
  * @property {string} name name of the driver
  * @property {string} description description of the driver
  * @property {string} version version of the driver
- * @property {string} dependencies (optional) What if anything the driver depends on.
- * @property {string} date (optional) Date upon release/last build.
- * @property {string} type Type of driver, e.g. "bluetooth"
+ * @property {string} dependencies Text describing what, if anything, the driver depends on.
+ * @property {string} date Date upon release/last build.
+ * @property {Array} type Array of string describing    Type of driver, e.g. "bluetooth"
  * @property {Array|object|string} compatibility An object or string that can be used to deduce compatibiity, or
  *      an array of different compatibilies.
  * @property {object} properties dictionary that holds custom attributes
  */
 AnyBoard.Driver = function(options) {
     if (!options.name || !options.description || !options.version || !options.type || !options.compatibility) {
-        AnyBoard.Logger.error(
+        AnyBoard.Logger.warn(
             'Attempted to add driver without necessary options (name, description, version, type, compatibility). ' +
             'Driver will be ignored.',
             this
