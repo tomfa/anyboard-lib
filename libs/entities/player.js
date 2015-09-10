@@ -67,6 +67,34 @@ AnyBoard.Player.prototype.pay = function(resources, receivingPlayer) {
  * @param {AnyBoard.ResourceSet} receiveResources resources this player receieves
  * @param {AnyBoard.Player} [player] *(optional)* Who shall be traded with. Omit if not to a player, but to "the bank".
  * @returns {boolean} whether or not transaction was completed (false if Player don't hold enough resources)
+ * @example
+ * new AnyBoard.Resource("gold");
+ * new AnyBoard.Resource("silver");
+ *
+ * var startTreasure = new AnyBoard.ResourceSet({"gold": 6, "silver": 42});
+ * var goldTreasure = new AnyBoard.ResourceSet({"gold": 2});
+ * var silverTreasure = new AnyBoard.ResourceSet({"silver": 12});
+ *
+ * var dr1 = new AnyBoard.Player("firstDoctor");
+ * var dr2 = new AnyBoard.Player("secondDoctor");
+ *
+ * dr1.receive(startTreasure);
+ * dr2.receive(startTreasure);
+ *
+ * // returns true. dr1 will now own {"gold": 4, "silver": 54}. dr2 owns {"gold": 8, "silver": 30}
+ * dr1.trade(goldTreasure, silverTreasure, dr2)
+ *
+ * @example
+ * // returns true. dr1 will now own {"gold": 2, "silver": 66}. dr2 still owns {"gold": 8, "silver": 30}
+ * dr1.trade(goldTreasure, silverTreasure)
+ *
+ * @example
+ * var firstOverlappingTreasure = new AnyBoard.ResourceSet({"silver": 115, "gold": "6"});
+ * var secondOverlappingTreasure= new AnyBoard.ResourceSet({"silver": 100, "gold": "7"});
+ *
+ * // returns true. The trade nullifies the similarities, so that the trade can go through even though
+ * //     dr1 has < 100 silver
+ * dr1.trade(firstOverlappingTreasure, secondOverlappingTreasure)
  */
 AnyBoard.Player.prototype.trade = function(giveResources, receiveResources, player) {
     var similarities = giveResources.similarities(receiveResources);
@@ -93,9 +121,20 @@ AnyBoard.Player.prototype.trade = function(giveResources, receiveResources, play
 /**
  * Receive resource from bank/game. Use pay() when receiving from players.
  * @param {AnyBoard.ResourceSet} resourceSet resources to be added to this players bank
+ * @example
+ * new AnyBoard.Resource("gold");
+ * new AnyBoard.Resource("silver");
+ *
+ * var startTreasure = new AnyBoard.ResourceSet({"gold": 6, "silver": 42});
+ * var secondTresure = new AnyBoard.ResourceSet({"silver": 12, "copper": 122});
+ *
+ * var dr1 = new AnyBoard.Player("firstDoctor");  // player owns nothing initially
+ *
+ * dr1.receive(startTreasure);  // owns {"gold": 6, "silver": 42}
+ * dr1.receive(secondTresure);  // owns {"gold": 6, "silver": 54, "copper": 122}
  */
 AnyBoard.Player.prototype.recieve = function(resourceSet) {
-    AnyBoard.Logger.debug('' + this.name + " received " + resourceSet.resources, this);
+    AnyBoard.Logger.debug("Received " + resourceSet.resources, this);
     this.bank.add(resourceSet)
 };
 
@@ -104,6 +143,14 @@ AnyBoard.Player.prototype.recieve = function(resourceSet) {
  * @param {AnyBoard.Deck} deck deck to be drawn from
  * @param {object} [options] *(optional)* parameters to be sent to the drawListeners on the deck
  * @returns {AnyBoard.Card} card that is drawn
+ * @example
+ * var dr1 = new AnyBoard.Player("firstDoctor");  // player has no cards initially
+ *
+ * // Now has one card
+ * dr1.draw(deck);
+ *
+ * // Now has two cards. option parameter is being passed on to any drawListeners (See Deck/Card)
+ * dr1.draw(deck, options);
  */
 AnyBoard.Player.prototype.draw = function(deck, options) {
     var card = deck._draw(this, options);
@@ -122,6 +169,14 @@ AnyBoard.Player.prototype.draw = function(deck, options) {
  * @param {AnyBoard.Card} card card to be played
  * @param {object} [customOptions] *(optional)* custom options that the play should be played with
  * @returns {boolean} whether or not the card was played
+ * @example
+ * var DrWho = new AnyBoard.Player("firstDoctor");  // player has no cards initially
+ *
+ * // Store the card that was drawn
+ * var card = DrWho.draw(existingDeck);
+ *
+ * // Play that same card
+ * DrWho.play(card)
  */
 AnyBoard.Player.prototype.play = function(card, customOptions) {
     if (!this.hand.has(card)) {
@@ -142,7 +197,7 @@ AnyBoard.Player.prototype.toString = function() {
 };
 
 /**
- * Represents a Hand of a player, containing cards.
+ * Represents a Hand of a player, containing cards. Players are given one Hand in Person constructor.
  * @param {AnyBoard.Player} player player to which this hand belongs
  * @param {object} [options] *(optional)* custom properties added to this hand
  * @constructor
@@ -159,6 +214,18 @@ AnyBoard.Hand = function(player, options) {
  * @param {AnyBoard.Card} card card to be checked if is in hand
  * @param {number} [amount=1] *(default: 1)* amount of card to be checked if is in hand
  * @returns {boolean} hasCard whether or not the player has that amount or more of that card in this hand
+ *
+ * @example
+ * var DrWho = new AnyBoard.Player("firstDoctor");  // player has no cards initially
+ *
+ * // Store the card that was drawn
+ * var tardis = DrWho.draw(tardisDeck);
+ *
+ * // returns true
+ * DrWho.hand.has(card)
+ *
+ * // returns false, as he has only one
+ * DrWho.hand.has(card, 3)
  */
 AnyBoard.Hand.prototype.has = function(card, amount) {
     amount = amount || 1;

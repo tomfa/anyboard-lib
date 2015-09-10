@@ -5,8 +5,8 @@
  * @param {object} jsonDeck loaded JSON file. See [examples/deck-loading/](./examples/deck-loading) for JSON format and loading.
  * @property {string} name name of Deck.
  * @property {Array.<AnyBoard.Card>} cards complete set of cards in the deck
- * @property {Array.<Object>} pile remaining cards in this pile
- * @property {Array.<Object>} usedPile cards played from this deck
+ * @property {Array.<AnyBoard.Card>} pile remaining cards in this pile
+ * @property {Array.<AnyBoard.Card>} usedPile cards played from this deck
  * @property {boolean} autoUsedRefill *(default: true)* whether or not to automatically refill pile from usedPile when empty. Is ignored if autoNewRefill is true.
  * @property {boolean} autoNewRefill *(default: false)* whether or not to automatically refill pile with a whole new deck when empty.
  * @property {Array.<Function>} playListeners holds functions to be called when cards in this deck are played
@@ -132,7 +132,7 @@ AnyBoard.Deck.prototype._draw = function(player, options) {
 
 /**
  * Adds functions to be executed upon all Cards in this Deck.
- * @param {callbacks.playDrawCallback} func callback function to be executed upon play of card from this deck
+ * @param {playDrawCallback} func callback function to be executed upon play of card from this deck
  */
 AnyBoard.Deck.prototype.onPlay = function(func) {
     AnyBoard.Logger.debug("Adds a new playListener", this);
@@ -149,15 +149,15 @@ AnyBoard.Deck.prototype.onDraw = function(callback) {
 };
 
 /**
- * Sting representation of a dek
+ * Sting representation of a deck
  * @returns {string}
  */
 AnyBoard.Deck.prototype.toString = function() {
     return 'Deck: ' + this.name;
 };
 
-/** Represents a single Card (AnyBoard.Card)
- * Read from JSON file provided to Deck class.
+/** Represents a single Card
+ * Should be instantiated in bulk by calling the deck constructor
  * @constructor
  * @param {AnyBoard.Deck} deck deck to which the card belongs
  * @param {object} options options for the card
@@ -200,11 +200,11 @@ AnyBoard.Card = function (deck, options) {
     AnyBoard.Card.all[this.id] = this;
     if (AnyBoard.Card.allTitle[this.title])
         AnyBoard.Logger.warn("Card with title " + this.title + " already exists. Old card will no longer be available " +
-        "through AnyBoard.Card.get", this);
+            "through AnyBoard.Card.get", this);
     AnyBoard.Card.allTitle[this.title] = this;
 };
 
-// Provides a unique ID for each card. Could be clojured inside the constructor instead of leaving it hanging out here.
+// Internal: Provides a unique ID for each card. Could be clojured inside the constructor instead of leaving it hanging out here.
 AnyBoard.Card.COUNTER = 0;
 AnyBoard.Card.AUTO_INC = function() {
     return ++AnyBoard.Card.COUNTER;
@@ -227,10 +227,9 @@ AnyBoard.Card.get = function(cardTitleOrID) {
     return AnyBoard.Card.all[cardTitleOrID];
 };
 
-
 /**
  * Adds functions to be executed upon a play of this card
- * @param {callbacks.playDrawCallback} func callback function to be executed upon play of card from this deck
+ * @param {playDrawCallback} func callback function to be executed upon play of card from this deck
  */
 AnyBoard.Card.prototype.onPlay = function(func) {
     AnyBoard.Logger.debug("Adds a new playListener", this);
@@ -239,11 +238,11 @@ AnyBoard.Card.prototype.onPlay = function(func) {
 
 /**
  * Adds functions to be executed upon a draw of this card
- * @param {callbacks.playDrawCallback} func callback function to be executed upon play of card from this deck
+ * @param {playDrawCallback} callback function to be executed upon play of card from this deck
  */
-AnyBoard.Card.prototype.onDraw = function(func) {
+AnyBoard.Card.prototype.onDraw = function(callback) {
     AnyBoard.Logger.debug("Adds a new drawListener", this);
-    this.drawListeners.push(func);
+    this.drawListeners.push(callback);
 };
 
 /**
@@ -275,10 +274,6 @@ AnyBoard.Card.prototype.toString = function() {
     return 'Card: ' + this.title + ', id: ' + this.id;
 };
 
-/**
- * Defining callbacks for documentation purposes
- */
-var callbacks = {};
 
 /**
 * This type of callback will be called when card is drawn or played
@@ -287,4 +282,4 @@ var callbacks = {};
 * @param {AnyBoard.Player} player that played the card
 * @param {object} [options] custom options as extra parameter when play was called
 */
-callbacks.playDrawCallback = function (card, player, options) {};
+

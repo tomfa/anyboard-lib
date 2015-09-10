@@ -20,7 +20,7 @@
         dependencies: 'evothings.easyble',
         version: '0.1',
         date: '2015-08-01',
-        type: ['bluetooth', 'bluetooth-discovery'],
+        type: ['bluetooth'],
         compatibility: [
             {
                 descriptor_uuid: '00002902-0000-1000-8000-00805f9b34fb',
@@ -233,34 +233,6 @@
             "PRINT_NEWLINE",
             beanBluetooth._CMD_CODE.PRINT_NEWLINE,
             NO_PARAMS)
-    };
-
-    /**
-     * Attempts to connect to a device and retrieves available services.
-     *
-     * @param {AnyBoard.BaseToken} token token to be connected to
-     * @param {function} win function to be executed upon success
-     * @param {function} fail function to be executed upon failure
-     */
-    beanBluetooth.connect = function (token, win, fail) {
-        var self = this;
-
-        token.device.connect(function(device) {
-            self.getServices(token, win, fail);
-        }, function(errorCode) {
-            token.device.haveServices = false;
-            fail && fail(errorCode);
-        });
-    };
-
-    /**
-     * Disconnects from device
-     * @param {AnyBoard.BaseToken} token
-     */
-    beanBluetooth.disconnect = function (token) {
-        AnyBoard.Logger.debug('Disconnecting from device: ' + token, this);
-        token.device && token.device.close()
-        token.device.haveServices = false;
     };
 
     beanBluetooth.getName = function (token, win, fail) {

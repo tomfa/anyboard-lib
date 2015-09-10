@@ -1,5 +1,5 @@
 /**
- * Logger handles logging. Will log using hyper.log if hyper is present (when using Evothings).
+ * Static logger object that handles logging. Will log using hyper.log if hyper is present (when using Evothings).
  * Will then log all events, regardless of severity
  *
  * @static {object}

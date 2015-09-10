@@ -113,7 +113,7 @@ AnyBoard.Drivers.toString = function() {
     return 'AnyBoard.Drivers (driverManager)'
 };
 
-/** Represents a single Driver, e.g. for spesific token or bluetooth on operating system.
+/** Represents a single Driver, e.g. for spesific token or bluetooth discovery
  * @constructor
  * @param {object} options options for the driver
  * @param {string} options.name name of the driver
@@ -303,7 +303,7 @@ AnyBoard.Deck.prototype._draw = function(player, options) {
 
 /**
  * Adds functions to be executed upon all Cards in this Deck.
- * @param {callbacks.playDrawCallback} func callback function to be executed upon play of card from this deck
+ * @param {playDrawCallback} func callback function to be executed upon play of card from this deck
  */
 AnyBoard.Deck.prototype.onPlay = function(func) {
     AnyBoard.Logger.debug("Adds a new playListener", this);
@@ -327,8 +327,8 @@ AnyBoard.Deck.prototype.toString = function() {
     return 'Deck: ' + this.name;
 };
 
-/** Represents a single Card (AnyBoard.Card)
- * Read from JSON file provided to Deck class.
+/** Represents a single Card
+ * Should be instantiated in bulk by calling the deck constructor
  * @constructor
  * @param {AnyBoard.Deck} deck deck to which the card belongs
  * @param {object} options options for the card
@@ -349,7 +349,7 @@ AnyBoard.Deck.prototype.toString = function() {
  * @property {number} amount amount of this card its deck
  * @property {AnyBoard.Deck} deck deck that this card belongs to
  * @property {Array} playListeneres holds functions to be called upon play of this spesific card (before potential playListeners on its belonging deck)
- * @property {Array} playListeneres holds functions to be called upon draw of this spesific card (before potential drawListeners on its belonging deck)
+ * @property {Array} drawListeners holds functions to be called upon draw of this spesific card (before potential drawListeners on its belonging deck)
  * @property {object} properties dictionary that holds custom attributes
  */
 AnyBoard.Card = function (deck, options) {
@@ -371,11 +371,11 @@ AnyBoard.Card = function (deck, options) {
     AnyBoard.Card.all[this.id] = this;
     if (AnyBoard.Card.allTitle[this.title])
         AnyBoard.Logger.warn("Card with title " + this.title + " already exists. Old card will no longer be available " +
-        "through AnyBoard.Card.get", this);
+            "through AnyBoard.Card.get", this);
     AnyBoard.Card.allTitle[this.title] = this;
 };
 
-// Provides a unique ID for each card. Could be clojured inside the constructor instead of leaving it hanging out here.
+// Internal: Provides a unique ID for each card. Could be clojured inside the constructor instead of leaving it hanging out here.
 AnyBoard.Card.COUNTER = 0;
 AnyBoard.Card.AUTO_INC = function() {
     return ++AnyBoard.Card.COUNTER;
@@ -398,10 +398,9 @@ AnyBoard.Card.get = function(cardTitleOrID) {
     return AnyBoard.Card.all[cardTitleOrID];
 };
 
-
 /**
  * Adds functions to be executed upon a play of this card
- * @param {callbacks.playDrawCallback} func callback function to be executed upon play of card from this deck
+ * @param {playDrawCallback} func callback function to be executed upon play of card from this deck
  */
 AnyBoard.Card.prototype.onPlay = function(func) {
     AnyBoard.Logger.debug("Adds a new playListener", this);
@@ -410,11 +409,11 @@ AnyBoard.Card.prototype.onPlay = function(func) {
 
 /**
  * Adds functions to be executed upon a draw of this card
- * @param {callbacks.playDrawCallback} func callback function to be executed upon play of card from this deck
+ * @param {playDrawCallback} callback function to be executed upon play of card from this deck
  */
-AnyBoard.Card.prototype.onDraw = function(func) {
+AnyBoard.Card.prototype.onDraw = function(callback) {
     AnyBoard.Logger.debug("Adds a new drawListener", this);
-    this.drawListeners.push(func);
+    this.drawListeners.push(callback);
 };
 
 /**
@@ -446,10 +445,6 @@ AnyBoard.Card.prototype.toString = function() {
     return 'Card: ' + this.title + ', id: ' + this.id;
 };
 
-/**
- * Defining callbacks for documentation purposes
- */
-var callbacks = {};
 
 /**
 * This type of callback will be called when card is drawn or played
@@ -458,7 +453,7 @@ var callbacks = {};
 * @param {AnyBoard.Player} player that played the card
 * @param {object} [options] custom options as extra parameter when play was called
 */
-callbacks.playDrawCallback = function (card, player, options) {};
+
 
 /** Represents a set of game dices that can be rolled to retrieve a random result.
  * @constructor
@@ -562,6 +557,34 @@ AnyBoard.Player.prototype.pay = function(resources, receivingPlayer) {
  * @param {AnyBoard.ResourceSet} receiveResources resources this player receieves
  * @param {AnyBoard.Player} [player] *(optional)* Who shall be traded with. Omit if not to a player, but to "the bank".
  * @returns {boolean} whether or not transaction was completed (false if Player don't hold enough resources)
+ * @example
+ * new AnyBoard.Resource("gold");
+ * new AnyBoard.Resource("silver");
+ *
+ * var startTreasure = new AnyBoard.ResourceSet({"gold": 6, "silver": 42});
+ * var goldTreasure = new AnyBoard.ResourceSet({"gold": 2});
+ * var silverTreasure = new AnyBoard.ResourceSet({"silver": 12});
+ *
+ * var dr1 = new AnyBoard.Player("firstDoctor");
+ * var dr2 = new AnyBoard.Player("secondDoctor");
+ *
+ * dr1.receive(startTreasure);
+ * dr2.receive(startTreasure);
+ *
+ * // returns true. dr1 will now own {"gold": 4, "silver": 54}. dr2 owns {"gold": 8, "silver": 30}
+ * dr1.trade(goldTreasure, silverTreasure, dr2)
+ *
+ * @example
+ * // returns true. dr1 will now own {"gold": 2, "silver": 66}. dr2 still owns {"gold": 8, "silver": 30}
+ * dr1.trade(goldTreasure, silverTreasure)
+ *
+ * @example
+ * var firstOverlappingTreasure = new AnyBoard.ResourceSet({"silver": 115, "gold": "6"});
+ * var secondOverlappingTreasure= new AnyBoard.ResourceSet({"silver": 100, "gold": "7"});
+ *
+ * // returns true. The trade nullifies the similarities, so that the trade can go through even though
+ * //     dr1 has < 100 silver
+ * dr1.trade(firstOverlappingTreasure, secondOverlappingTreasure)
  */
 AnyBoard.Player.prototype.trade = function(giveResources, receiveResources, player) {
     var similarities = giveResources.similarities(receiveResources);
@@ -588,9 +611,20 @@ AnyBoard.Player.prototype.trade = function(giveResources, receiveResources, play
 /**
  * Receive resource from bank/game. Use pay() when receiving from players.
  * @param {AnyBoard.ResourceSet} resourceSet resources to be added to this players bank
+ * @example
+ * new AnyBoard.Resource("gold");
+ * new AnyBoard.Resource("silver");
+ *
+ * var startTreasure = new AnyBoard.ResourceSet({"gold": 6, "silver": 42});
+ * var secondTresure = new AnyBoard.ResourceSet({"silver": 12, "copper": 122});
+ *
+ * var dr1 = new AnyBoard.Player("firstDoctor");  // player owns nothing initially
+ *
+ * dr1.receive(startTreasure);  // owns {"gold": 6, "silver": 42}
+ * dr1.receive(secondTresure);  // owns {"gold": 6, "silver": 54, "copper": 122}
  */
 AnyBoard.Player.prototype.recieve = function(resourceSet) {
-    AnyBoard.Logger.debug('' + this.name + " received " + resourceSet.resources, this);
+    AnyBoard.Logger.debug("Received " + resourceSet.resources, this);
     this.bank.add(resourceSet)
 };
 
@@ -599,6 +633,14 @@ AnyBoard.Player.prototype.recieve = function(resourceSet) {
  * @param {AnyBoard.Deck} deck deck to be drawn from
  * @param {object} [options] *(optional)* parameters to be sent to the drawListeners on the deck
  * @returns {AnyBoard.Card} card that is drawn
+ * @example
+ * var dr1 = new AnyBoard.Player("firstDoctor");  // player has no cards initially
+ *
+ * // Now has one card
+ * dr1.draw(deck);
+ *
+ * // Now has two cards. option parameter is being passed on to any drawListeners (See Deck/Card)
+ * dr1.draw(deck, options);
  */
 AnyBoard.Player.prototype.draw = function(deck, options) {
     var card = deck._draw(this, options);
@@ -617,6 +659,14 @@ AnyBoard.Player.prototype.draw = function(deck, options) {
  * @param {AnyBoard.Card} card card to be played
  * @param {object} [customOptions] *(optional)* custom options that the play should be played with
  * @returns {boolean} whether or not the card was played
+ * @example
+ * var DrWho = new AnyBoard.Player("firstDoctor");  // player has no cards initially
+ *
+ * // Store the card that was drawn
+ * var card = DrWho.draw(existingDeck);
+ *
+ * // Play that same card
+ * DrWho.play(card)
  */
 AnyBoard.Player.prototype.play = function(card, customOptions) {
     if (!this.hand.has(card)) {
@@ -637,7 +687,7 @@ AnyBoard.Player.prototype.toString = function() {
 };
 
 /**
- * Represents a Hand of a player, containing cards.
+ * Represents a Hand of a player, containing cards. Players are given one Hand in Person constructor.
  * @param {AnyBoard.Player} player player to which this hand belongs
  * @param {object} [options] *(optional)* custom properties added to this hand
  * @constructor
@@ -654,6 +704,18 @@ AnyBoard.Hand = function(player, options) {
  * @param {AnyBoard.Card} card card to be checked if is in hand
  * @param {number} [amount=1] *(default: 1)* amount of card to be checked if is in hand
  * @returns {boolean} hasCard whether or not the player has that amount or more of that card in this hand
+ *
+ * @example
+ * var DrWho = new AnyBoard.Player("firstDoctor");  // player has no cards initially
+ *
+ * // Store the card that was drawn
+ * var tardis = DrWho.draw(tardisDeck);
+ *
+ * // returns true
+ * DrWho.hand.has(card)
+ *
+ * // returns false, as he has only one
+ * DrWho.hand.has(card, 3)
  */
 AnyBoard.Hand.prototype.has = function(card, amount) {
     amount = amount || 1;
@@ -713,7 +775,15 @@ AnyBoard.Hand.prototype.toString = function() {
  * @param {string} name name representing the resource
  * @param {object} [properties] *(optional)* custom properties of this resource
  * @property {string} name name of resource
- * @property {string} properties custom options added to resource
+ * @property {any} properties custom options added to resource
+ * @example
+ * var simpleGold = new AnyBoard.Resource("gold");
+ *
+ * // The optional properties parameter can be of any type.
+ * var advancedPowder = new AnyBoard.Resource("powder", {"value": 6, "color": "blue"});
+ *
+ * // 6
+ * advancedPowder.properties.value
  */
 AnyBoard.Resource = function(name, properties) {
     AnyBoard.Logger.debug("Adding new Resource " + name);
@@ -733,6 +803,11 @@ AnyBoard.Resource.all = {};
  * Returns resource with given name
  * @param {string} name name of resource
  * @returns {AnyBoard.Resource} resource with given name (or undefined if non-existent)
+ * @example
+ * var simpleGold = new AnyBoard.Resource("gold");
+ *
+ * // returns simpleGold
+ * AnyBoard.Resource.get("gold");
  */
 AnyBoard.Resource.get = function(name) {
     return AnyBoard.Resource.all[name]
@@ -745,6 +820,9 @@ AnyBoard.Resource.get = function(name) {
  * @property {object} [resources] *(optional)* a set of initially contained resources
  * @property {boolean} [allowNegative=false] *(optional, default: false)*  whether or not to allow being subtracted resources to below 0 (dept)
  * @constructor
+
+ * // Returns a resourceset that can be deducted below 0
+ * var debtBank = new AnyBoard.ResourceSet({}, true);
  */
 AnyBoard.ResourceSet = function(resources, allowNegative) {
     AnyBoard.Logger.debug("Adding new ResourceSet (allowNegative: " + allowNegative + ")");
@@ -769,6 +847,19 @@ AnyBoard.ResourceSet = function(resources, allowNegative) {
  * Whether or not a ResourceSet contains another ResourceSet
  * @param {AnyBoard.ResourceSet} reqResource ResourceSet to be compared against
  * @returns {boolean} true if this ResourceSet contains reqResource, else false
+ * @example
+ * new AnyBoard.Resource("gold");
+ * new AnyBoard.Resource("silver");
+ *
+ * var myTreasure = new AnyBoard.ResourceSet({"gold": 6, "silver": 42});
+ * var minorDebt = new AnyBoard.ResourceSet({"gold": 1, "silver": 3});
+ * var hugeDebt = new AnyBoard.ResourceSet({"gold": 12, "silver": 41});
+ *
+ * // returns true
+ * myTreasure.contains(minorDebt);
+ *
+ * // returns false
+ * myTreasure.contains(hugeDebt);
  */
 AnyBoard.ResourceSet.prototype.contains = function(reqResource) {
     for (var resource in reqResource.resources) {
@@ -783,6 +874,15 @@ AnyBoard.ResourceSet.prototype.contains = function(reqResource) {
 /**
  * Adds a ResourceSet to this one
  * @param {AnyBoard.ResourceSet} resourceSet ResourceSet to be added to this one
+ * @example
+ * new AnyBoard.Resource("gold");
+ * new AnyBoard.Resource("silver");
+ *
+ * var myTreasure = new AnyBoard.ResourceSet({"gold": 6, "silver": 42});
+ * var minorGift = new AnyBoard.ResourceSet({"silver": 2});
+ *
+ * myTreasure.add(minorGift);
+ * // myTreasure is now {"gold": 6, "silver": 45}
  */
 AnyBoard.ResourceSet.prototype.add = function(resourceSet) {
     for (var resource in resourceSet.resources) {
@@ -798,6 +898,23 @@ AnyBoard.ResourceSet.prototype.add = function(resourceSet) {
  * Subtracts a dictionary of resources and amounts to a ResourceSet
  * @param {AnyBoard.ResourceSet} resourceSet set of resources to be subtracted
  * @returns {boolean} whether or not resources were subtracted successfully
+ * @example
+ * new AnyBoard.Resource("gold");
+ * new AnyBoard.Resource("silver");
+ *
+ * var myTreasure = new AnyBoard.ResourceSet({"gold": 6, "silver": 42});
+ * var minorGift = new AnyBoard.ResourceSet({"silver": 2});
+ * var debtBank = new AnyBoard.ResourceSet({}, true);
+ * var cosyBank = new AnyBoard.ResourceSet();
+ *
+ * // returns true. myTreasure becomes {"gold": 6, "silver": 40}
+ * myTreasure.subtract(minorGift);
+ *
+ * // returns true. debtbank becomes {"silver": -2}
+ * debtBank.subtract(minorGift);
+ *
+ * // returns false and leaves cosyBank unchanged
+ * cosyBank.subtract(minorGift);
  */
 AnyBoard.ResourceSet.prototype.subtract = function(resourceSet) {
     if (!this.allowNegative && !this.contains(resourceSet)){
@@ -817,6 +934,15 @@ AnyBoard.ResourceSet.prototype.subtract = function(resourceSet) {
  * Returns the common resources and minimum amount between a dictionary of resources and amounts, and this ResourceSet
  * @param {AnyBoard.ResourceSet} resourceSet dictionary of resources and amounts to be compared against
  * @returns {object} similarities dictionary of common resources and amounts
+ * @example
+ * new AnyBoard.Resource("gold");
+ * new AnyBoard.Resource("silver");
+ *
+ * var myTreasure = new AnyBoard.ResourceSet({"gold": 6, "silver": 42});
+ * var otherTresure = new AnyBoard.ResourceSet({"silver": 2, "bacon": 12});
+ *
+ * // returns {"silver": 2}
+ * myTreasure.similarities(otherTresure);
  */
 AnyBoard.ResourceSet.prototype.similarities = function(resourceSet) {
     var similarities = {};
@@ -841,7 +967,9 @@ AnyBoard.TokenManager = {
 };
 
 /**
- * Sets a new default driver to handle communication for tokens without specified driver
+ * Sets a new default driver to handle communication for tokens without specified driver.
+ * The driver must have implemented methods *scan(win, fail, timeout), in order to discover tokens.
+ *
  * @param {AnyBoard.Driver} driver driver to be used for communication
  */
 AnyBoard.TokenManager.setDriver = function(driver) {
@@ -860,8 +988,13 @@ AnyBoard.TokenManager.setDriver = function(driver) {
 /**
  * Scans for tokens nearby and stores in discoveredTokens property
  * @param {onScanWinCallback} win function to be executed when devices are found (called for each device found)
- * @param {onScanFailCallback} fail function to be executed upon failure
+ * @param {onFailCallback} fail function to be executed upon failure
  * @param {number} timeout amount of milliseconds to scan before stopping
+ * @example
+ * var onDiscover = function(token) { console.log("I found " + token) };
+ *
+ * // Scans for tokens. For every token found, it prints "I found ...")
+ * TokenManager.scan(onDiscover);
  */
 AnyBoard.TokenManager.scan = function(win, fail, timeout) {
     this.driver.scan(
@@ -874,15 +1007,15 @@ AnyBoard.TokenManager.scan = function(win, fail, timeout) {
 
 /**
  * Callback
+ * @callback
  * @param {AnyBoard.BaseToken} token token that is returned upon scanning.
  */
-var onScanWinCallback = function(token) {};
 
 /**
  * Callback
- * @param {string} errorCode ErrorCode cast upon scanning for devices
+ * @callback
+ * @param {string} errorCode ErrorCode the function failed with
  */
-var onScanFailCallback = function(errorCode) {};
 
 /**
  * Returns a token handled by this TokenManager
@@ -905,7 +1038,8 @@ AnyBoard.TokenManager.get = function(address) {
  * @property {object} device driver spesific data.
  * @property {object} listeners functions to be execute upon certain triggered events
  * @property {object} onceListeners functions to be execute upon next triggering of certain events
- * @property {object} sendQueue sending to Pawn is being held here until available
+ * @property {Array.<Function>} sendQueue queue for communicating with
+ * @property {object} cache key-value store for caching certain communication calls
  * @property {AnyBoard.Driver} driver driver that handles communication
  * @constructor
  */
@@ -917,8 +1051,29 @@ AnyBoard.BaseToken = function(name, address, device, driver) {
     this.listeners = {};
     this.onceListeners = {};
     this.sendQueue = [];
-    this.cache = [];
-    this.driver = driver;
+    this.cache = {};
+    this.driver = driver || AnyBoard.BaseToken._defaultDriver;
+};
+
+AnyBoard.BaseToken._defaultDriver = {};
+
+/**
+ * Sets a new default driver to handle communication for tokens without specified driver.
+ * The driver must have implement a method *scan(win, fail, timeout)* in order to discover tokens.
+ *
+ * @param {AnyBoard.Driver} driver driver to be used for communication
+ * @returns {boolean} whether or not driver was successfully set
+ */
+AnyBoard.BaseToken.setDefaultDriver = function(driver) {
+    // Check that functions exists on driver
+    (driver.send && typeof driver.send === 'function') || AnyBoard.Logger.warn('Could not find send() on given driver', this);
+
+    if (driver.send && typeof driver.send === 'function') {
+        AnyBoard.BaseToken._defaultDriver = driver;
+        return true;
+    }
+
+    return false;
 };
 
 /**
@@ -929,17 +1084,16 @@ AnyBoard.BaseToken.prototype.isConnected = function() {
     return this.connected;
 };
 
-/** TODO: Add callbacks to JSDoc
- * Attempts to connect to token.
- * @param {function} win function to be executed upon success
- * @param {function} fail function to be executed upon failure
- * @returns {boolean} whether or not token is connected
+/**
+ * Attempts to connect to token. Uses TokenManager driver, not its own, since connect
+ *      needs to happen before determining suitable driver.
+ * @param {function} [win] function to be executed upon success
+ * @param {function} [fail] function to be executed upon failure
  */
 AnyBoard.BaseToken.prototype.connect = function(win, fail) {
     AnyBoard.Logger.debug('Attempting to connect to ' + this);
-    var pointer = this.driver || AnyBoard.TokenManager.driver;
     var self = this;
-    pointer.connect(
+    AnyBoard.TokenManager.connect(
         self,
         function(device) {
             AnyBoard.Logger.debug('Connected to ' + self);
@@ -965,8 +1119,7 @@ AnyBoard.BaseToken.prototype.connect = function(win, fail) {
  * Disconnects from the token.
  */
 AnyBoard.BaseToken.prototype.disconnect = function() {
-    var pointer = this.driver || AnyBoard.TokenManager.driver;
-    pointer.disconnect(this);
+    AnyBoard.TokenManager.disconnect(this);
     AnyBoard.Logger.debug('' + this + ' disconnected', this);
     this.connected = false;
     this.trigger('disconnect', {device: this});
@@ -976,9 +1129,18 @@ AnyBoard.BaseToken.prototype.disconnect = function() {
  * Trigger an event on a token
  * @param {string} eventName name of event
  * @param {object} [eventOptions] dictionary of parameters and values
+ * @example
+ * var onTimeTravelCallback = function (options) {console.log("The tardis is great!")};
+ * existingToken.on('timeTravelled', onTimeTravelCallback);
+ *
+ * // Triggers the function, and prints praise for the tardis
+ * existingToken.trigger('timeTravelled');
+ *
+ * existingToken.trigger('timeTravelled');  // prints again
+ * existingToken.trigger('timeTravelled');  // prints again
  */
 AnyBoard.BaseToken.prototype.trigger = function(eventName, eventOptions) {
-    AnyBoard.Logger.debug('' + this + ' triggered "' + eventName + '"');
+    AnyBoard.Logger.debug('Triggered "' + eventName + '"', this);
     if (this.listeners[eventName])
         for (var i in this.listeners[eventName]) {
             if (this.listeners[eventName].hasOwnProperty(i))
@@ -993,51 +1155,71 @@ AnyBoard.BaseToken.prototype.trigger = function(eventName, eventOptions) {
     }
 };
 
-/** TODO: Add callbacks to JSDoc
+// TODO: Add callbacks to JSDoc
+/**
  * Adds a callbackFunction to be executed always when event is triggered
  * @param {string} eventName name of event to listen to
  * @param {function} callbackFunction function to be executed
+ * @example
+ * var onTimeTravelCallback = function (options) {console.log("The tardis is great!")};
+ * existingToken.on('timeTravelled', onTimeTravelCallback);
+ *
+ * // Triggers the function, and prints praise for the tardis
+ * existingToken.trigger('timeTravelled');
+ *
+ * existingToken.trigger('timeTravelled');  // prints again
+ * existingToken.trigger('timeTravelled');  // prints again
  */
 AnyBoard.BaseToken.prototype.on = function(eventName, callbackFunction) {
-    AnyBoard.Logger.debug('' + this + ' added listener to event: ' + eventName, this);
+    AnyBoard.Logger.debug('Added listener to event: ' + eventName, this);
     if (!this.listeners[eventName])
         this.listeners[eventName] = [];
     this.listeners[eventName].push(callbackFunction);
 };
 
-/** TODO: Add callbacks to JSDoc
+// TODO: Add callbacks to JSDoc
+/**
  * Adds a callbackFunction to be executed next time an event is triggered
  * @param {string} eventName name of event to listen to
  * @param {function} callbackFunction function to be executed
+ * @example
+ * var onTimeTravelCallback = function (options) {console.log("The tardis is great!")};
+ * existingToken.once('timeTravelled', onTimeTravelCallback);
+ *
+ * // Triggers the function, and prints praise for the tardis
+ * existingToken.trigger('timeTravelled');
+ *
+ * // No effect
+ * existingToken.trigger('timeTravelled');
  */
 AnyBoard.BaseToken.prototype.once = function(eventName, callbackFunction) {
-    AnyBoard.Logger.debug('' + this + ' added onceListener to event: ' + eventName, this);
+    AnyBoard.Logger.debug('Added onceListener to event: ' + eventName, this);
     if (!this.onceListeners[eventName])
         this.onceListeners[eventName] = [];
     this.onceListeners[eventName].push(callbackFunction);
 };
 
-/** TODO: Add callbacks to JSDoc
+// TODO: Add callbacks to JSDoc
+/**
  * Sends data to the token. Uses either own driver, or (if not set) TokenManager driver
  * @param {Uint8Array|ArrayBuffer|String} data data to be sent
  * @param {function} win function to be executed upon success
  * @param {function} fail function to be executed upon error
  */
 AnyBoard.BaseToken.prototype.send = function(data, win, fail) {
-    AnyBoard.Logger.debug('' + this + ' attempting to send with data: ' + data, this);
+    AnyBoard.Logger.debug('Attempting to send with data: ' + data, this);
     if (!this.isConnected()) {
-        AnyBoard.Logger.warn(this + ' is not connected. Attempting to connect first.', this);
+        AnyBoard.Logger.warn('Is not connected. Attempting to connect first.', this);
         var self = this;
         this.connect(
             function(device){
-                self.sendBuffer(data, win, fail);
+                self.send(data, win, fail);
             }, function(errorCode){
                 fail(errorCode);
             }
         )
     } else {
-        var pointer = this.driver || AnyBoard.TokenManager.driver;
-        pointer.send(this, data, win, fail);
+        this.driver.send(this, data, win, fail);
     }
 };
 
@@ -1050,6 +1232,7 @@ AnyBoard.BaseToken.prototype.send = function(data, win, fail) {
  * @param {string} value
  * @param {function} [win] callback function to be called upon successful execution
  * @param {function} [fail] callback function to be executed upon failure
+ *
  */
 AnyBoard.BaseToken.prototype.print = function(value, win, fail) {
     if (!this.driver.hasOwnProperty('print')) {
@@ -1064,6 +1247,17 @@ AnyBoard.BaseToken.prototype.print = function(value, win, fail) {
  * Gets the name of the firmware type of the token
  * @param {function} [win] callback function to be called upon successful execution
  * @param {function} [fail] callback function to be executed upon failure
+ * @example
+ * // Function to be executed upon name retrieval
+ * var getNameCallback = function (name) {console.log("Firmware name: " + name)};
+ *
+ * // Function to be executed upon failure to retrieve name
+ * var failGettingNameCallback = function (name) {console.log("Couldn't get name :(")};
+ *
+ * existingToken.getFirmwareName(getNameCallback, failGettingNameCallback);
+ *
+ * // Since it's asyncronous, this will be printed before the result
+ * console.log("This comes first!")
  */
 AnyBoard.BaseToken.prototype.getFirmwareName = function(win, fail) {
     if (!this.driver.hasOwnProperty('getName')) {
@@ -1235,6 +1429,12 @@ AnyBoard.BaseToken.prototype.hasTemperature = function(win, fail) {
  * @param {string|Array} value string with color name or array of [red, green, blue] values 0-255
  * @param {function} [win] callback function to be called upon successful execution
  * @param {function} [fail] callback function to be executed upon
+ * @example
+ * // sets Led to white
+ * existingToken.ledOn([255, 255, 255]);
+ *
+ * // sets Led to white (See driver implementation for what colors are supported)
+ * existingToken.ledOn("white");
  */
 AnyBoard.BaseToken.prototype.ledOn = function(value, win, fail) {
     if (!this.driver.hasOwnProperty('ledOn')) {
@@ -1246,10 +1446,16 @@ AnyBoard.BaseToken.prototype.ledOn = function(value, win, fail) {
 };
 
 /**
- * Sets color on token
+ * tells token to blink its led
  * @param {string|Array} value string with color name or array of [red, green, blue] values 0-255
  * @param {function} [win] callback function to be called upon successful execution
  * @param {function} [fail] callback function to be executed upon
+ * @example
+ * // blinks red
+ * existingToken.ledBlink([255, 0, 0]);
+ *
+ * // blinks blue
+ * existingToken.ledBlink("blue");
  */
 AnyBoard.BaseToken.prototype.ledBlink = function(value, win, fail) {
     if (!this.driver.hasOwnProperty('ledBlink')) {
@@ -1283,7 +1489,7 @@ AnyBoard.BaseToken.prototype.toString = function() {
 };
 
 /**
- * Logger handles logging. Will log using hyper.log if hyper is present (when using Evothings).
+ * Static logger object that handles logging. Will log using hyper.log if hyper is present (when using Evothings).
  * Will then log all events, regardless of severity
  *
  * @static {object}
@@ -1372,7 +1578,7 @@ AnyBoard.Logger = {
 AnyBoard.Utils = {};
 
 /**
- * Internal methods to evaluate if obj is a function
+ * Internal method to evaluate if obj is a function
  * @param obj
  * @returns {boolean}
  * @private
@@ -1382,7 +1588,7 @@ AnyBoard.Utils._isFunction = function(obj) {
 };
 
 /**
- * Internal methods to evaluate if obj is an object
+ * Internal method to evaluate if obj is an object
  * @param obj
  * @returns {boolean}
  * @private
@@ -1393,7 +1599,7 @@ AnyBoard.Utils._isObject = function(obj) {
 };
 
 /**
- * Internal methods to evaluate if obj has a certain key
+ * Internal method to evaluate if obj has a certain key
  * @param obj
  * @param key
  * @returns {boolean|*}
@@ -1404,7 +1610,7 @@ AnyBoard.Utils._has = function(obj, key) {
 };
 
 /**
- * Internal methods that returns the keys of obj
+ * Internal method that returns the keys of obj
  * @param obj
  * @returns {Array}
  * @private
@@ -1424,6 +1630,16 @@ AnyBoard.Utils._keys = function(obj) {
  * @param {Array} [aStack] *(optional)* array of items to further compare
  * @param {Array} [bStack] *(optional)* array of items to further compare
  * @returns {boolean} whether or not the items were equal
+ * @example
+ * var tardis = {"quality": "awesome"}
+ * var smardis = {"quality": "shabby"}
+ * var drWhoCar = {"quality": "awesome"}
+ *
+ * // Returns true
+ * AnyBoard.Utils.isEqual(tardis, drWhoCar)
+ *
+ * // Returns false
+ * AnyBoard.Utils.isEqual(tardis, smardis)
  */
 AnyBoard.Utils.isEqual = function (a, b, aStack, bStack) {
     // Identical objects are equal. `0 === -0`, but they aren't identical.

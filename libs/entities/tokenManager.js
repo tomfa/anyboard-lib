@@ -10,7 +10,10 @@ AnyBoard.TokenManager = {
 };
 
 /**
- * Sets a new default driver to handle communication for tokens without specified driver
+ * Sets a new default driver to handle communication for tokens without specified driver.
+ * The driver must have implemented methods *scan(win, fail, timeout) connect(token, win, fail) and
+ * disconnect(token, win, fail)*, in order to discover tokens.
+ *
  * @param {AnyBoard.Driver} driver driver to be used for communication
  */
 AnyBoard.TokenManager.setDriver = function(driver) {
@@ -29,8 +32,13 @@ AnyBoard.TokenManager.setDriver = function(driver) {
 /**
  * Scans for tokens nearby and stores in discoveredTokens property
  * @param {onScanWinCallback} win function to be executed when devices are found (called for each device found)
- * @param {onScanFailCallback} fail function to be executed upon failure
- * @param {number} timeout amount of milliseconds to scan before stopping
+ * @param {onFailCallback} [fail] *optional* function to be executed upon failure
+ * @param {number} [timeout] amount of milliseconds to scan before stopping. Driver has a default.
+ * @example
+ * var onDiscover = function(token) { console.log("I found " + token) };
+ *
+ * // Scans for tokens. For every token found, it prints "I found ...")
+ * TokenManager.scan(onDiscover);
  */
 AnyBoard.TokenManager.scan = function(win, fail, timeout) {
     this.driver.scan(
@@ -43,15 +51,15 @@ AnyBoard.TokenManager.scan = function(win, fail, timeout) {
 
 /**
  * Callback
+ * @callback
  * @param {AnyBoard.BaseToken} token token that is returned upon scanning.
  */
-var onScanWinCallback = function(token) {};
 
 /**
  * Callback
- * @param {string} errorCode ErrorCode cast upon scanning for devices
+ * @callback
+ * @param {string} errorCode ErrorCode the function failed with
  */
-var onScanFailCallback = function(errorCode) {};
 
 /**
  * Returns a token handled by this TokenManager
@@ -74,7 +82,8 @@ AnyBoard.TokenManager.get = function(address) {
  * @property {object} device driver spesific data.
  * @property {object} listeners functions to be execute upon certain triggered events
  * @property {object} onceListeners functions to be execute upon next triggering of certain events
- * @property {object} sendQueue sending to Pawn is being held here until available
+ * @property {Array.<Function>} sendQueue queue for communicating with
+ * @property {object} cache key-value store for caching certain communication calls
  * @property {AnyBoard.Driver} driver driver that handles communication
  * @constructor
  */
@@ -86,8 +95,29 @@ AnyBoard.BaseToken = function(name, address, device, driver) {
     this.listeners = {};
     this.onceListeners = {};
     this.sendQueue = [];
-    this.cache = [];
-    this.driver = driver;
+    this.cache = {};
+    this.driver = driver || AnyBoard.BaseToken._defaultDriver;
+};
+
+AnyBoard.BaseToken._defaultDriver = {};
+
+/**
+ * Sets a new default driver to handle communication for tokens without specified driver.
+ * The driver must have implement a method *scan(win, fail, timeout)* in order to discover tokens.
+ *
+ * @param {AnyBoard.Driver} driver driver to be used for communication
+ * @returns {boolean} whether or not driver was successfully set
+ */
+AnyBoard.BaseToken.setDefaultDriver = function(driver) {
+    // Check that functions exists on driver
+    (driver.send && typeof driver.send === 'function') || AnyBoard.Logger.warn('Could not find send() on given driver', this);
+
+    if (driver.send && typeof driver.send === 'function') {
+        AnyBoard.BaseToken._defaultDriver = driver;
+        return true;
+    }
+
+    return false;
 };
 
 /**
@@ -98,17 +128,16 @@ AnyBoard.BaseToken.prototype.isConnected = function() {
     return this.connected;
 };
 
-/** TODO: Add callbacks to JSDoc
- * Attempts to connect to token.
- * @param {function} win function to be executed upon success
- * @param {function} fail function to be executed upon failure
- * @returns {boolean} whether or not token is connected
+/**
+ * Attempts to connect to token. Uses TokenManager driver, not its own, since connect
+ *      needs to happen before determining suitable driver.
+ * @param {function} [win] function to be executed upon success
+ * @param {function} [fail] function to be executed upon failure
  */
 AnyBoard.BaseToken.prototype.connect = function(win, fail) {
     AnyBoard.Logger.debug('Attempting to connect to ' + this);
-    var pointer = this.driver || AnyBoard.TokenManager.driver;
     var self = this;
-    pointer.connect(
+    AnyBoard.TokenManager.connect(
         self,
         function(device) {
             AnyBoard.Logger.debug('Connected to ' + self);
@@ -134,8 +163,7 @@ AnyBoard.BaseToken.prototype.connect = function(win, fail) {
  * Disconnects from the token.
  */
 AnyBoard.BaseToken.prototype.disconnect = function() {
-    var pointer = this.driver || AnyBoard.TokenManager.driver;
-    pointer.disconnect(this);
+    AnyBoard.TokenManager.disconnect(this);
     AnyBoard.Logger.debug('' + this + ' disconnected', this);
     this.connected = false;
     this.trigger('disconnect', {device: this});
@@ -145,9 +173,18 @@ AnyBoard.BaseToken.prototype.disconnect = function() {
  * Trigger an event on a token
  * @param {string} eventName name of event
  * @param {object} [eventOptions] dictionary of parameters and values
+ * @example
+ * var onTimeTravelCallback = function (options) {console.log("The tardis is great!")};
+ * existingToken.on('timeTravelled', onTimeTravelCallback);
+ *
+ * // Triggers the function, and prints praise for the tardis
+ * existingToken.trigger('timeTravelled');
+ *
+ * existingToken.trigger('timeTravelled');  // prints again
+ * existingToken.trigger('timeTravelled');  // prints again
  */
 AnyBoard.BaseToken.prototype.trigger = function(eventName, eventOptions) {
-    AnyBoard.Logger.debug('' + this + ' triggered "' + eventName + '"');
+    AnyBoard.Logger.debug('Triggered "' + eventName + '"', this);
     if (this.listeners[eventName])
         for (var i in this.listeners[eventName]) {
             if (this.listeners[eventName].hasOwnProperty(i))
@@ -162,51 +199,71 @@ AnyBoard.BaseToken.prototype.trigger = function(eventName, eventOptions) {
     }
 };
 
-/** TODO: Add callbacks to JSDoc
+// TODO: Add callbacks to JSDoc
+/**
  * Adds a callbackFunction to be executed always when event is triggered
  * @param {string} eventName name of event to listen to
  * @param {function} callbackFunction function to be executed
+ * @example
+ * var onTimeTravelCallback = function (options) {console.log("The tardis is great!")};
+ * existingToken.on('timeTravelled', onTimeTravelCallback);
+ *
+ * // Triggers the function, and prints praise for the tardis
+ * existingToken.trigger('timeTravelled');
+ *
+ * existingToken.trigger('timeTravelled');  // prints again
+ * existingToken.trigger('timeTravelled');  // prints again
  */
 AnyBoard.BaseToken.prototype.on = function(eventName, callbackFunction) {
-    AnyBoard.Logger.debug('' + this + ' added listener to event: ' + eventName, this);
+    AnyBoard.Logger.debug('Added listener to event: ' + eventName, this);
     if (!this.listeners[eventName])
         this.listeners[eventName] = [];
     this.listeners[eventName].push(callbackFunction);
 };
 
-/** TODO: Add callbacks to JSDoc
+// TODO: Add callbacks to JSDoc
+/**
  * Adds a callbackFunction to be executed next time an event is triggered
  * @param {string} eventName name of event to listen to
  * @param {function} callbackFunction function to be executed
+ * @example
+ * var onTimeTravelCallback = function (options) {console.log("The tardis is great!")};
+ * existingToken.once('timeTravelled', onTimeTravelCallback);
+ *
+ * // Triggers the function, and prints praise for the tardis
+ * existingToken.trigger('timeTravelled');
+ *
+ * // No effect
+ * existingToken.trigger('timeTravelled');
  */
 AnyBoard.BaseToken.prototype.once = function(eventName, callbackFunction) {
-    AnyBoard.Logger.debug('' + this + ' added onceListener to event: ' + eventName, this);
+    AnyBoard.Logger.debug('Added onceListener to event: ' + eventName, this);
     if (!this.onceListeners[eventName])
         this.onceListeners[eventName] = [];
     this.onceListeners[eventName].push(callbackFunction);
 };
 
-/** TODO: Add callbacks to JSDoc
+// TODO: Add callbacks to JSDoc
+/**
  * Sends data to the token. Uses either own driver, or (if not set) TokenManager driver
  * @param {Uint8Array|ArrayBuffer|String} data data to be sent
  * @param {function} win function to be executed upon success
  * @param {function} fail function to be executed upon error
  */
 AnyBoard.BaseToken.prototype.send = function(data, win, fail) {
-    AnyBoard.Logger.debug('' + this + ' attempting to send with data: ' + data, this);
+    AnyBoard.Logger.debug('Attempting to send with data: ' + data, this);
     if (!this.isConnected()) {
-        AnyBoard.Logger.warn(this + ' is not connected. Attempting to connect first.', this);
+        AnyBoard.Logger.warn('Is not connected. Attempting to connect first.', this);
         var self = this;
         this.connect(
             function(device){
-                self.sendBuffer(data, win, fail);
+                self.send(data, win, fail);
             }, function(errorCode){
                 fail(errorCode);
             }
         )
     } else {
-        var pointer = this.driver || AnyBoard.TokenManager.driver;
-        pointer.send(this, data, win, fail);
+        this.driver.send(this, data, win, fail);
     }
 };
 
@@ -219,6 +276,7 @@ AnyBoard.BaseToken.prototype.send = function(data, win, fail) {
  * @param {string} value
  * @param {function} [win] callback function to be called upon successful execution
  * @param {function} [fail] callback function to be executed upon failure
+ *
  */
 AnyBoard.BaseToken.prototype.print = function(value, win, fail) {
     if (!this.driver.hasOwnProperty('print')) {
@@ -233,6 +291,17 @@ AnyBoard.BaseToken.prototype.print = function(value, win, fail) {
  * Gets the name of the firmware type of the token
  * @param {function} [win] callback function to be called upon successful execution
  * @param {function} [fail] callback function to be executed upon failure
+ * @example
+ * // Function to be executed upon name retrieval
+ * var getNameCallback = function (name) {console.log("Firmware name: " + name)};
+ *
+ * // Function to be executed upon failure to retrieve name
+ * var failGettingNameCallback = function (name) {console.log("Couldn't get name :(")};
+ *
+ * existingToken.getFirmwareName(getNameCallback, failGettingNameCallback);
+ *
+ * // Since it's asyncronous, this will be printed before the result
+ * console.log("This comes first!")
  */
 AnyBoard.BaseToken.prototype.getFirmwareName = function(win, fail) {
     if (!this.driver.hasOwnProperty('getName')) {
@@ -404,6 +473,12 @@ AnyBoard.BaseToken.prototype.hasTemperature = function(win, fail) {
  * @param {string|Array} value string with color name or array of [red, green, blue] values 0-255
  * @param {function} [win] callback function to be called upon successful execution
  * @param {function} [fail] callback function to be executed upon
+ * @example
+ * // sets Led to white
+ * existingToken.ledOn([255, 255, 255]);
+ *
+ * // sets Led to white (See driver implementation for what colors are supported)
+ * existingToken.ledOn("white");
  */
 AnyBoard.BaseToken.prototype.ledOn = function(value, win, fail) {
     if (!this.driver.hasOwnProperty('ledOn')) {
@@ -415,10 +490,16 @@ AnyBoard.BaseToken.prototype.ledOn = function(value, win, fail) {
 };
 
 /**
- * Sets color on token
+ * tells token to blink its led
  * @param {string|Array} value string with color name or array of [red, green, blue] values 0-255
  * @param {function} [win] callback function to be called upon successful execution
  * @param {function} [fail] callback function to be executed upon
+ * @example
+ * // blinks red
+ * existingToken.ledBlink([255, 0, 0]);
+ *
+ * // blinks blue
+ * existingToken.ledBlink("blue");
  */
 AnyBoard.BaseToken.prototype.ledBlink = function(value, win, fail) {
     if (!this.driver.hasOwnProperty('ledBlink')) {

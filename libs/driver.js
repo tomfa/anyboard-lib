@@ -9,10 +9,21 @@ AnyBoard.Drivers = {
 /**
  * Returns driver with given name
  * @example
- * // returns 3
- * globalNS.method(5, 15);
+ * var discoveryBluetooth = new AnyBoard.Driver({
+        name: 'theTardisMachine',
+        description: 'bla bla',
+        version: '1.0',
+        type: ['bluetooth-discovery', 'bluetooth'],
+        compatibility: ['tardis', 'pancakes']
+    });
+ *
+ * // Returns undefined
+ * AnyBoard.Drivers.get("non-existant-driver")
+ *
+ * // Returns driver
+ * AnyBoard.Drivers.get("theTardisMachine")
  * @param {string} name name of driver
- * @returns {AnyBoard.Driver} driver with given name (or undefined if non-existent)
+ * @returns {AnyBoard.Driver|undefined} driver with given name (or undefined if non-existent)
  */
 AnyBoard.Drivers.get = function(name) {
     return this.drivers[name];
@@ -20,9 +31,28 @@ AnyBoard.Drivers.get = function(name) {
 
 /**
  * Returns first driver of certain type that matches the given compatibility.
+ * @example
+ * var discoveryBluetooth = new AnyBoard.Driver({
+        name: 'theTardisMachine',
+        description: 'bla bla',
+        version: '1.0',
+        type: ['bluetooth-discovery', 'bluetooth'],
+        compatibility: ['tardis', {"show": "Doctor Who"}]
+    });
+ *
+ * // Returns undefined (right type, wrong compatibility)
+ * AnyBoard.Drivers.getCompatibleDriver('bluetooth', 'weirdCompatibility');
+ *
+ * // Returns undefined (wrong type, right compatibility)
+ * AnyBoard.Drivers.getCompatibleDriver('HTTP, {"service": "iCanTypeAnyThingHere"});
+ *
+ * // Returns discoveryBluetooth driver
+ * AnyBoard.Drivers.getCompatibleDriver('bluetooth', 'tardis');
+ *
  * @param {string} type name of driver
  * @param {string|object} compatibility name of driver
  * @returns {AnyBoard.Driver} compatible driver (or undefined if non-existent)
+ *
  */
 AnyBoard.Drivers.getCompatibleDriver = function(type, compatibility) {
     for (var key in AnyBoard.Drivers.drivers) {
@@ -70,7 +100,7 @@ AnyBoard.Drivers.toString = function() {
     return 'AnyBoard.Drivers (driverManager)'
 };
 
-/** Represents a single Driver, e.g. for spesific token or bluetooth on operating system.
+/** Represents a single Driver, e.g. for spesific token or bluetooth discovery
  * @constructor
  * @param {object} options options for the driver
  * @param {string} options.name name of the driver

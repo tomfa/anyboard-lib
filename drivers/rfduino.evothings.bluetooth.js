@@ -200,34 +200,6 @@
     };
 
     /**
-     * Attempts to connect to a device and retrieves available services.
-     *
-     * @param {AnyBoard.BaseToken} token token to be connected to
-     * @param {function} win function to be executed upon success
-     * @param {function} fail function to be executed upon failure
-     */
-    rfduinoBluetooth.connect = function (token, win, fail) {
-        var self = this;
-
-        token.device.connect(function(device) {
-            self.getServices(token, win, fail);
-        }, function(errorCode) {
-            token.device.haveServices = false;
-            fail && fail(errorCode);
-        });
-    };
-
-    /**
-     * Disconnects from device
-     * @param {AnyBoard.BaseToken} token
-     */
-    rfduinoBluetooth.disconnect = function (token) {
-        AnyBoard.Logger.debug('Disconnecting from device: ' + token, this);
-        token.device && token.device.close();
-        token.device.haveServices = false;
-    };
-
-    /**
      * Internal method that subscribes to updates from the token
      * @param token
      * @param callback

@@ -1,5 +1,10 @@
 /**
- * Internal methods to evaluate if obj is a function
+ * Utility functions for AnyBoard
+ */
+AnyBoard.Utils = {};
+
+/**
+ * Internal method to evaluate if obj is a function
  * @param obj
  * @returns {boolean}
  * @private
@@ -9,7 +14,7 @@ AnyBoard.Utils._isFunction = function(obj) {
 };
 
 /**
- * Internal methods to evaluate if obj is an object
+ * Internal method to evaluate if obj is an object
  * @param obj
  * @returns {boolean}
  * @private
@@ -20,7 +25,7 @@ AnyBoard.Utils._isObject = function(obj) {
 };
 
 /**
- * Internal methods to evaluate if obj has a certain key
+ * Internal method to evaluate if obj has a certain key
  * @param obj
  * @param key
  * @returns {boolean|*}
@@ -31,7 +36,7 @@ AnyBoard.Utils._has = function(obj, key) {
 };
 
 /**
- * Internal methods that returns the keys of obj
+ * Internal method that returns the keys of obj
  * @param obj
  * @returns {Array}
  * @private
@@ -51,6 +56,16 @@ AnyBoard.Utils._keys = function(obj) {
  * @param {Array} [aStack] *(optional)* array of items to further compare
  * @param {Array} [bStack] *(optional)* array of items to further compare
  * @returns {boolean} whether or not the items were equal
+ * @example
+ * var tardis = {"quality": "awesome"}
+ * var smardis = {"quality": "shabby"}
+ * var drWhoCar = {"quality": "awesome"}
+ *
+ * // Returns true
+ * AnyBoard.Utils.isEqual(tardis, drWhoCar)
+ *
+ * // Returns false
+ * AnyBoard.Utils.isEqual(tardis, smardis)
  */
 AnyBoard.Utils.isEqual = function (a, b, aStack, bStack) {
     // Identical objects are equal. `0 === -0`, but they aren't identical.

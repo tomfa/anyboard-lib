@@ -4,22 +4,10 @@
 <dd><p>Global variable AnyBoard.</p>
 </dd>
 </dl>
-## Functions
-<dl>
-<dt><a href="#onScanWinCallback">onScanWinCallback(token)</a></dt>
-<dd><p>Callback</p>
-</dd>
-<dt><a href="#onScanFailCallback">onScanFailCallback(errorCode)</a></dt>
-<dd><p>Callback</p>
-</dd>
-</dl>
 ## Typedefs
 <dl>
-<dt><a href="#onPlayCallback">onPlayCallback</a> : <code>function</code></dt>
-<dd><p>This callback is displayed as used of the Deck class.</p>
-</dd>
-<dt><a href="#onDrawCallback">onDrawCallback</a> : <code>function</code></dt>
-<dd><p>This callback is displayed as part of the Deck class.</p>
+<dt><a href="#playDrawCallback">playDrawCallback</a> : <code>function</code></dt>
+<dd><p>This type of callback will be called when card is drawn or played</p>
 </dd>
 </dl>
 <a name="AnyBoard"></a>
@@ -46,6 +34,8 @@ Global variable AnyBoard.
   * [.Card](#AnyBoard.Card)
     * [new AnyBoard.Card(deck, options)](#new_AnyBoard.Card_new)
     * _instance_
+      * [.onPlay(func)](#AnyBoard.Card+onPlay)
+      * [.onDraw(callback)](#AnyBoard.Card+onDraw)
       * [.toString()](#AnyBoard.Card+toString) ⇒ <code>string</code>
     * _static_
       * [.get(cardTitleOrID)](#AnyBoard.Card.get) ⇒ <code>[Card](#AnyBoard.Card)</code>
@@ -65,8 +55,11 @@ Global variable AnyBoard.
     * _static_
       * [.get(name)](#AnyBoard.Player.get) ⇒ <code>[Player](#AnyBoard.Player)</code>
   * [.Hand](#AnyBoard.Hand)
-    * [new AnyBoard.Hand(player, options)](#new_AnyBoard.Hand_new)
+    * [new AnyBoard.Hand(player, [options])](#new_AnyBoard.Hand_new)
     * [.has(card, [amount])](#AnyBoard.Hand+has) ⇒ <code>boolean</code>
+    * [.discardHand()](#AnyBoard.Hand+discardHand)
+    * [.discardCard(card)](#AnyBoard.Hand+discardCard)
+    * [.toString()](#AnyBoard.Hand+toString) ⇒ <code>string</code>
   * [.Resource](#AnyBoard.Resource)
     * [new AnyBoard.Resource(name, [properties])](#new_AnyBoard.Resource_new)
     * [.get(name)](#AnyBoard.Resource.get) ⇒ <code>[Resource](#AnyBoard.Resource)</code>
@@ -78,30 +71,33 @@ Global variable AnyBoard.
     * [.similarities(resourceSet)](#AnyBoard.ResourceSet+similarities) ⇒ <code>object</code>
   * [.BaseToken](#AnyBoard.BaseToken)
     * [new AnyBoard.BaseToken(name, address, device, [driver])](#new_AnyBoard.BaseToken_new)
-    * [.isConnected()](#AnyBoard.BaseToken+isConnected) ⇒ <code>boolean</code>
-    * [.connect(win, fail)](#AnyBoard.BaseToken+connect) ⇒ <code>boolean</code>
-    * [.disconnect()](#AnyBoard.BaseToken+disconnect)
-    * [.trigger(eventName, [eventOptions])](#AnyBoard.BaseToken+trigger)
-    * [.on(eventName, callbackFunction)](#AnyBoard.BaseToken+on)
-    * [.once(eventName, callbackFunction)](#AnyBoard.BaseToken+once)
-    * [.send(data, win, fail)](#AnyBoard.BaseToken+send)
-    * [.print(value, [win], [fail])](#AnyBoard.BaseToken+print)
-    * [.getFirmwareName([win], [fail])](#AnyBoard.BaseToken+getFirmwareName)
-    * [.getFirmwareVersion([win], [fail])](#AnyBoard.BaseToken+getFirmwareVersion)
-    * [.getFirmwareUUID([win], [fail])](#AnyBoard.BaseToken+getFirmwareUUID)
-    * [.hasLed([win], [fail])](#AnyBoard.BaseToken+hasLed)
-    * [.hasLedColor([win], [fail])](#AnyBoard.BaseToken+hasLedColor)
-    * [.hasVibration([win], [fail])](#AnyBoard.BaseToken+hasVibration)
-    * [.hasColorDetection([win], [fail])](#AnyBoard.BaseToken+hasColorDetection)
-    * [.hasLedScreen([win], [fail])](#AnyBoard.BaseToken+hasLedScreen)
-    * [.hasRfid([win], [fail])](#AnyBoard.BaseToken+hasRfid)
-    * [.hasNfc([win], [fail])](#AnyBoard.BaseToken+hasNfc)
-    * [.hasAccelometer([win], [fail])](#AnyBoard.BaseToken+hasAccelometer)
-    * [.hasTemperature([win], [fail])](#AnyBoard.BaseToken+hasTemperature)
-    * [.ledOn(value, [win], [fail])](#AnyBoard.BaseToken+ledOn)
-    * [.ledBlink(value, [win], [fail])](#AnyBoard.BaseToken+ledBlink)
-    * [.ledOff([win], [fail])](#AnyBoard.BaseToken+ledOff)
-    * [.toString()](#AnyBoard.BaseToken+toString) ⇒ <code>string</code>
+    * _instance_
+      * [.isConnected()](#AnyBoard.BaseToken+isConnected) ⇒ <code>boolean</code>
+      * [.connect([win], [fail])](#AnyBoard.BaseToken+connect)
+      * [.disconnect()](#AnyBoard.BaseToken+disconnect)
+      * [.trigger(eventName, [eventOptions])](#AnyBoard.BaseToken+trigger)
+      * [.on(eventName, callbackFunction)](#AnyBoard.BaseToken+on)
+      * [.once(eventName, callbackFunction)](#AnyBoard.BaseToken+once)
+      * [.send(data, win, fail)](#AnyBoard.BaseToken+send)
+      * [.print(value, [win], [fail])](#AnyBoard.BaseToken+print)
+      * [.getFirmwareName([win], [fail])](#AnyBoard.BaseToken+getFirmwareName)
+      * [.getFirmwareVersion([win], [fail])](#AnyBoard.BaseToken+getFirmwareVersion)
+      * [.getFirmwareUUID([win], [fail])](#AnyBoard.BaseToken+getFirmwareUUID)
+      * [.hasLed([win], [fail])](#AnyBoard.BaseToken+hasLed)
+      * [.hasLedColor([win], [fail])](#AnyBoard.BaseToken+hasLedColor)
+      * [.hasVibration([win], [fail])](#AnyBoard.BaseToken+hasVibration)
+      * [.hasColorDetection([win], [fail])](#AnyBoard.BaseToken+hasColorDetection)
+      * [.hasLedScreen([win], [fail])](#AnyBoard.BaseToken+hasLedScreen)
+      * [.hasRfid([win], [fail])](#AnyBoard.BaseToken+hasRfid)
+      * [.hasNfc([win], [fail])](#AnyBoard.BaseToken+hasNfc)
+      * [.hasAccelometer([win], [fail])](#AnyBoard.BaseToken+hasAccelometer)
+      * [.hasTemperature([win], [fail])](#AnyBoard.BaseToken+hasTemperature)
+      * [.ledOn(value, [win], [fail])](#AnyBoard.BaseToken+ledOn)
+      * [.ledBlink(value, [win], [fail])](#AnyBoard.BaseToken+ledBlink)
+      * [.ledOff([win], [fail])](#AnyBoard.BaseToken+ledOff)
+      * [.toString()](#AnyBoard.BaseToken+toString) ⇒ <code>string</code>
+    * _static_
+      * [.setDefaultDriver(driver)](#AnyBoard.BaseToken.setDefaultDriver) ⇒ <code>boolean</code>
   * [.Drivers](#AnyBoard.Drivers) : <code>Object</code>
     * [.get(name)](#AnyBoard.Drivers.get) ⇒ <code>[Driver](#AnyBoard.Driver)</code> &#124; <code>undefined</code>
     * [.getCompatibleDriver(type, compatibility)](#AnyBoard.Drivers.getCompatibleDriver) ⇒ <code>[Driver](#AnyBoard.Driver)</code>
@@ -114,6 +110,8 @@ Global variable AnyBoard.
     * [.error(message, [sender])](#AnyBoard.Logger.error)
     * [.log(message, [sender])](#AnyBoard.Logger.log)
     * [.debug(message, [sender])](#AnyBoard.Logger.debug)
+  * [.Utils](#AnyBoard.Utils)
+    * [.isEqual(a, b, [aStack], [bStack])](#AnyBoard.Utils.isEqual) ⇒ <code>boolean</code>
 
 <a name="AnyBoard.Driver"></a>
 ### AnyBoard.Driver
@@ -138,7 +136,7 @@ Global variable AnyBoard.
 
 <a name="new_AnyBoard.Driver_new"></a>
 #### new AnyBoard.Driver(options)
-Represents a single Driver, e.g. for spesific token or bluetooth on operating system.
+Represents a single Driver, e.g. for spesific token or bluetooth discovery
 
 
 | Param | Type | Description |
@@ -233,7 +231,7 @@ Adds functions to be executed upon all Cards in this Deck.
 
 | Param | Type | Description |
 | --- | --- | --- |
-| func | <code>[onPlayCallback](#onPlayCallback)</code> | callback function to be executed upon play of card from this deck |
+| func | <code>[playDrawCallback](#playDrawCallback)</code> | callback function to be executed upon play of card from this deck |
 
 <a name="AnyBoard.Deck+onDraw"></a>
 #### deck.onDraw(callback)
@@ -243,7 +241,7 @@ Adds functions to be executed upon draw of Card from this Deck
 
 | Param | Type | Description |
 | --- | --- | --- |
-| callback | <code>[onDrawCallback](#onDrawCallback)</code> | function to be executed with the 3 parameters AnyBoard.Card, AnyBoard.Player, (options) when cards are drawn |
+| callback | <code>[playDrawCallback](#playDrawCallback)</code> | function to be executed with the 3 parameters AnyBoard.Card, AnyBoard.Player, (options) when cards are drawn |
 
 <a name="AnyBoard.Deck+toString"></a>
 #### deck.toString() ⇒ <code>string</code>
@@ -276,21 +274,24 @@ Returns deck with given name
 | type | <code>string</code> | type of the card, not used by AnyBoard FrameWork |
 | amount | <code>number</code> | amount of this card its deck |
 | deck | <code>[Deck](#AnyBoard.Deck)</code> | deck that this card belongs to |
-| playListeneres | <code>Array</code> | holds functions to be called upon play of this spesific card (in addition to playListeners on its belonging deck) |
+| playListeneres | <code>Array</code> | holds functions to be called upon play of this spesific card (before potential playListeners on its belonging deck) |
+| drawListeners | <code>Array</code> | holds functions to be called upon draw of this spesific card (before potential drawListeners on its belonging deck) |
 | properties | <code>object</code> | dictionary that holds custom attributes |
 
 
 * [.Card](#AnyBoard.Card)
   * [new AnyBoard.Card(deck, options)](#new_AnyBoard.Card_new)
   * _instance_
+    * [.onPlay(func)](#AnyBoard.Card+onPlay)
+    * [.onDraw(callback)](#AnyBoard.Card+onDraw)
     * [.toString()](#AnyBoard.Card+toString) ⇒ <code>string</code>
   * _static_
     * [.get(cardTitleOrID)](#AnyBoard.Card.get) ⇒ <code>[Card](#AnyBoard.Card)</code>
 
 <a name="new_AnyBoard.Card_new"></a>
 #### new AnyBoard.Card(deck, options)
-Represents a single Card (AnyBoard.Card)
-Read from JSON file provided to Deck class.
+Represents a single Card
+Should be instantiated in bulk by calling the deck constructor
 
 
 | Param | Type | Default | Description |
@@ -306,6 +307,26 @@ Read from JSON file provided to Deck class.
 | [options.amount] | <code>number</code> | <code>1</code> | *(optional, default: 1)* amount of this card in the deck |
 | [options.yourAttributeHere] | <code>any</code> |  | custom attributes, as well as specified ones, are all placed in card.properties. E.g. 'heat' would be placed in card.properties.heat. |
 
+<a name="AnyBoard.Card+onPlay"></a>
+#### card.onPlay(func)
+Adds functions to be executed upon a play of this card
+
+**Kind**: instance method of <code>[Card](#AnyBoard.Card)</code>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| func | <code>[playDrawCallback](#playDrawCallback)</code> | callback function to be executed upon play of card from this deck |
+
+<a name="AnyBoard.Card+onDraw"></a>
+#### card.onDraw(callback)
+Adds functions to be executed upon a draw of this card
+
+**Kind**: instance method of <code>[Card](#AnyBoard.Card)</code>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| callback | <code>[playDrawCallback](#playDrawCallback)</code> | function to be executed upon play of card from this deck |
+
 <a name="AnyBoard.Card+toString"></a>
 #### card.toString() ⇒ <code>string</code>
 Returns a string representation of the card.
@@ -320,7 +341,7 @@ Returns card with given id
 
 | Param | Type | Description |
 | --- | --- | --- |
-| cardTitleOrID | <code>number</code> | id or title of card |
+| cardTitleOrID | <code>number</code> &#124; <code>string</code> | id or title of card |
 
 <a name="AnyBoard.Dices"></a>
 ### AnyBoard.Dices
@@ -418,6 +439,38 @@ Trade resources between players/game
 | receiveResources | <code>[ResourceSet](#AnyBoard.ResourceSet)</code> | resources this player receieves |
 | [player] | <code>[Player](#AnyBoard.Player)</code> | *(optional)* Who shall be traded with. Omit if not to a player, but to "the bank". |
 
+**Example**  
+```js
+new AnyBoard.Resource("gold");
+new AnyBoard.Resource("silver");
+
+var startTreasure = new AnyBoard.ResourceSet({"gold": 6, "silver": 42});
+var goldTreasure = new AnyBoard.ResourceSet({"gold": 2});
+var silverTreasure = new AnyBoard.ResourceSet({"silver": 12});
+
+var dr1 = new AnyBoard.Player("firstDoctor");
+var dr2 = new AnyBoard.Player("secondDoctor");
+
+dr1.receive(startTreasure);
+dr2.receive(startTreasure);
+
+// returns true. dr1 will now own {"gold": 4, "silver": 54}. dr2 owns {"gold": 8, "silver": 30}
+dr1.trade(goldTreasure, silverTreasure, dr2)
+```
+**Example**  
+```js
+// returns true. dr1 will now own {"gold": 2, "silver": 66}. dr2 still owns {"gold": 8, "silver": 30}
+dr1.trade(goldTreasure, silverTreasure)
+```
+**Example**  
+```js
+var firstOverlappingTreasure = new AnyBoard.ResourceSet({"silver": 115, "gold": "6"});
+var secondOverlappingTreasure= new AnyBoard.ResourceSet({"silver": 100, "gold": "7"});
+
+// returns true. The trade nullifies the similarities, so that the trade can go through even though
+//     dr1 has < 100 silver
+dr1.trade(firstOverlappingTreasure, secondOverlappingTreasure)
+```
 <a name="AnyBoard.Player+recieve"></a>
 #### player.recieve(resourceSet)
 Receive resource from bank/game. Use pay() when receiving from players.
@@ -428,6 +481,19 @@ Receive resource from bank/game. Use pay() when receiving from players.
 | --- | --- | --- |
 | resourceSet | <code>[ResourceSet](#AnyBoard.ResourceSet)</code> | resources to be added to this players bank |
 
+**Example**  
+```js
+new AnyBoard.Resource("gold");
+new AnyBoard.Resource("silver");
+
+var startTreasure = new AnyBoard.ResourceSet({"gold": 6, "silver": 42});
+var secondTresure = new AnyBoard.ResourceSet({"silver": 12, "copper": 122});
+
+var dr1 = new AnyBoard.Player("firstDoctor");  // player owns nothing initially
+
+dr1.receive(startTreasure);  // owns {"gold": 6, "silver": 42}
+dr1.receive(secondTresure);  // owns {"gold": 6, "silver": 54, "copper": 122}
+```
 <a name="AnyBoard.Player+draw"></a>
 #### player.draw(deck, [options]) ⇒ <code>[Card](#AnyBoard.Card)</code>
 Draws a card from a deck and puts it in the hand of the player
@@ -440,6 +506,16 @@ Draws a card from a deck and puts it in the hand of the player
 | deck | <code>[Deck](#AnyBoard.Deck)</code> | deck to be drawn from |
 | [options] | <code>object</code> | *(optional)* parameters to be sent to the drawListeners on the deck |
 
+**Example**  
+```js
+var dr1 = new AnyBoard.Player("firstDoctor");  // player has no cards initially
+
+// Now has one card
+dr1.draw(deck);
+
+// Now has two cards. option parameter is being passed on to any drawListeners (See Deck/Card)
+dr1.draw(deck, options);
+```
 <a name="AnyBoard.Player+play"></a>
 #### player.play(card, [customOptions]) ⇒ <code>boolean</code>
 Plays a card from the hand. If the hand does not contain the card, the card is not played and the hand unchanged.
@@ -452,6 +528,16 @@ Plays a card from the hand. If the hand does not contain the card, the card is n
 | card | <code>[Card](#AnyBoard.Card)</code> | card to be played |
 | [customOptions] | <code>object</code> | *(optional)* custom options that the play should be played with |
 
+**Example**  
+```js
+var DrWho = new AnyBoard.Player("firstDoctor");  // player has no cards initially
+
+// Store the card that was drawn
+var card = DrWho.draw(existingDeck);
+
+// Play that same card
+DrWho.play(card)
+```
 <a name="AnyBoard.Player+toString"></a>
 #### player.toString() ⇒ <code>string</code>
 Returns a string representation of the player
@@ -473,18 +559,21 @@ Returns player with given name
 **Kind**: static class of <code>[AnyBoard](#AnyBoard)</code>  
 
 * [.Hand](#AnyBoard.Hand)
-  * [new AnyBoard.Hand(player, options)](#new_AnyBoard.Hand_new)
+  * [new AnyBoard.Hand(player, [options])](#new_AnyBoard.Hand_new)
   * [.has(card, [amount])](#AnyBoard.Hand+has) ⇒ <code>boolean</code>
+  * [.discardHand()](#AnyBoard.Hand+discardHand)
+  * [.discardCard(card)](#AnyBoard.Hand+discardCard)
+  * [.toString()](#AnyBoard.Hand+toString) ⇒ <code>string</code>
 
 <a name="new_AnyBoard.Hand_new"></a>
-#### new AnyBoard.Hand(player, options)
-Represents a Hand of a player, containing cards.
+#### new AnyBoard.Hand(player, [options])
+Represents a Hand of a player, containing cards. Players are given one Hand in Person constructor.
 
 
 | Param | Type | Description |
 | --- | --- | --- |
 | player | <code>[Player](#AnyBoard.Player)</code> | player to which this hand belongs |
-| options | <code>object</code> | *(optional)* custom properties added to this hand |
+| [options] | <code>object</code> | *(optional)* custom properties added to this hand |
 
 <a name="AnyBoard.Hand+has"></a>
 #### hand.has(card, [amount]) ⇒ <code>boolean</code>
@@ -496,8 +585,41 @@ Checks whether or not a player has an amount card in this hand.
 | Param | Type | Default | Description |
 | --- | --- | --- | --- |
 | card | <code>[Card](#AnyBoard.Card)</code> |  | card to be checked if is in hand |
-| [amount] | <code>number</code> | <code>1</code> | (default: 1)* amount of card to be checked if is in hand |
+| [amount] | <code>number</code> | <code>1</code> | *(default: 1)* amount of card to be checked if is in hand |
 
+**Example**  
+```js
+var DrWho = new AnyBoard.Player("firstDoctor");  // player has no cards initially
+
+// Store the card that was drawn
+var tardis = DrWho.draw(tardisDeck);
+
+// returns true
+DrWho.hand.has(card)
+
+// returns false, as he has only one
+DrWho.hand.has(card, 3)
+```
+<a name="AnyBoard.Hand+discardHand"></a>
+#### hand.discardHand()
+Discard the entire hand of the player, leaving him with no cards
+
+**Kind**: instance method of <code>[Hand](#AnyBoard.Hand)</code>  
+<a name="AnyBoard.Hand+discardCard"></a>
+#### hand.discardCard(card)
+Discard a card from the hand of the player
+
+**Kind**: instance method of <code>[Hand](#AnyBoard.Hand)</code>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| card | <code>[Card](#AnyBoard.Card)</code> | card to be discarded. |
+
+<a name="AnyBoard.Hand+toString"></a>
+#### hand.toString() ⇒ <code>string</code>
+Returns a string representation of the hand
+
+**Kind**: instance method of <code>[Hand](#AnyBoard.Hand)</code>  
 <a name="AnyBoard.Resource"></a>
 ### AnyBoard.Resource
 **Kind**: static class of <code>[AnyBoard](#AnyBoard)</code>  
@@ -506,7 +628,7 @@ Checks whether or not a player has an amount card in this hand.
 | Name | Type | Description |
 | --- | --- | --- |
 | name | <code>string</code> | name of resource |
-| properties | <code>string</code> | custom options added to resource |
+| properties | <code>any</code> | custom options added to resource |
 
 
 * [.Resource](#AnyBoard.Resource)
@@ -523,6 +645,16 @@ Represents a simple resource (AnyBoard.Resource)
 | name | <code>string</code> | name representing the resource |
 | [properties] | <code>object</code> | *(optional)* custom properties of this resource |
 
+**Example**  
+```js
+var simpleGold = new AnyBoard.Resource("gold");
+
+// The optional properties parameter can be of any type.
+var advancedPowder = new AnyBoard.Resource("powder", {"value": 6, "color": "blue"});
+
+// 6
+advancedPowder.properties.value
+```
 <a name="AnyBoard.Resource.get"></a>
 #### Resource.get(name) ⇒ <code>[Resource](#AnyBoard.Resource)</code>
 Returns resource with given name
@@ -534,6 +666,13 @@ Returns resource with given name
 | --- | --- | --- |
 | name | <code>string</code> | name of resource |
 
+**Example**  
+```js
+var simpleGold = new AnyBoard.Resource("gold");
+
+// returns simpleGold
+AnyBoard.Resource.get("gold");
+```
 <a name="AnyBoard.ResourceSet"></a>
 ### AnyBoard.ResourceSet
 **Kind**: static class of <code>[AnyBoard](#AnyBoard)</code>  
@@ -562,6 +701,11 @@ Creates a ResourceSet
 | [resources] | <code>object</code> |  | *(optional)* a set of initially contained resources |
 | [allowNegative] | <code>boolean</code> | <code>false</code> | *(optional, default: false)*  whether or not to allow being subtracted resources to below 0 (dept) |
 
+**Example**  
+```js
+// Returns a resourceset that can be deducted below 0
+var debtBank = new AnyBoard.ResourceSet({}, true);
+```
 <a name="AnyBoard.ResourceSet+contains"></a>
 #### resourceSet.contains(reqResource) ⇒ <code>boolean</code>
 Whether or not a ResourceSet contains another ResourceSet
@@ -573,6 +717,21 @@ Whether or not a ResourceSet contains another ResourceSet
 | --- | --- | --- |
 | reqResource | <code>[ResourceSet](#AnyBoard.ResourceSet)</code> | ResourceSet to be compared against |
 
+**Example**  
+```js
+new AnyBoard.Resource("gold");
+new AnyBoard.Resource("silver");
+
+var myTreasure = new AnyBoard.ResourceSet({"gold": 6, "silver": 42});
+var minorDebt = new AnyBoard.ResourceSet({"gold": 1, "silver": 3});
+var hugeDebt = new AnyBoard.ResourceSet({"gold": 12, "silver": 41});
+
+// returns true
+myTreasure.contains(minorDebt);
+
+// returns false
+myTreasure.contains(hugeDebt);
+```
 <a name="AnyBoard.ResourceSet+add"></a>
 #### resourceSet.add(resourceSet)
 Adds a ResourceSet to this one
@@ -583,6 +742,17 @@ Adds a ResourceSet to this one
 | --- | --- | --- |
 | resourceSet | <code>[ResourceSet](#AnyBoard.ResourceSet)</code> | ResourceSet to be added to this one |
 
+**Example**  
+```js
+new AnyBoard.Resource("gold");
+new AnyBoard.Resource("silver");
+
+var myTreasure = new AnyBoard.ResourceSet({"gold": 6, "silver": 42});
+var minorGift = new AnyBoard.ResourceSet({"silver": 2});
+
+myTreasure.add(minorGift);
+// myTreasure is now {"gold": 6, "silver": 45}
+```
 <a name="AnyBoard.ResourceSet+subtract"></a>
 #### resourceSet.subtract(resourceSet) ⇒ <code>boolean</code>
 Subtracts a dictionary of resources and amounts to a ResourceSet
@@ -594,6 +764,25 @@ Subtracts a dictionary of resources and amounts to a ResourceSet
 | --- | --- | --- |
 | resourceSet | <code>[ResourceSet](#AnyBoard.ResourceSet)</code> | set of resources to be subtracted |
 
+**Example**  
+```js
+new AnyBoard.Resource("gold");
+new AnyBoard.Resource("silver");
+
+var myTreasure = new AnyBoard.ResourceSet({"gold": 6, "silver": 42});
+var minorGift = new AnyBoard.ResourceSet({"silver": 2});
+var debtBank = new AnyBoard.ResourceSet({}, true);
+var cosyBank = new AnyBoard.ResourceSet();
+
+// returns true. myTreasure becomes {"gold": 6, "silver": 40}
+myTreasure.subtract(minorGift);
+
+// returns true. debtbank becomes {"silver": -2}
+debtBank.subtract(minorGift);
+
+// returns false and leaves cosyBank unchanged
+cosyBank.subtract(minorGift);
+```
 <a name="AnyBoard.ResourceSet+similarities"></a>
 #### resourceSet.similarities(resourceSet) ⇒ <code>object</code>
 Returns the common resources and minimum amount between a dictionary of resources and amounts, and this ResourceSet
@@ -605,6 +794,17 @@ Returns the common resources and minimum amount between a dictionary of resource
 | --- | --- | --- |
 | resourceSet | <code>[ResourceSet](#AnyBoard.ResourceSet)</code> | dictionary of resources and amounts to be compared against |
 
+**Example**  
+```js
+new AnyBoard.Resource("gold");
+new AnyBoard.Resource("silver");
+
+var myTreasure = new AnyBoard.ResourceSet({"gold": 6, "silver": 42});
+var otherTresure = new AnyBoard.ResourceSet({"silver": 2, "bacon": 12});
+
+// returns {"silver": 2}
+myTreasure.similarities(otherTresure);
+```
 <a name="AnyBoard.BaseToken"></a>
 ### AnyBoard.BaseToken
 **Kind**: static class of <code>[AnyBoard](#AnyBoard)</code>  
@@ -618,36 +818,40 @@ Returns the common resources and minimum amount between a dictionary of resource
 | device | <code>object</code> | driver spesific data. |
 | listeners | <code>object</code> | functions to be execute upon certain triggered events |
 | onceListeners | <code>object</code> | functions to be execute upon next triggering of certain events |
-| sendQueue | <code>object</code> | sending to Pawn is being held here until available |
+| sendQueue | <code>Array.&lt;function()&gt;</code> | queue for communicating with |
+| cache | <code>object</code> | key-value store for caching certain communication calls |
 | driver | <code>[Driver](#AnyBoard.Driver)</code> | driver that handles communication |
 
 
 * [.BaseToken](#AnyBoard.BaseToken)
   * [new AnyBoard.BaseToken(name, address, device, [driver])](#new_AnyBoard.BaseToken_new)
-  * [.isConnected()](#AnyBoard.BaseToken+isConnected) ⇒ <code>boolean</code>
-  * [.connect(win, fail)](#AnyBoard.BaseToken+connect) ⇒ <code>boolean</code>
-  * [.disconnect()](#AnyBoard.BaseToken+disconnect)
-  * [.trigger(eventName, [eventOptions])](#AnyBoard.BaseToken+trigger)
-  * [.on(eventName, callbackFunction)](#AnyBoard.BaseToken+on)
-  * [.once(eventName, callbackFunction)](#AnyBoard.BaseToken+once)
-  * [.send(data, win, fail)](#AnyBoard.BaseToken+send)
-  * [.print(value, [win], [fail])](#AnyBoard.BaseToken+print)
-  * [.getFirmwareName([win], [fail])](#AnyBoard.BaseToken+getFirmwareName)
-  * [.getFirmwareVersion([win], [fail])](#AnyBoard.BaseToken+getFirmwareVersion)
-  * [.getFirmwareUUID([win], [fail])](#AnyBoard.BaseToken+getFirmwareUUID)
-  * [.hasLed([win], [fail])](#AnyBoard.BaseToken+hasLed)
-  * [.hasLedColor([win], [fail])](#AnyBoard.BaseToken+hasLedColor)
-  * [.hasVibration([win], [fail])](#AnyBoard.BaseToken+hasVibration)
-  * [.hasColorDetection([win], [fail])](#AnyBoard.BaseToken+hasColorDetection)
-  * [.hasLedScreen([win], [fail])](#AnyBoard.BaseToken+hasLedScreen)
-  * [.hasRfid([win], [fail])](#AnyBoard.BaseToken+hasRfid)
-  * [.hasNfc([win], [fail])](#AnyBoard.BaseToken+hasNfc)
-  * [.hasAccelometer([win], [fail])](#AnyBoard.BaseToken+hasAccelometer)
-  * [.hasTemperature([win], [fail])](#AnyBoard.BaseToken+hasTemperature)
-  * [.ledOn(value, [win], [fail])](#AnyBoard.BaseToken+ledOn)
-  * [.ledBlink(value, [win], [fail])](#AnyBoard.BaseToken+ledBlink)
-  * [.ledOff([win], [fail])](#AnyBoard.BaseToken+ledOff)
-  * [.toString()](#AnyBoard.BaseToken+toString) ⇒ <code>string</code>
+  * _instance_
+    * [.isConnected()](#AnyBoard.BaseToken+isConnected) ⇒ <code>boolean</code>
+    * [.connect([win], [fail])](#AnyBoard.BaseToken+connect)
+    * [.disconnect()](#AnyBoard.BaseToken+disconnect)
+    * [.trigger(eventName, [eventOptions])](#AnyBoard.BaseToken+trigger)
+    * [.on(eventName, callbackFunction)](#AnyBoard.BaseToken+on)
+    * [.once(eventName, callbackFunction)](#AnyBoard.BaseToken+once)
+    * [.send(data, win, fail)](#AnyBoard.BaseToken+send)
+    * [.print(value, [win], [fail])](#AnyBoard.BaseToken+print)
+    * [.getFirmwareName([win], [fail])](#AnyBoard.BaseToken+getFirmwareName)
+    * [.getFirmwareVersion([win], [fail])](#AnyBoard.BaseToken+getFirmwareVersion)
+    * [.getFirmwareUUID([win], [fail])](#AnyBoard.BaseToken+getFirmwareUUID)
+    * [.hasLed([win], [fail])](#AnyBoard.BaseToken+hasLed)
+    * [.hasLedColor([win], [fail])](#AnyBoard.BaseToken+hasLedColor)
+    * [.hasVibration([win], [fail])](#AnyBoard.BaseToken+hasVibration)
+    * [.hasColorDetection([win], [fail])](#AnyBoard.BaseToken+hasColorDetection)
+    * [.hasLedScreen([win], [fail])](#AnyBoard.BaseToken+hasLedScreen)
+    * [.hasRfid([win], [fail])](#AnyBoard.BaseToken+hasRfid)
+    * [.hasNfc([win], [fail])](#AnyBoard.BaseToken+hasNfc)
+    * [.hasAccelometer([win], [fail])](#AnyBoard.BaseToken+hasAccelometer)
+    * [.hasTemperature([win], [fail])](#AnyBoard.BaseToken+hasTemperature)
+    * [.ledOn(value, [win], [fail])](#AnyBoard.BaseToken+ledOn)
+    * [.ledBlink(value, [win], [fail])](#AnyBoard.BaseToken+ledBlink)
+    * [.ledOff([win], [fail])](#AnyBoard.BaseToken+ledOff)
+    * [.toString()](#AnyBoard.BaseToken+toString) ⇒ <code>string</code>
+  * _static_
+    * [.setDefaultDriver(driver)](#AnyBoard.BaseToken.setDefaultDriver) ⇒ <code>boolean</code>
 
 <a name="new_AnyBoard.BaseToken_new"></a>
 #### new AnyBoard.BaseToken(name, address, device, [driver])
@@ -668,17 +872,16 @@ Returns whether or not the token is connected
 **Kind**: instance method of <code>[BaseToken](#AnyBoard.BaseToken)</code>  
 **Returns**: <code>boolean</code> - true if connected, else false  
 <a name="AnyBoard.BaseToken+connect"></a>
-#### baseToken.connect(win, fail) ⇒ <code>boolean</code>
-TODO: Add callbacks to JSDoc
-Attempts to connect to token.
+#### baseToken.connect([win], [fail])
+Attempts to connect to token. Uses TokenManager driver, not its own, since connect
+     needs to happen before determining suitable driver.
 
 **Kind**: instance method of <code>[BaseToken](#AnyBoard.BaseToken)</code>  
-**Returns**: <code>boolean</code> - whether or not token is connected  
 
 | Param | Type | Description |
 | --- | --- | --- |
-| win | <code>function</code> | function to be executed upon success |
-| fail | <code>function</code> | function to be executed upon failure |
+| [win] | <code>function</code> | function to be executed upon success |
+| [fail] | <code>function</code> | function to be executed upon failure |
 
 <a name="AnyBoard.BaseToken+disconnect"></a>
 #### baseToken.disconnect()
@@ -696,9 +899,19 @@ Trigger an event on a token
 | eventName | <code>string</code> | name of event |
 | [eventOptions] | <code>object</code> | dictionary of parameters and values |
 
+**Example**  
+```js
+var onTimeTravelCallback = function (options) {console.log("The tardis is great!")};
+existingToken.on('timeTravelled', onTimeTravelCallback);
+
+// Triggers the function, and prints praise for the tardis
+existingToken.trigger('timeTravelled');
+
+existingToken.trigger('timeTravelled');  // prints again
+existingToken.trigger('timeTravelled');  // prints again
+```
 <a name="AnyBoard.BaseToken+on"></a>
 #### baseToken.on(eventName, callbackFunction)
-TODO: Add callbacks to JSDoc
 Adds a callbackFunction to be executed always when event is triggered
 
 **Kind**: instance method of <code>[BaseToken](#AnyBoard.BaseToken)</code>  
@@ -708,9 +921,19 @@ Adds a callbackFunction to be executed always when event is triggered
 | eventName | <code>string</code> | name of event to listen to |
 | callbackFunction | <code>function</code> | function to be executed |
 
+**Example**  
+```js
+var onTimeTravelCallback = function (options) {console.log("The tardis is great!")};
+existingToken.on('timeTravelled', onTimeTravelCallback);
+
+// Triggers the function, and prints praise for the tardis
+existingToken.trigger('timeTravelled');
+
+existingToken.trigger('timeTravelled');  // prints again
+existingToken.trigger('timeTravelled');  // prints again
+```
 <a name="AnyBoard.BaseToken+once"></a>
 #### baseToken.once(eventName, callbackFunction)
-TODO: Add callbacks to JSDoc
 Adds a callbackFunction to be executed next time an event is triggered
 
 **Kind**: instance method of <code>[BaseToken](#AnyBoard.BaseToken)</code>  
@@ -720,9 +943,19 @@ Adds a callbackFunction to be executed next time an event is triggered
 | eventName | <code>string</code> | name of event to listen to |
 | callbackFunction | <code>function</code> | function to be executed |
 
+**Example**  
+```js
+var onTimeTravelCallback = function (options) {console.log("The tardis is great!")};
+existingToken.once('timeTravelled', onTimeTravelCallback);
+
+// Triggers the function, and prints praise for the tardis
+existingToken.trigger('timeTravelled');
+
+// No effect
+existingToken.trigger('timeTravelled');
+```
 <a name="AnyBoard.BaseToken+send"></a>
 #### baseToken.send(data, win, fail)
-TODO: Add callbacks to JSDoc
 Sends data to the token. Uses either own driver, or (if not set) TokenManager driver
 
 **Kind**: instance method of <code>[BaseToken](#AnyBoard.BaseToken)</code>  
@@ -759,6 +992,19 @@ Gets the name of the firmware type of the token
 | [win] | <code>function</code> | callback function to be called upon successful execution |
 | [fail] | <code>function</code> | callback function to be executed upon failure |
 
+**Example**  
+```js
+// Function to be executed upon name retrieval
+var getNameCallback = function (name) {console.log("Firmware name: " + name)};
+
+// Function to be executed upon failure to retrieve name
+var failGettingNameCallback = function (name) {console.log("Couldn't get name :(")};
+
+existingToken.getFirmwareName(getNameCallback, failGettingNameCallback);
+
+// Since it's asyncronous, this will be printed before the result
+console.log("This comes first!")
+```
 <a name="AnyBoard.BaseToken+getFirmwareVersion"></a>
 #### baseToken.getFirmwareVersion([win], [fail])
 Gets the version of the firmware type of the token
@@ -892,9 +1138,17 @@ Sets color on token
 | [win] | <code>function</code> | callback function to be called upon successful execution |
 | [fail] | <code>function</code> | callback function to be executed upon |
 
+**Example**  
+```js
+// sets Led to white
+existingToken.ledOn([255, 255, 255]);
+
+// sets Led to white (See driver implementation for what colors are supported)
+existingToken.ledOn("white");
+```
 <a name="AnyBoard.BaseToken+ledBlink"></a>
 #### baseToken.ledBlink(value, [win], [fail])
-Sets color on token
+tells token to blink its led
 
 **Kind**: instance method of <code>[BaseToken](#AnyBoard.BaseToken)</code>  
 
@@ -904,6 +1158,14 @@ Sets color on token
 | [win] | <code>function</code> | callback function to be called upon successful execution |
 | [fail] | <code>function</code> | callback function to be executed upon |
 
+**Example**  
+```js
+// blinks red
+existingToken.ledBlink([255, 0, 0]);
+
+// blinks blue
+existingToken.ledBlink("blue");
+```
 <a name="AnyBoard.BaseToken+ledOff"></a>
 #### baseToken.ledOff([win], [fail])
 Turns LED off
@@ -920,6 +1182,18 @@ Turns LED off
 Representational string of class instance.
 
 **Kind**: instance method of <code>[BaseToken](#AnyBoard.BaseToken)</code>  
+<a name="AnyBoard.BaseToken.setDefaultDriver"></a>
+#### BaseToken.setDefaultDriver(driver) ⇒ <code>boolean</code>
+Sets a new default driver to handle communication for tokens without specified driver.
+The driver must have implement a method *scan(win, fail, timeout)* in order to discover tokens.
+
+**Kind**: static method of <code>[BaseToken](#AnyBoard.BaseToken)</code>  
+**Returns**: <code>boolean</code> - whether or not driver was successfully set  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| driver | <code>[Driver](#AnyBoard.Driver)</code> | driver to be used for communication |
+
 <a name="AnyBoard.Drivers"></a>
 ### AnyBoard.Drivers : <code>Object</code>
 Manager of drivers.
@@ -952,7 +1226,7 @@ var discoveryBluetooth = new AnyBoard.Driver({
     });
 
 // Returns undefined
-var driver = AnyBoard.Drivers.get("non-existant-driver")
+AnyBoard.Drivers.get("non-existant-driver")
 
 // Returns driver
 AnyBoard.Drivers.get("theTardisMachine")
@@ -980,13 +1254,13 @@ var discoveryBluetooth = new AnyBoard.Driver({
     });
 
 // Returns undefined (right type, wrong compatibility)
-var driver = AnyBoard.Drivers.getCompatibleDriver('bluetooth, 'weirdCompatibility')
+AnyBoard.Drivers.getCompatibleDriver('bluetooth, 'weirdCompatibility')
 
 // Returns undefined (wrong type, right compatibility)
-var driver = AnyBoard.Drivers.getCompatibleDriver('HTTP, {"service": "iCanTypeAnyThingHere"})
+AnyBoard.Drivers.getCompatibleDriver('HTTP, {"service": "iCanTypeAnyThingHere"})
 
 // Returns discoveryBluetooth driver
-var driver = AnyBoard.Drivers.getCompatibleDriver('bluetooth', 'tardis')
+AnyBoard.Drivers.getCompatibleDriver('bluetooth', 'tardis')
 ```
 <a name="AnyBoard.TokenManager"></a>
 ### AnyBoard.TokenManager
@@ -1008,7 +1282,8 @@ A token manager. Holds all tokens. Discovers and connects to them.
 
 <a name="AnyBoard.TokenManager.setDriver"></a>
 #### TokenManager.setDriver(driver)
-Sets a new default driver to handle communication for tokens without specified driver
+Sets a new default driver to handle communication for tokens without specified driver.
+The driver must have implemented methods *scan(win, fail, timeout), in order to discover tokens.
 
 **Kind**: static method of <code>[TokenManager](#AnyBoard.TokenManager)</code>  
 
@@ -1024,10 +1299,17 @@ Scans for tokens nearby and stores in discoveredTokens property
 
 | Param | Type | Description |
 | --- | --- | --- |
-| win | <code>[onScanWinCallback](#onScanWinCallback)</code> | function to be executed when devices are found (called for each device found) |
-| fail | <code>[onScanFailCallback](#onScanFailCallback)</code> | function to be executed upon failure |
+| win | <code>onScanWinCallback</code> | function to be executed when devices are found (called for each device found) |
+| fail | <code>onFailCallback</code> | function to be executed upon failure |
 | timeout | <code>number</code> | amount of milliseconds to scan before stopping |
 
+**Example**  
+```js
+var onDiscover = function(token) { console.log("I found " + token) };
+
+// Scans for tokens. For every token found, it prints "I found ...")
+TokenManager.scan(onDiscover);
+```
 <a name="AnyBoard.TokenManager.get"></a>
 #### TokenManager.get(address) ⇒ <code>[BaseToken](#AnyBoard.BaseToken)</code>
 Returns a token handled by this TokenManager
@@ -1041,7 +1323,7 @@ Returns a token handled by this TokenManager
 
 <a name="AnyBoard.Logger"></a>
 ### AnyBoard.Logger
-Logger handles logging. Will log using hyper.log if hyper is present (when using Evothings).
+Static logger object that handles logging. Will log using hyper.log if hyper is present (when using Evothings).
 Will then log all events, regardless of severity
 
 **Kind**: static property of <code>[AnyBoard](#AnyBoard)</code>  
@@ -1107,41 +1389,40 @@ logs debugging information. Ignored if threshold > this.debugLevel (default: 0)
 | message | <code>string</code> | event to be logged |
 | [sender] | <code>object</code> | *(optional)* sender of the message |
 
-<a name="onScanWinCallback"></a>
-## onScanWinCallback(token)
-Callback
+<a name="AnyBoard.Utils"></a>
+### AnyBoard.Utils
+Utility functions for AnyBoard
 
-**Kind**: global function  
+**Kind**: static property of <code>[AnyBoard](#AnyBoard)</code>  
+<a name="AnyBoard.Utils.isEqual"></a>
+#### Utils.isEqual(a, b, [aStack], [bStack]) ⇒ <code>boolean</code>
+Returns whether or not two objects are equal. Works with objects, dictionaries, and arrays as well.
 
-| Param | Type | Description |
-| --- | --- | --- |
-| token | <code>[BaseToken](#AnyBoard.BaseToken)</code> | token that is returned upon scanning. |
-
-<a name="onScanFailCallback"></a>
-## onScanFailCallback(errorCode)
-Callback
-
-**Kind**: global function  
+**Kind**: static method of <code>[Utils](#AnyBoard.Utils)</code>  
+**Returns**: <code>boolean</code> - whether or not the items were equal  
 
 | Param | Type | Description |
 | --- | --- | --- |
-| errorCode | <code>string</code> | ErrorCode cast upon scanning for devices |
+| a | <code>object</code> &#124; <code>Array</code> &#124; <code>String</code> &#124; <code>number</code> &#124; <code>boolean</code> | item to compare |
+| b | <code>object</code> &#124; <code>Array</code> &#124; <code>String</code> &#124; <code>number</code> &#124; <code>boolean</code> | item to compare against a |
+| [aStack] | <code>Array</code> | *(optional)* array of items to further compare |
+| [bStack] | <code>Array</code> | *(optional)* array of items to further compare |
 
-<a name="onPlayCallback"></a>
-## onPlayCallback : <code>function</code>
-This callback is displayed as used of the Deck class.
+**Example**  
+```js
+var tardis = {"quality": "awesome"}
+var smardis = {"quality": "shabby"}
+var drWhoCar = {"quality": "awesome"}
 
-**Kind**: global typedef  
+// Returns true
+AnyBoard.Utils.isEqual(tardis, drWhoCar)
 
-| Param | Type | Description |
-| --- | --- | --- |
-| card | <code>[Card](#AnyBoard.Card)</code> | that is played |
-| player | <code>[Player](#AnyBoard.Player)</code> | that played the card |
-| [options] | <code>object</code> | custom options as extra parameter when play was called |
-
-<a name="onDrawCallback"></a>
-## onDrawCallback : <code>function</code>
-This callback is displayed as part of the Deck class.
+// Returns false
+AnyBoard.Utils.isEqual(tardis, smardis)
+```
+<a name="playDrawCallback"></a>
+## playDrawCallback : <code>function</code>
+This type of callback will be called when card is drawn or played
 
 **Kind**: global typedef  
 
