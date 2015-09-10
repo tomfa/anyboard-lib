@@ -108,11 +108,11 @@ AnyBoard.Player.prototype.recieve = function(resourceSet) {
 AnyBoard.Player.prototype.draw = function(deck, options) {
     var card = deck._draw(this, options);
     if (!card) {
-        AnyBoard.Logger.debug('' + this.name + " couldn't draw from empty deck " + deck.name, this);
+        AnyBoard.Logger.debug("Can't draw from empty deck " + deck, this);
     }
     else {
         this.hand._add(card);
-        AnyBoard.Logger.debug('' + this.name + " drew card " + card.title + " from deck " + deck.name, this);
+        AnyBoard.Logger.debug("Drew " + card+ " from deck " + deck, this);
     }
     return card;
 };
@@ -124,13 +124,12 @@ AnyBoard.Player.prototype.draw = function(deck, options) {
  * @returns {boolean} whether or not the card was played
  */
 AnyBoard.Player.prototype.play = function(card, customOptions) {
-    AnyBoard.Logger.debug('' + this.name + " playes card " + card.title, this);
     if (!this.hand.has(card)) {
-        AnyBoard.Logger.debug('' + this.name + "'s Hand does not contain card " + card.title, this);
         return false;
     }
-    card._play(this, customOptions);
+    AnyBoard.Logger.debug("Plays card " + card.title, this);
     this.hand.cards[card.id] -= 1;
+    card._play(this, customOptions);
     return true;
 };
 
@@ -145,7 +144,7 @@ AnyBoard.Player.prototype.toString = function() {
 /**
  * Represents a Hand of a player, containing cards.
  * @param {AnyBoard.Player} player player to which this hand belongs
- * @param {object} options *(optional)* custom properties added to this hand
+ * @param {object} [options] *(optional)* custom properties added to this hand
  * @constructor
  */
 AnyBoard.Hand = function(player, options) {
@@ -158,33 +157,57 @@ AnyBoard.Hand = function(player, options) {
 /**
  * Checks whether or not a player has an amount card in this hand.
  * @param {AnyBoard.Card} card card to be checked if is in hand
- * @param {number} [amount=1] (default: 1)* amount of card to be checked if is in hand
+ * @param {number} [amount=1] *(default: 1)* amount of card to be checked if is in hand
  * @returns {boolean} hasCard whether or not the player has that amount or more of that card in this hand
  */
 AnyBoard.Hand.prototype.has = function(card, amount) {
     amount = amount || 1;
     if (this.cards[card.id] && this.cards[card.id] >= amount) {
-        AnyBoard.Logger.debug('' + this.player.name + " has at least " + amount + " card: " + card.title, this);
         return true;
     }
-    AnyBoard.Logger.debug('' + this.player.name + " has less than " + amount + " card: " + card.title, this);
     return false;
 };
 
-/*
+/**
  * Internal function! Use player.draw(deck) instead.
  * Adds a card to the hand of a player
  * @param {AnyBoard.Card} card card to be added to this hand
+ * @private
  */
 AnyBoard.Hand.prototype._add = function(card) {
     if (!this.cards[card.id])
         this.cards[card.id] = 0;
-    AnyBoard.Logger.debug('' + this.player.name + " added to hand, card " + card.title, this);
     this.cards[card.id] += 1;
 };
 
+/**
+ * Discard the entire hand of the player, leaving him with no cards
+ */
+AnyBoard.Hand.prototype.discardHand = function() {
+    for (var cardId in this.cards) {
+        if (this.cards.hasOwnProperty(cardId))
+            for (var i = 0; i < this.cards[cardId];)
+                this.discardCard(AnyBoard.Card.get(cardId));
+    }
+};
+
+/**
+ * Discard a card from the hand of the player
+ * @param {AnyBoard.Card} card card to be discarded.
+ */
+AnyBoard.Hand.prototype.discardCard = function(card) {
+    AnyBoard.Logger.debug("Discarding card " + card, this.player);
+    if (!this.cards[card.id] || this.cards[card.id] === 0) return;
+    card.deck.usedPile.push(card);
+    this.cards[card.id] -= 1;
+};
+
+/**
+ * Returns a string representation of the hand
+ * @returns {string}
+ */
 AnyBoard.Hand.prototype.toString = function() {
-    return 'Hand: belongs to ' + (this.player ? this.player.name : ' no one');
+    return 'Hand (' + (this.player ? this.player.name : 'no one') + ')';
 };
 
 

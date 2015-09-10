@@ -11,6 +11,7 @@
  * @property {boolean} autoNewRefill *(default: false)* whether or not to automatically refill pile with a whole new deck when empty.
  * @property {Array.<Function>} playListeners holds functions to be called when cards in this deck are played
  * @property {Array.<Function>} drawListeners holds functions to be called when cards in this deck are drawn
+ *
  */
 AnyBoard.Deck = function (name, jsonDeck) {
     AnyBoard.Logger.debug("Adding new Deck " + name)
@@ -77,25 +78,29 @@ AnyBoard.Deck.prototype.initiate = function(jsonDeck) {
  * False if to refill with played cards (from usedPile)
  */
 AnyBoard.Deck.prototype.refill = function(newDeck) {
-    AnyBoard.Logger.debug("Refilling Deck " + this.name + " with " + (newDeck ? "new cards" : "used pile."));
     var tmp = this.pile.slice();
     if (newDeck)
         this.pile = this.cards.slice();
     else
         this.pile = this.usedPile.slice();
+    if (this.pile.length === 0)
+        AnyBoard.Logger.debug("Can't refill Deck. No cards to refill with.", this);
+    else
+        AnyBoard.Logger.debug("Refilling Deck with " + (newDeck ? "new cards" : "used pile.", this));
     this.shuffle();
     this.pile.concat(tmp);
     if (!newDeck)
         this.usedPile = [];
 };
 
-/*
+/**
  * Internal function! Use player.draw(deck) instead.
  * Draws a card from the deck.
  * Refills pile if autoNewRefill or autoUsedRefill is true.
  * @param {AnyBoard.Player} player player that draws the card
  * @param {object} [options] *(optional)* custom options sent to drawListeners
  * @returns {AnyBoard.Card} card card that is drawn, or undefined if pile is empty and autoRefill properties are false.
+ * @private
  */
 AnyBoard.Deck.prototype._draw = function(player, options) {
     if (this.pile.length < 1) {
@@ -106,49 +111,41 @@ AnyBoard.Deck.prototype._draw = function(player, options) {
         }
     }
     var card = this.pile.pop();
-    if (!card) {
-        // out of cards. Could potentially trigger an event.
+    if (card) {
+
+        for (var deckCallback in this.drawListeners) {
+            if (this.drawListeners.hasOwnProperty(deckCallback))
+                this.drawListeners[deckCallback](card, player, options)
+        }
+
+        for (var cardCallback in card.drawListeners) {
+            if (card.drawListeners.hasOwnProperty(cardCallback))
+                card.drawListeners[cardCallback](card, player, options)
+        }
     }
-    for (var func in this.drawListeners) {
-        if (this.drawListeners.hasOwnProperty(func))
-            this.drawListeners[func](card, player, options)
+    else {
+        // out of cards, and couldn't refill. Could potentially trigger an event.
     }
+
     return card;
 };
 
 /**
  * Adds functions to be executed upon all Cards in this Deck.
- * @param {onPlayCallback} func callback function to be executed upon play of card from this deck
+ * @param {callbacks.playDrawCallback} func callback function to be executed upon play of card from this deck
  */
 AnyBoard.Deck.prototype.onPlay = function(func) {
-    AnyBoard.Logger.debug("Adds function to playListener of deck " + this.name);
+    AnyBoard.Logger.debug("Adds a new playListener", this);
     this.playListeners.push(func);
 };
 
 /**
- * This callback is displayed as used of the Deck class.
- * @callback onPlayCallback
- * @param {AnyBoard.Card} card that is played
- * @param {AnyBoard.Player} player that played the card
- * @param {object} [options] custom options as extra parameter when play was called
- */
-var onPlayCallback = function (card, player, options) {};
-
-/**
- * This callback is displayed as part of the Deck class.
- * @callback onDrawCallback
- * @param {AnyBoard.Card} card that is played
- * @param {AnyBoard.Player} player that played the card
- * @param {object} [options] custom options as extra parameter when play was called
- */
-
-/**
  * Adds functions to be executed upon draw of Card from this Deck
- * @param {onDrawCallback} callback function to be executed with the 3 parameters AnyBoard.Card, AnyBoard.Player, (options) when cards are drawn
+ * @param {playDrawCallback} callback function to be executed with the 3 parameters AnyBoard.Card, AnyBoard.Player, (options) when cards are drawn
  */
 AnyBoard.Deck.prototype.onDraw = function(callback) {
     AnyBoard.Logger.debug("Adds function to drawListener of deck " + this.name);
-    this.drawListeners.push(func);
+    this.drawListeners.push(callback);
 };
 
 /**
@@ -180,7 +177,8 @@ AnyBoard.Deck.prototype.toString = function() {
  * @property {string} type type of the card, not used by AnyBoard FrameWork
  * @property {number} amount amount of this card its deck
  * @property {AnyBoard.Deck} deck deck that this card belongs to
- * @property {Array} playListeneres holds functions to be called upon play of this spesific card (in addition to playListeners on its belonging deck)
+ * @property {Array} playListeneres holds functions to be called upon play of this spesific card (before potential playListeners on its belonging deck)
+ * @property {Array} drawListeners holds functions to be called upon draw of this spesific card (before potential drawListeners on its belonging deck)
  * @property {object} properties dictionary that holds custom attributes
  */
 AnyBoard.Card = function (deck, options) {
@@ -193,6 +191,8 @@ AnyBoard.Card = function (deck, options) {
     this.value = options.value || null;
     this.type = options.type || null;
     this.amount = options.amount || 1;
+    this.playListeners = [];
+    this.drawListeners = [];
 
     this.properties = options;
     this.deck = deck;
@@ -218,29 +218,54 @@ AnyBoard.Card.allTitle = {};
 
 /**
  * Returns card with given id
- * @param {number} cardTitleOrID id or title of card
+ * @param {number|string} cardTitleOrID id or title of card
  * @returns {AnyBoard.Card} card with given id (or undefined if non-existent)
  */
 AnyBoard.Card.get = function(cardTitleOrID) {
-    if (typeof(cardTitleOrID) === 'number')
-        return AnyBoard.Card.all[cardTitleOrID];
-    return AnyBoard.Card.allTitle[cardTitleOrID]
+    if (isNaN(cardTitleOrID))
+        return AnyBoard.Card.allTitle[cardTitleOrID];
+    return AnyBoard.Card.all[cardTitleOrID];
 };
 
-/*
+
+/**
+ * Adds functions to be executed upon a play of this card
+ * @param {callbacks.playDrawCallback} func callback function to be executed upon play of card from this deck
+ */
+AnyBoard.Card.prototype.onPlay = function(func) {
+    AnyBoard.Logger.debug("Adds a new playListener", this);
+    this.playListeners.push(func);
+};
+
+/**
+ * Adds functions to be executed upon a draw of this card
+ * @param {callbacks.playDrawCallback} func callback function to be executed upon play of card from this deck
+ */
+AnyBoard.Card.prototype.onDraw = function(func) {
+    AnyBoard.Logger.debug("Adds a new drawListener", this);
+    this.drawListeners.push(func);
+};
+
+/**
  * Internal function! Use player.play(card) instead.
  * Call in order to play a card. This will ensure any listeners are informed of the play and put the card in the usedPile of its belonging deck.
  * @param {AnyBoard.Player} player the player that does the play
  * @param {object} options custom options/properties
+ * @private
  */
 AnyBoard.Card.prototype._play = function(player, options) {
-    for (var func in this.deck.playListeners) {
-        if (this.deck.playListeners.hasOwnProperty(func))
-            this.deck.playListeners[func](this, player, options)
-    }
     this.deck.usedPile.push(this);
-};
 
+    for (var cardCallback in this.playListeners) {
+        if (this.playListeners.hasOwnProperty(cardCallback))
+            this.playListeners[cardCallback](this, player, options)
+    }
+
+    for (var deckCallback in this.deck.playListeners) {
+        if (this.deck.playListeners.hasOwnProperty(deckCallback))
+            this.deck.playListeners[deckCallback](this, player, options)
+    }
+};
 
 /**
  * Returns a string representation of the card.
@@ -249,3 +274,17 @@ AnyBoard.Card.prototype._play = function(player, options) {
 AnyBoard.Card.prototype.toString = function() {
     return 'Card: ' + this.title + ', id: ' + this.id;
 };
+
+/**
+ * Defining callbacks for documentation purposes
+ */
+var callbacks = {};
+
+/**
+* This type of callback will be called when card is drawn or played
+* @callback playDrawCallback
+* @param {AnyBoard.Card} card that is played
+* @param {AnyBoard.Player} player that played the card
+* @param {object} [options] custom options as extra parameter when play was called
+*/
+callbacks.playDrawCallback = function (card, player, options) {};
