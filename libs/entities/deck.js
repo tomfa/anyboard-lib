@@ -74,7 +74,7 @@ AnyBoard.Deck.prototype.initiate = function(jsonDeck) {
 
 /**
  * Manually refills the pile. This is not necessary if autoUsedRefill or autoNewRefill property of deck is true.
- * @param {boolean} [newDeck=false] *(optional, default: false)* True if to refill with a new deck.
+ * @param {boolean} [newDeck=false] *(default: false)* True if to refill with a new deck.
  * False if to refill with played cards (from usedPile)
  */
 AnyBoard.Deck.prototype.refill = function(newDeck) {
@@ -273,23 +273,3 @@ AnyBoard.Card.prototype._play = function(player, options) {
 AnyBoard.Card.prototype.toString = function() {
     return 'Card: ' + this.title + ', id: ' + this.id;
 };
-
-
-/**
- * This type of callback will be called when card is drawn or played
- * @callback playDrawCallback
- * @param {AnyBoard.Card} card that is played
- * @param {AnyBoard.Player} player that played the card
- * @param {object} [options] custom options as extra parameter when play was called
- */
-
-/**
- * This type of callback will be called when card is drawn or played
- * @callback stdErrorCallback
- * @param {AnyBoard.Card} card that is played
- * @param {AnyBoard.Player} player that played the card
- * @param {object} [options] custom options as extra parameter when play was called
- */
-
-// TODO: Document the rest of the cbs
-

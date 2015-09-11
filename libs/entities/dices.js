@@ -1,7 +1,7 @@
 /** Represents a set of game dices that can be rolled to retrieve a random result.
  * @constructor
- * @param {number} [eyes=6] *(optional, default: 6)* number of max eyes on a roll with this dice
- * @param {number} [numOfDice=1] *(optional, default: 1)* number of dices
+ * @param {number} [eyes=6] *(default: 6)* number of max eyes on a roll with this dice
+ * @param {number} [numOfDice=1] *(default: 1)* number of dices
  * @example
  * // will create 1 dice, with 6 eyes
  * var dice = new AnyBoard.Dices();

@@ -42,7 +42,7 @@
     discoveryBluetooth.connect = function (token, win, fail) {
         var self = this;
 
-        token.device.connect(function(device) {
+        token.device.connect(function() {
             self.getServices(token, win, fail);
         }, function(errorCode) {
             token.device.haveServices = false;

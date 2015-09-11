@@ -9,6 +9,24 @@
 <dt><a href="#playDrawCallback">playDrawCallback</a> : <code>function</code></dt>
 <dd><p>This type of callback will be called when card is drawn or played</p>
 </dd>
+<dt><a href="#simpleTriggerCallback">simpleTriggerCallback</a> : <code>function</code></dt>
+<dd><p>Type of callback called upon triggering of events</p>
+</dd>
+<dt><a href="#stdStringCallback">stdStringCallback</a> : <code>function</code></dt>
+<dd><p>Generic callback returning a string param</p>
+</dd>
+<dt><a href="#stdBoolCallback">stdBoolCallback</a> : <code>function</code></dt>
+<dd><p>Generic callback returning a bool param</p>
+</dd>
+<dt><a href="#stdNoParamCallback">stdNoParamCallback</a> : <code>function</code></dt>
+<dd><p>Generic callback without params</p>
+</dd>
+<dt><a href="#onScanCallback">onScanCallback</a> : <code>function</code></dt>
+<dd><p>Type of callback called upon detecting a token</p>
+</dd>
+<dt><a href="#stdErrorCallback">stdErrorCallback</a> : <code>function</code></dt>
+<dd><p>This type of callback will be called upon failure to complete a function</p>
+</dd>
 </dl>
 <a name="AnyBoard"></a>
 ## AnyBoard : <code>object</code>
@@ -78,7 +96,7 @@ Global variable AnyBoard.
       * [.trigger(eventName, [eventOptions])](#AnyBoard.BaseToken+trigger)
       * [.on(eventName, callbackFunction)](#AnyBoard.BaseToken+on)
       * [.once(eventName, callbackFunction)](#AnyBoard.BaseToken+once)
-      * [.send(data, win, fail)](#AnyBoard.BaseToken+send)
+      * [.send(data, [win], [fail])](#AnyBoard.BaseToken+send)
       * [.print(value, [win], [fail])](#AnyBoard.BaseToken+print)
       * [.getFirmwareName([win], [fail])](#AnyBoard.BaseToken+getFirmwareName)
       * [.getFirmwareVersion([win], [fail])](#AnyBoard.BaseToken+getFirmwareVersion)
@@ -103,13 +121,14 @@ Global variable AnyBoard.
     * [.getCompatibleDriver(type, compatibility)](#AnyBoard.Drivers.getCompatibleDriver) ⇒ <code>[Driver](#AnyBoard.Driver)</code>
   * [.TokenManager](#AnyBoard.TokenManager)
     * [.setDriver(driver)](#AnyBoard.TokenManager.setDriver)
-    * [.scan(win, fail, timeout)](#AnyBoard.TokenManager.scan)
+    * [.scan([win], [fail], [timeout])](#AnyBoard.TokenManager.scan)
     * [.get(address)](#AnyBoard.TokenManager.get) ⇒ <code>[BaseToken](#AnyBoard.BaseToken)</code>
   * [.Logger](#AnyBoard.Logger)
     * [.warn(message, [sender])](#AnyBoard.Logger.warn)
     * [.error(message, [sender])](#AnyBoard.Logger.error)
     * [.log(message, [sender])](#AnyBoard.Logger.log)
     * [.debug(message, [sender])](#AnyBoard.Logger.debug)
+    * [.setThreshold(severity)](#AnyBoard.Logger.setThreshold)
   * [.Utils](#AnyBoard.Utils)
     * [.isEqual(a, b, [aStack], [bStack])](#AnyBoard.Utils.isEqual) ⇒ <code>boolean</code>
 
@@ -147,8 +166,8 @@ Represents a single Driver, e.g. for spesific token or bluetooth discovery
 | options.version | <code>string</code> | version of the driver |
 | options.type | <code>string</code> | Type of driver, e.g. "bluetooth" |
 | options.compatibility | <code>Array</code> &#124; <code>object</code> &#124; <code>string</code> | An object or string that can be used to deduce compatibiity, or      an array of different compatibilies. How this is used is determined by the set standard driver on TokenManager      that handles scanning for and connecting to tokens. |
-| [options.dependencies] | <code>string</code> | (optional) What if anything the driver depends on. |
-| [options.date] | <code>string</code> | (optional) Date upon release/last build. |
+| [options.dependencies] | <code>string</code> | *(optional)* What if anything the driver depends on. |
+| [options.date] | <code>string</code> | *(optional)* Date upon release/last build. |
 | options.yourAttributeHere | <code>any</code> | custom attributes, as well as specified ones, are all placed in      driver.properties. E.g. 'heat' would be placed in driver.properties.heat. |
 
 <a name="AnyBoard.Driver+toString"></a>
@@ -165,8 +184,8 @@ Returns a short description of the Driver instance
 | --- | --- | --- |
 | name | <code>string</code> | name of Deck. |
 | cards | <code>[Array.&lt;Card&gt;](#AnyBoard.Card)</code> | complete set of cards in the deck |
-| pile | <code>Array.&lt;Object&gt;</code> | remaining cards in this pile |
-| usedPile | <code>Array.&lt;Object&gt;</code> | cards played from this deck |
+| pile | <code>[Array.&lt;Card&gt;](#AnyBoard.Card)</code> | remaining cards in this pile |
+| usedPile | <code>[Array.&lt;Card&gt;](#AnyBoard.Card)</code> | cards played from this deck |
 | autoUsedRefill | <code>boolean</code> | *(default: true)* whether or not to automatically refill pile from usedPile when empty. Is ignored if autoNewRefill is true. |
 | autoNewRefill | <code>boolean</code> | *(default: false)* whether or not to automatically refill pile with a whole new deck when empty. |
 | playListeners | <code>Array.&lt;function()&gt;</code> | holds functions to be called when cards in this deck are played |
@@ -221,7 +240,7 @@ Manually refills the pile. This is not necessary if autoUsedRefill or autoNewRef
 
 | Param | Type | Default | Description |
 | --- | --- | --- | --- |
-| [newDeck] | <code>boolean</code> | <code>false</code> | *(optional, default: false)* True if to refill with a new deck. False if to refill with played cards (from usedPile) |
+| [newDeck] | <code>boolean</code> | <code>false</code> | *(default: false)* True if to refill with a new deck. False if to refill with played cards (from usedPile) |
 
 <a name="AnyBoard.Deck+onPlay"></a>
 #### deck.onPlay(func)
@@ -245,7 +264,7 @@ Adds functions to be executed upon draw of Card from this Deck
 
 <a name="AnyBoard.Deck+toString"></a>
 #### deck.toString() ⇒ <code>string</code>
-Sting representation of a dek
+Sting representation of a deck
 
 **Kind**: instance method of <code>[Deck](#AnyBoard.Deck)</code>  
 <a name="AnyBoard.Deck.get"></a>
@@ -359,21 +378,56 @@ Represents a set of game dices that can be rolled to retrieve a random result.
 
 | Param | Type | Default | Description |
 | --- | --- | --- | --- |
-| [eyes] | <code>number</code> | <code>6</code> | *(optional, default: 6)* number of max eyes on a roll with this dice |
-| [numOfDice] | <code>number</code> | <code>1</code> | *(optional, default: 1)* number of dices |
+| [eyes] | <code>number</code> | <code>6</code> | *(default: 6)* number of max eyes on a roll with this dice |
+| [numOfDice] | <code>number</code> | <code>1</code> | *(default: 1)* number of dices |
 
+**Example**  
+```js
+// will create 1 dice, with 6 eyes
+var dice = new AnyBoard.Dices();
+
+// will create 2 dice, with 6 eyes
+var dice = new AnyBoard.Dices(2, 6);
+```
 <a name="AnyBoard.Dices+roll"></a>
 #### dices.roll() ⇒ <code>number</code>
 Roll the dices and returns a the sum
 
 **Kind**: instance method of <code>[Dices](#AnyBoard.Dices)</code>  
 **Returns**: <code>number</code> - combined result of rolls for all dices  
+**Example**  
+```js
+var dice = new AnyBoard.Dices();
+
+// returns random number between 1 and 6
+dice.roll()
+```
+**Example**  
+```js
+var dice = new AnyBoard.Dices(2, 6);
+
+// returns random number between 1 and 12
+dice.roll()
+```
 <a name="AnyBoard.Dices+rollEach"></a>
 #### dices.rollEach() ⇒ <code>Array</code>
 Roll the dices and returns an array of results for each dice
 
 **Kind**: instance method of <code>[Dices](#AnyBoard.Dices)</code>  
 **Returns**: <code>Array</code> - list of results for each dice  
+**Example**  
+```js
+var dice = new AnyBoard.Dices(2, 6);
+
+// returns an Array of numbers
+var resultArray = dice.rollEach()
+
+// result of first dice, between 1-6
+resultArray[0]
+
+// result of second dice, between 1-6
+resultArray[1]
+```
 <a name="AnyBoard.Player"></a>
 ### AnyBoard.Player
 **Kind**: static class of <code>[AnyBoard](#AnyBoard)</code>  
@@ -408,11 +462,11 @@ Represents a Player (AnyBoard.Player)
 | Param | Type | Description |
 | --- | --- | --- |
 | name | <code>string</code> | name of the player |
-| [options] | <code>object</code> | options for the player |
-| [options.color] | <code>string</code> | color representing the player |
-| [options.faction] | <code>string</code> | faction representing the player |
-| [options.class] | <code>string</code> | class representing the player |
-| [options.yourAttributeHere] | <code>any</code> | custom attributes, as well as specified ones, are all placed in player.properties. E.g. 'age' would be placed in player.properties.age. |
+| [options] | <code>object</code> | *(optional)* options for the player |
+| [options.color] | <code>string</code> | *(optional)* color representing the player |
+| [options.faction] | <code>string</code> | *(optional)* faction representing the player |
+| [options.class] | <code>string</code> | *(optional)* class representing the player |
+| [options.yourAttributeHere] | <code>any</code> | *(optional)* custom attributes, as well as specified ones, are all placed in player.properties. E.g. 'age' would be placed in player.properties.age. |
 
 <a name="AnyBoard.Player+pay"></a>
 #### player.pay(resources, [receivingPlayer]) ⇒ <code>boolean</code>
@@ -424,7 +478,7 @@ Take resources from this player and give to receivingPlayer.
 | Param | Type | Description |
 | --- | --- | --- |
 | resources | <code>[ResourceSet](#AnyBoard.ResourceSet)</code> | dictionary of resources |
-| [receivingPlayer] | <code>[Player](#AnyBoard.Player)</code> | Who shall receive the resources. Omit if not to anyone (e.g. give to "the bank") |
+| [receivingPlayer] | <code>[Player](#AnyBoard.Player)</code> | *(optional)* Who shall receive the resources. Omit if not to anyone (e.g. give to "the bank") |
 
 <a name="AnyBoard.Player+trade"></a>
 #### player.trade(giveResources, receiveResources, [player]) ⇒ <code>boolean</code>
@@ -681,7 +735,7 @@ AnyBoard.Resource.get("gold");
 | Name | Type | Default | Description |
 | --- | --- | --- | --- |
 | resources | <code>object</code> |  | *(optional)* a set of initially contained resources |
-| allowNegative | <code>boolean</code> | <code>false</code> | *(optional, default: false)*  whether or not to allow being subtracted resources to below 0 (dept) |
+| allowNegative | <code>boolean</code> | <code>false</code> | *(default: false)*  whether or not to allow being subtracted resources to below 0 (dept) |
 
 
 * [.ResourceSet](#AnyBoard.ResourceSet)
@@ -699,7 +753,7 @@ Creates a ResourceSet
 | Param | Type | Default | Description |
 | --- | --- | --- | --- |
 | [resources] | <code>object</code> |  | *(optional)* a set of initially contained resources |
-| [allowNegative] | <code>boolean</code> | <code>false</code> | *(optional, default: false)*  whether or not to allow being subtracted resources to below 0 (dept) |
+| [allowNegative] | <code>boolean</code> | <code>false</code> | *(default: false)*  whether or not to allow being subtracted resources to below 0 (dept) |
 
 **Example**  
 ```js
@@ -832,7 +886,7 @@ myTreasure.similarities(otherTresure);
     * [.trigger(eventName, [eventOptions])](#AnyBoard.BaseToken+trigger)
     * [.on(eventName, callbackFunction)](#AnyBoard.BaseToken+on)
     * [.once(eventName, callbackFunction)](#AnyBoard.BaseToken+once)
-    * [.send(data, win, fail)](#AnyBoard.BaseToken+send)
+    * [.send(data, [win], [fail])](#AnyBoard.BaseToken+send)
     * [.print(value, [win], [fail])](#AnyBoard.BaseToken+print)
     * [.getFirmwareName([win], [fail])](#AnyBoard.BaseToken+getFirmwareName)
     * [.getFirmwareVersion([win], [fail])](#AnyBoard.BaseToken+getFirmwareVersion)
@@ -863,7 +917,7 @@ Base class for tokens. Should be used by communication driver upon AnyBoard.Toke
 | name | <code>string</code> |  | name of the token |
 | address | <code>string</code> |  | address of the token found when scanned |
 | device | <code>object</code> |  | device object used and handled by driver |
-| [driver] | <code>[Driver](#AnyBoard.Driver)</code> | <code>AnyBoard.TokenManager.driver</code> | token driver for handling communication with it. |
+| [driver] | <code>[Driver](#AnyBoard.Driver)</code> | <code>AnyBoard.BaseToken._defaultDriver</code> | token driver for handling communication with it. |
 
 <a name="AnyBoard.BaseToken+isConnected"></a>
 #### baseToken.isConnected() ⇒ <code>boolean</code>
@@ -880,8 +934,8 @@ Attempts to connect to token. Uses TokenManager driver, not its own, since conne
 
 | Param | Type | Description |
 | --- | --- | --- |
-| [win] | <code>function</code> | function to be executed upon success |
-| [fail] | <code>function</code> | function to be executed upon failure |
+| [win] | <code>[stdNoParamCallback](#stdNoParamCallback)</code> | *(optional)* function to be executed upon success |
+| [fail] | <code>[stdErrorCallback](#stdErrorCallback)</code> | *(optional)* function to be executed upon failure |
 
 <a name="AnyBoard.BaseToken+disconnect"></a>
 #### baseToken.disconnect()
@@ -897,7 +951,7 @@ Trigger an event on a token
 | Param | Type | Description |
 | --- | --- | --- |
 | eventName | <code>string</code> | name of event |
-| [eventOptions] | <code>object</code> | dictionary of parameters and values |
+| [eventOptions] | <code>object</code> | (*optional)* dictionary of parameters and values |
 
 **Example**  
 ```js
@@ -919,11 +973,11 @@ Adds a callbackFunction to be executed always when event is triggered
 | Param | Type | Description |
 | --- | --- | --- |
 | eventName | <code>string</code> | name of event to listen to |
-| callbackFunction | <code>function</code> | function to be executed |
+| callbackFunction | <code>[simpleTriggerCallback](#simpleTriggerCallback)</code> | function to be executed |
 
 **Example**  
 ```js
-var onTimeTravelCallback = function (options) {console.log("The tardis is great!")};
+var onTimeTravelCallback = function () {console.log("The tardis is great!")};
 existingToken.on('timeTravelled', onTimeTravelCallback);
 
 // Triggers the function, and prints praise for the tardis
@@ -931,6 +985,23 @@ existingToken.trigger('timeTravelled');
 
 existingToken.trigger('timeTravelled');  // prints again
 existingToken.trigger('timeTravelled');  // prints again
+```
+**Example**  
+```js
+var onTimeTravelCallback = function (options) {
+    // Options can be left out of a trigger. You should therefore check
+    // that input is as expected, throw an error or give a default value
+    var name = (options && options.name ? options.name : "You're");
+
+    console.log(options.name + " is great!");
+};
+existingToken.on('timeTravelled', onTimeTravelCallback);
+
+// prints "Dr.Who is great!"
+existingToken.trigger('timeTravelled', {"name": "Dr.Who"});
+
+// prints "You're great!"
+existingToken.trigger('timeTravelled');
 ```
 <a name="AnyBoard.BaseToken+once"></a>
 #### baseToken.once(eventName, callbackFunction)
@@ -941,7 +1012,7 @@ Adds a callbackFunction to be executed next time an event is triggered
 | Param | Type | Description |
 | --- | --- | --- |
 | eventName | <code>string</code> | name of event to listen to |
-| callbackFunction | <code>function</code> | function to be executed |
+| callbackFunction | <code>[simpleTriggerCallback](#simpleTriggerCallback)</code> | function to be executed |
 
 **Example**  
 ```js
@@ -955,7 +1026,7 @@ existingToken.trigger('timeTravelled');
 existingToken.trigger('timeTravelled');
 ```
 <a name="AnyBoard.BaseToken+send"></a>
-#### baseToken.send(data, win, fail)
+#### baseToken.send(data, [win], [fail])
 Sends data to the token. Uses either own driver, or (if not set) TokenManager driver
 
 **Kind**: instance method of <code>[BaseToken](#AnyBoard.BaseToken)</code>  
@@ -963,8 +1034,8 @@ Sends data to the token. Uses either own driver, or (if not set) TokenManager dr
 | Param | Type | Description |
 | --- | --- | --- |
 | data | <code>Uint8Array</code> &#124; <code>ArrayBuffer</code> &#124; <code>String</code> | data to be sent |
-| win | <code>function</code> | function to be executed upon success |
-| fail | <code>function</code> | function to be executed upon error |
+| [win] | <code>[stdNoParamCallback](#stdNoParamCallback)</code> | *(optional)* function to be executed upon success |
+| [fail] | <code>[stdErrorCallback](#stdErrorCallback)</code> | *(optional)* function to be executed upon error |
 
 <a name="AnyBoard.BaseToken+print"></a>
 #### baseToken.print(value, [win], [fail])
@@ -978,8 +1049,8 @@ Refer to the individual driver for token spesific implementation and capabilites
 | Param | Type | Description |
 | --- | --- | --- |
 | value | <code>string</code> |  |
-| [win] | <code>function</code> | callback function to be called upon successful execution |
-| [fail] | <code>function</code> | callback function to be executed upon failure |
+| [win] | <code>[stdNoParamCallback](#stdNoParamCallback)</code> | *(optional)* callback function to be called upon successful execution |
+| [fail] | <code>[stdErrorCallback](#stdErrorCallback)</code> | *(optional)* callback function to be executed upon failure |
 
 <a name="AnyBoard.BaseToken+getFirmwareName"></a>
 #### baseToken.getFirmwareName([win], [fail])
@@ -989,8 +1060,8 @@ Gets the name of the firmware type of the token
 
 | Param | Type | Description |
 | --- | --- | --- |
-| [win] | <code>function</code> | callback function to be called upon successful execution |
-| [fail] | <code>function</code> | callback function to be executed upon failure |
+| [win] | <code>[stdStringCallback](#stdStringCallback)</code> | *(optional)* callback function to be called upon successful execution |
+| [fail] | <code>[stdErrorCallback](#stdErrorCallback)</code> | *(optional)* callback function to be executed upon failure |
 
 **Example**  
 ```js
@@ -1013,8 +1084,8 @@ Gets the version of the firmware type of the token
 
 | Param | Type | Description |
 | --- | --- | --- |
-| [win] | <code>function</code> | callback function to be called upon successful execution |
-| [fail] | <code>function</code> | callback function to be executed upon failure |
+| [win] | <code>[stdStringCallback](#stdStringCallback)</code> | *(optional)* callback function to be called upon successful execution |
+| [fail] | <code>[stdErrorCallback](#stdErrorCallback)</code> | *(optional)* callback function to be executed upon failure |
 
 <a name="AnyBoard.BaseToken+getFirmwareUUID"></a>
 #### baseToken.getFirmwareUUID([win], [fail])
@@ -1024,8 +1095,8 @@ Gets a uniquie ID the firmware of the token
 
 | Param | Type | Description |
 | --- | --- | --- |
-| [win] | <code>function</code> | callback function to be called upon successful execution |
-| [fail] | <code>function</code> | callback function to be executed upon failure |
+| [win] | <code>[stdStringCallback](#stdStringCallback)</code> | *(optional)* callback function to be called upon successful execution |
+| [fail] | <code>[stdErrorCallback](#stdErrorCallback)</code> | *(optional)* callback function to be executed upon failure |
 
 <a name="AnyBoard.BaseToken+hasLed"></a>
 #### baseToken.hasLed([win], [fail])
@@ -1035,8 +1106,8 @@ Checks whether or not the token has simple LED
 
 | Param | Type | Description |
 | --- | --- | --- |
-| [win] | <code>function</code> | callback function to be called upon successful execution |
-| [fail] | <code>function</code> | callback function to be executed upon failure |
+| [win] | <code>[stdBoolCallback](#stdBoolCallback)</code> | *(optional)* callback function to be called upon successful execution |
+| [fail] | <code>[stdErrorCallback](#stdErrorCallback)</code> | *(optional)* callback function to be executed upon failure |
 
 <a name="AnyBoard.BaseToken+hasLedColor"></a>
 #### baseToken.hasLedColor([win], [fail])
@@ -1046,8 +1117,8 @@ Checks whether or not the token has colored LEDs
 
 | Param | Type | Description |
 | --- | --- | --- |
-| [win] | <code>function</code> | callback function to be called upon successful execution |
-| [fail] | <code>function</code> | callback function to be executed upon failure |
+| [win] | <code>[stdBoolCallback](#stdBoolCallback)</code> | *(optional)* callback function to be called upon successful execution |
+| [fail] | <code>[stdErrorCallback](#stdErrorCallback)</code> | *(optional)* callback function to be executed upon failure |
 
 <a name="AnyBoard.BaseToken+hasVibration"></a>
 #### baseToken.hasVibration([win], [fail])
@@ -1057,8 +1128,8 @@ Checks whether or not the token has vibration
 
 | Param | Type | Description |
 | --- | --- | --- |
-| [win] | <code>function</code> | callback function to be called upon successful execution |
-| [fail] | <code>function</code> | callback function to be executed upon failure |
+| [win] | <code>[stdBoolCallback](#stdBoolCallback)</code> | *(optional)* callback function to be called upon successful execution |
+| [fail] | <code>[stdErrorCallback](#stdErrorCallback)</code> | *(optional)* callback function to be executed upon failure |
 
 <a name="AnyBoard.BaseToken+hasColorDetection"></a>
 #### baseToken.hasColorDetection([win], [fail])
@@ -1068,8 +1139,8 @@ Checks whether or not the token has ColorDetection
 
 | Param | Type | Description |
 | --- | --- | --- |
-| [win] | <code>function</code> | callback function to be called upon successful execution |
-| [fail] | <code>function</code> | callback function to be executed upon failure |
+| [win] | <code>[stdBoolCallback](#stdBoolCallback)</code> | *(optional)* callback function to be called upon successful execution |
+| [fail] | <code>[stdErrorCallback](#stdErrorCallback)</code> | *(optional)* callback function to be executed upon failure |
 
 <a name="AnyBoard.BaseToken+hasLedScreen"></a>
 #### baseToken.hasLedScreen([win], [fail])
@@ -1079,8 +1150,8 @@ Checks whether or not the token has LedSceen
 
 | Param | Type | Description |
 | --- | --- | --- |
-| [win] | <code>function</code> | callback function to be called upon successful execution |
-| [fail] | <code>function</code> | callback function to be executed upon failure |
+| [win] | <code>[stdBoolCallback](#stdBoolCallback)</code> | *(optional)* callback function to be called upon successful execution |
+| [fail] | <code>[stdErrorCallback](#stdErrorCallback)</code> | *(optional)* callback function to be executed upon failure |
 
 <a name="AnyBoard.BaseToken+hasRfid"></a>
 #### baseToken.hasRfid([win], [fail])
@@ -1090,8 +1161,8 @@ Checks whether or not the token has RFID reader
 
 | Param | Type | Description |
 | --- | --- | --- |
-| [win] | <code>function</code> | callback function to be called upon successful execution |
-| [fail] | <code>function</code> | callback function to be executed upon failure |
+| [win] | <code>[stdBoolCallback](#stdBoolCallback)</code> | *(optional)* callback function to be called upon successful execution |
+| [fail] | <code>[stdErrorCallback](#stdErrorCallback)</code> | *(optional)* callback function to be executed upon failure |
 
 <a name="AnyBoard.BaseToken+hasNfc"></a>
 #### baseToken.hasNfc([win], [fail])
@@ -1101,8 +1172,8 @@ Checks whether or not the token has NFC reader
 
 | Param | Type | Description |
 | --- | --- | --- |
-| [win] | <code>function</code> | callback function to be called upon successful execution |
-| [fail] | <code>function</code> | callback function to be executed upon failure |
+| [win] | <code>[stdBoolCallback](#stdBoolCallback)</code> | *(optional)* callback function to be called upon successful execution |
+| [fail] | <code>[stdErrorCallback](#stdErrorCallback)</code> | *(optional)* callback function to be executed upon failure |
 
 <a name="AnyBoard.BaseToken+hasAccelometer"></a>
 #### baseToken.hasAccelometer([win], [fail])
@@ -1112,8 +1183,8 @@ Checks whether or not the token has Accelometer
 
 | Param | Type | Description |
 | --- | --- | --- |
-| [win] | <code>function</code> | callback function to be called upon successful execution |
-| [fail] | <code>function</code> | callback function to be executed upon failure |
+| [win] | <code>[stdBoolCallback](#stdBoolCallback)</code> | *(optional)* callback function to be called upon successful execution |
+| [fail] | <code>[stdErrorCallback](#stdErrorCallback)</code> | *(optional)* callback function to be executed upon failure |
 
 <a name="AnyBoard.BaseToken+hasTemperature"></a>
 #### baseToken.hasTemperature([win], [fail])
@@ -1123,8 +1194,8 @@ Checks whether or not the token has temperature measurement
 
 | Param | Type | Description |
 | --- | --- | --- |
-| [win] | <code>function</code> | callback function to be called upon successful execution |
-| [fail] | <code>function</code> | callback function to be executed upon failure |
+| [win] | <code>[stdBoolCallback](#stdBoolCallback)</code> | *(optional)* callback function to be called upon successful execution |
+| [fail] | <code>[stdErrorCallback](#stdErrorCallback)</code> | *(optional)* callback function to be executed upon failure |
 
 <a name="AnyBoard.BaseToken+ledOn"></a>
 #### baseToken.ledOn(value, [win], [fail])
@@ -1135,8 +1206,8 @@ Sets color on token
 | Param | Type | Description |
 | --- | --- | --- |
 | value | <code>string</code> &#124; <code>Array</code> | string with color name or array of [red, green, blue] values 0-255 |
-| [win] | <code>function</code> | callback function to be called upon successful execution |
-| [fail] | <code>function</code> | callback function to be executed upon |
+| [win] | <code>[stdNoParamCallback](#stdNoParamCallback)</code> | *(optional)* callback function to be called upon successful execution |
+| [fail] | <code>[stdErrorCallback](#stdErrorCallback)</code> | *(optional)* callback function to be executed upon |
 
 **Example**  
 ```js
@@ -1155,8 +1226,8 @@ tells token to blink its led
 | Param | Type | Description |
 | --- | --- | --- |
 | value | <code>string</code> &#124; <code>Array</code> | string with color name or array of [red, green, blue] values 0-255 |
-| [win] | <code>function</code> | callback function to be called upon successful execution |
-| [fail] | <code>function</code> | callback function to be executed upon |
+| [win] | <code>[stdNoParamCallback](#stdNoParamCallback)</code> | *(optional)* callback function to be called upon successful execution |
+| [fail] | <code>[stdErrorCallback](#stdErrorCallback)</code> | *(optional)* callback function to be executed upon |
 
 **Example**  
 ```js
@@ -1174,8 +1245,8 @@ Turns LED off
 
 | Param | Type | Description |
 | --- | --- | --- |
-| [win] | <code>function</code> | callback function to be called upon successful execution |
-| [fail] | <code>function</code> | callback function to be executed upon |
+| [win] | <code>[stdNoParamCallback](#stdNoParamCallback)</code> | *(optional)* callback function to be called upon successful execution |
+| [fail] | <code>[stdErrorCallback](#stdErrorCallback)</code> | *(optional)* callback function to be executed upon |
 
 <a name="AnyBoard.BaseToken+toString"></a>
 #### baseToken.toString() ⇒ <code>string</code>
@@ -1185,7 +1256,7 @@ Representational string of class instance.
 <a name="AnyBoard.BaseToken.setDefaultDriver"></a>
 #### BaseToken.setDefaultDriver(driver) ⇒ <code>boolean</code>
 Sets a new default driver to handle communication for tokens without specified driver.
-The driver must have implement a method *scan(win, fail, timeout)* in order to discover tokens.
+The driver must have implement a method *send(win, fail)* in order to discover tokens.
 
 **Kind**: static method of <code>[BaseToken](#AnyBoard.BaseToken)</code>  
 **Returns**: <code>boolean</code> - whether or not driver was successfully set  
@@ -1254,13 +1325,13 @@ var discoveryBluetooth = new AnyBoard.Driver({
     });
 
 // Returns undefined (right type, wrong compatibility)
-AnyBoard.Drivers.getCompatibleDriver('bluetooth, 'weirdCompatibility')
+AnyBoard.Drivers.getCompatibleDriver('bluetooth', 'weirdCompatibility');
 
 // Returns undefined (wrong type, right compatibility)
-AnyBoard.Drivers.getCompatibleDriver('HTTP, {"service": "iCanTypeAnyThingHere"})
+AnyBoard.Drivers.getCompatibleDriver('HTTP, {"service": "iCanTypeAnyThingHere"});
 
 // Returns discoveryBluetooth driver
-AnyBoard.Drivers.getCompatibleDriver('bluetooth', 'tardis')
+AnyBoard.Drivers.getCompatibleDriver('bluetooth', 'tardis');
 ```
 <a name="AnyBoard.TokenManager"></a>
 ### AnyBoard.TokenManager
@@ -1277,13 +1348,14 @@ A token manager. Holds all tokens. Discovers and connects to them.
 
 * [.TokenManager](#AnyBoard.TokenManager)
   * [.setDriver(driver)](#AnyBoard.TokenManager.setDriver)
-  * [.scan(win, fail, timeout)](#AnyBoard.TokenManager.scan)
+  * [.scan([win], [fail], [timeout])](#AnyBoard.TokenManager.scan)
   * [.get(address)](#AnyBoard.TokenManager.get) ⇒ <code>[BaseToken](#AnyBoard.BaseToken)</code>
 
 <a name="AnyBoard.TokenManager.setDriver"></a>
 #### TokenManager.setDriver(driver)
 Sets a new default driver to handle communication for tokens without specified driver.
-The driver must have implemented methods *scan(win, fail, timeout), in order to discover tokens.
+The driver must have implemented methods *scan(win, fail, timeout) connect(token, win, fail) and
+disconnect(token, win, fail)*, in order to discover tokens.
 
 **Kind**: static method of <code>[TokenManager](#AnyBoard.TokenManager)</code>  
 
@@ -1292,16 +1364,16 @@ The driver must have implemented methods *scan(win, fail, timeout), in order to 
 | driver | <code>[Driver](#AnyBoard.Driver)</code> | driver to be used for communication |
 
 <a name="AnyBoard.TokenManager.scan"></a>
-#### TokenManager.scan(win, fail, timeout)
+#### TokenManager.scan([win], [fail], [timeout])
 Scans for tokens nearby and stores in discoveredTokens property
 
 **Kind**: static method of <code>[TokenManager](#AnyBoard.TokenManager)</code>  
 
 | Param | Type | Description |
 | --- | --- | --- |
-| win | <code>onScanWinCallback</code> | function to be executed when devices are found (called for each device found) |
-| fail | <code>onFailCallback</code> | function to be executed upon failure |
-| timeout | <code>number</code> | amount of milliseconds to scan before stopping |
+| [win] | <code>[onScanCallback](#onScanCallback)</code> | *(optional)* function to be executed when devices are found (called for each device found) |
+| [fail] | <code>[stdErrorCallback](#stdErrorCallback)</code> | *(optional)* function to be executed upon failure |
+| [timeout] | <code>number</code> | *(optional)* amount of milliseconds to scan before stopping. Driver has a default. |
 
 **Example**  
 ```js
@@ -1331,12 +1403,12 @@ Will then log all events, regardless of severity
 
 | Name | Type | Description |
 | --- | --- | --- |
-| threshold | <code>number</code> | *(default: 10)* sets a threshold on whether or not to log an event.      At 10, AnyBoard will log all normal logs, warning logs, and erros, but ignore debug logs.      At 0, will also log debug events. At 20, only warning and error. At 30 only error events. |
+| threshold | <code>number</code> | *(default: 10)* threshold on whether or not to log an event.      Any message with level above or equal threshold will be logged |
 | debugLevel | <code>number</code> | *(value: 0)* sets a threshold for when a log should be considered a debug log event. |
 | normalLevel | <code>number</code> | *(value: 10)* sets a threshold for when a log should be considered a normal log event. |
 | warningLevel | <code>number</code> | *(value: 20)* sets a threshold for when a log should be considered a warning. |
 | errorLevel | <code>number</code> | *(value: 30)* sets a threshold for when a log should be considered a fatal error. |
-| loggerObject | <code>function</code> | *(default: console)* logging method. Must have implemented .debug(), .log(), .warn() and .error() |
+| loggerObject | <code>object</code> | *(default: console)* logging method. Must have implemented .debug(), .log(), .warn() and .error() |
 
 
 * [.Logger](#AnyBoard.Logger)
@@ -1344,6 +1416,7 @@ Will then log all events, regardless of severity
   * [.error(message, [sender])](#AnyBoard.Logger.error)
   * [.log(message, [sender])](#AnyBoard.Logger.log)
   * [.debug(message, [sender])](#AnyBoard.Logger.debug)
+  * [.setThreshold(severity)](#AnyBoard.Logger.setThreshold)
 
 <a name="AnyBoard.Logger.warn"></a>
 #### Logger.warn(message, [sender])
@@ -1389,6 +1462,39 @@ logs debugging information. Ignored if threshold > this.debugLevel (default: 0)
 | message | <code>string</code> | event to be logged |
 | [sender] | <code>object</code> | *(optional)* sender of the message |
 
+<a name="AnyBoard.Logger.setThreshold"></a>
+#### Logger.setThreshold(severity)
+Sets threshold for logging
+
+**Kind**: static method of <code>[Logger](#AnyBoard.Logger)</code>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| severity | <code>number</code> | a message has to have before being logged |
+
+**Example**  
+```js
+// By default, debug doesn't log
+AnyBoard.debug("Hi")  // does not log
+```
+**Example**  
+```js
+// But you can lower the thresholdlevel
+AnyBoard.Logger.setThreshold(AnyBoard.Logger.debugLevel)
+AnyBoard.debug("I'm here afterall!")  // logs
+```
+**Example**  
+```js
+// Or increase it to avoid certain logging
+AnyBoard.Logger.setThreshold(AnyBoard.Logger.errorLevel)
+AnyBoard.warn("The tardis has arrived!")  // does not log
+```
+**Example**  
+```js
+// But you can never avoid errors
+AnyBoard.Logger.setThreshold(AnyBoard.Logger.errorLevel+1)
+AnyBoard.error("The Doctor is dead!!")  // logs
+```
 <a name="AnyBoard.Utils"></a>
 ### AnyBoard.Utils
 Utility functions for AnyBoard
@@ -1430,5 +1536,61 @@ This type of callback will be called when card is drawn or played
 | --- | --- | --- |
 | card | <code>[Card](#AnyBoard.Card)</code> | that is played |
 | player | <code>[Player](#AnyBoard.Player)</code> | that played the card |
-| [options] | <code>object</code> | custom options as extra parameter when play was called |
+| [options] | <code>object</code> | *(optional)* custom options as extra parameter when AnyBoard.Player.play was called |
+
+<a name="simpleTriggerCallback"></a>
+## simpleTriggerCallback : <code>function</code>
+Type of callback called upon triggering of events
+
+**Kind**: global typedef  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| event | <code>string</code> | name of event |
+| [options] | <code>object</code> | *(optional)* options called with the triggering of that event |
+
+<a name="stdStringCallback"></a>
+## stdStringCallback : <code>function</code>
+Generic callback returning a string param
+
+**Kind**: global typedef  
+
+| Param | Type |
+| --- | --- |
+| string | <code>string</code> | 
+
+<a name="stdBoolCallback"></a>
+## stdBoolCallback : <code>function</code>
+Generic callback returning a bool param
+
+**Kind**: global typedef  
+
+| Param | Type |
+| --- | --- |
+| boolean | <code>boolean</code> | 
+
+<a name="stdNoParamCallback"></a>
+## stdNoParamCallback : <code>function</code>
+Generic callback without params
+
+**Kind**: global typedef  
+<a name="onScanCallback"></a>
+## onScanCallback : <code>function</code>
+Type of callback called upon detecting a token
+
+**Kind**: global typedef  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| token | <code>[BaseToken](#AnyBoard.BaseToken)</code> | discovered token |
+
+<a name="stdErrorCallback"></a>
+## stdErrorCallback : <code>function</code>
+This type of callback will be called upon failure to complete a function
+
+**Kind**: global typedef  
+
+| Param | Type |
+| --- | --- |
+| errorMessage | <code>string</code> | 
 

@@ -31,9 +31,9 @@ AnyBoard.TokenManager.setDriver = function(driver) {
 
 /**
  * Scans for tokens nearby and stores in discoveredTokens property
- * @param {onScanWinCallback} win function to be executed when devices are found (called for each device found)
- * @param {onFailCallback} [fail] *optional* function to be executed upon failure
- * @param {number} [timeout] amount of milliseconds to scan before stopping. Driver has a default.
+ * @param {onScanCallback} [win] *(optional)* function to be executed when devices are found (called for each device found)
+ * @param {stdErrorCallback} [fail] *(optional)* function to be executed upon failure
+ * @param {number} [timeout] *(optional)* amount of milliseconds to scan before stopping. Driver has a default.
  * @example
  * var onDiscover = function(token) { console.log("I found " + token) };
  *
@@ -44,22 +44,10 @@ AnyBoard.TokenManager.scan = function(win, fail, timeout) {
     this.driver.scan(
         function(token) {
             AnyBoard.TokenManager.tokens[token.address] = token;
-            win(token);
+            win && win(token);
         },
         fail, timeout)
 };
-
-/**
- * Callback
- * @callback
- * @param {AnyBoard.BaseToken} token token that is returned upon scanning.
- */
-
-/**
- * Callback
- * @callback
- * @param {string} errorCode ErrorCode the function failed with
- */
 
 /**
  * Returns a token handled by this TokenManager
@@ -75,7 +63,7 @@ AnyBoard.TokenManager.get = function(address) {
  * @param {string} name name of the token
  * @param {string} address address of the token found when scanned
  * @param {object} device device object used and handled by driver
- * @param {AnyBoard.Driver} [driver=AnyBoard.TokenManager.driver] token driver for handling communication with it.
+ * @param {AnyBoard.Driver} [driver=AnyBoard.BaseToken._defaultDriver] token driver for handling communication with it.
  * @property {string} name name of the token
  * @property {string} address address of the token found when scanned
  * @property {boolean} connected whether or not the token is connected
@@ -103,7 +91,7 @@ AnyBoard.BaseToken._defaultDriver = {};
 
 /**
  * Sets a new default driver to handle communication for tokens without specified driver.
- * The driver must have implement a method *scan(win, fail, timeout)* in order to discover tokens.
+ * The driver must have implement a method *send(win, fail)* in order to discover tokens.
  *
  * @param {AnyBoard.Driver} driver driver to be used for communication
  * @returns {boolean} whether or not driver was successfully set
@@ -131,8 +119,8 @@ AnyBoard.BaseToken.prototype.isConnected = function() {
 /**
  * Attempts to connect to token. Uses TokenManager driver, not its own, since connect
  *      needs to happen before determining suitable driver.
- * @param {function} [win] function to be executed upon success
- * @param {function} [fail] function to be executed upon failure
+ * @param {stdNoParamCallback} [win] *(optional)* function to be executed upon success
+ * @param {stdErrorCallback} [fail] *(optional)* function to be executed upon failure
  */
 AnyBoard.BaseToken.prototype.connect = function(win, fail) {
     AnyBoard.Logger.debug('Attempting to connect to ' + this);
@@ -143,21 +131,16 @@ AnyBoard.BaseToken.prototype.connect = function(win, fail) {
             AnyBoard.Logger.debug('Connected to ' + self);
             self.connected = true;
             self.trigger('connect', {device: self});
-            win(device);
+            win && win();
         },
         function(errorCode) {
             AnyBoard.Logger.debug('Could not connect to ' + self + '. ' + errorCode);
             self.trigger('disconnect', {device: self});
             self.connected = false;
-            fail(errorCode);
+            fail && fail(errorCode);
         }
     );
 };
-
-/**
- * Callback
- * @param {AnyBoard.BaseToken} token token that is returned upon scanning.
- */
 
 /**
  * Disconnects from the token.
@@ -172,7 +155,7 @@ AnyBoard.BaseToken.prototype.disconnect = function() {
 /**
  * Trigger an event on a token
  * @param {string} eventName name of event
- * @param {object} [eventOptions] dictionary of parameters and values
+ * @param {object} [eventOptions] (*optional)* dictionary of parameters and values
  * @example
  * var onTimeTravelCallback = function (options) {console.log("The tardis is great!")};
  * existingToken.on('timeTravelled', onTimeTravelCallback);
@@ -199,13 +182,12 @@ AnyBoard.BaseToken.prototype.trigger = function(eventName, eventOptions) {
     }
 };
 
-// TODO: Add callbacks to JSDoc
 /**
  * Adds a callbackFunction to be executed always when event is triggered
  * @param {string} eventName name of event to listen to
- * @param {function} callbackFunction function to be executed
+ * @param {simpleTriggerCallback} callbackFunction function to be executed
  * @example
- * var onTimeTravelCallback = function (options) {console.log("The tardis is great!")};
+ * var onTimeTravelCallback = function () {console.log("The tardis is great!")};
  * existingToken.on('timeTravelled', onTimeTravelCallback);
  *
  * // Triggers the function, and prints praise for the tardis
@@ -213,6 +195,21 @@ AnyBoard.BaseToken.prototype.trigger = function(eventName, eventOptions) {
  *
  * existingToken.trigger('timeTravelled');  // prints again
  * existingToken.trigger('timeTravelled');  // prints again
+ * @example
+ * var onTimeTravelCallback = function (options) {
+ *     // Options can be left out of a trigger. You should therefore check
+ *     // that input is as expected, throw an error or give a default value
+ *     var name = (options && options.name ? options.name : "You're");
+  *
+ *     console.log(options.name + " is great!");
+ * };
+ * existingToken.on('timeTravelled', onTimeTravelCallback);
+ *
+ * // prints "Dr.Who is great!"
+ * existingToken.trigger('timeTravelled', {"name": "Dr.Who"});
+ *
+ * // prints "You're great!"
+ * existingToken.trigger('timeTravelled');
  */
 AnyBoard.BaseToken.prototype.on = function(eventName, callbackFunction) {
     AnyBoard.Logger.debug('Added listener to event: ' + eventName, this);
@@ -221,11 +218,10 @@ AnyBoard.BaseToken.prototype.on = function(eventName, callbackFunction) {
     this.listeners[eventName].push(callbackFunction);
 };
 
-// TODO: Add callbacks to JSDoc
 /**
  * Adds a callbackFunction to be executed next time an event is triggered
  * @param {string} eventName name of event to listen to
- * @param {function} callbackFunction function to be executed
+ * @param {simpleTriggerCallback} callbackFunction function to be executed
  * @example
  * var onTimeTravelCallback = function (options) {console.log("The tardis is great!")};
  * existingToken.once('timeTravelled', onTimeTravelCallback);
@@ -243,12 +239,11 @@ AnyBoard.BaseToken.prototype.once = function(eventName, callbackFunction) {
     this.onceListeners[eventName].push(callbackFunction);
 };
 
-// TODO: Add callbacks to JSDoc
 /**
  * Sends data to the token. Uses either own driver, or (if not set) TokenManager driver
  * @param {Uint8Array|ArrayBuffer|String} data data to be sent
- * @param {function} win function to be executed upon success
- * @param {function} fail function to be executed upon error
+ * @param {stdNoParamCallback} [win] *(optional)* function to be executed upon success
+ * @param {stdErrorCallback} [fail] *(optional)* function to be executed upon error
  */
 AnyBoard.BaseToken.prototype.send = function(data, win, fail) {
     AnyBoard.Logger.debug('Attempting to send with data: ' + data, this);
@@ -259,7 +254,7 @@ AnyBoard.BaseToken.prototype.send = function(data, win, fail) {
             function(device){
                 self.send(data, win, fail);
             }, function(errorCode){
-                fail(errorCode);
+                fail && fail(errorCode);
             }
         )
     } else {
@@ -274,8 +269,8 @@ AnyBoard.BaseToken.prototype.send = function(data, win, fail) {
  * Refer to the individual driver for token spesific implementation and capabilites
  *
  * @param {string} value
- * @param {function} [win] callback function to be called upon successful execution
- * @param {function} [fail] callback function to be executed upon failure
+ * @param {stdNoParamCallback} [win] *(optional)* callback function to be called upon successful execution
+ * @param {stdErrorCallback} [fail] *(optional)* callback function to be executed upon failure
  *
  */
 AnyBoard.BaseToken.prototype.print = function(value, win, fail) {
@@ -289,8 +284,8 @@ AnyBoard.BaseToken.prototype.print = function(value, win, fail) {
 
 /**
  * Gets the name of the firmware type of the token
- * @param {function} [win] callback function to be called upon successful execution
- * @param {function} [fail] callback function to be executed upon failure
+ * @param {stdStringCallback} [win] *(optional)* callback function to be called upon successful execution
+ * @param {stdErrorCallback} [fail] *(optional)* callback function to be executed upon failure
  * @example
  * // Function to be executed upon name retrieval
  * var getNameCallback = function (name) {console.log("Firmware name: " + name)};
@@ -315,8 +310,8 @@ AnyBoard.BaseToken.prototype.getFirmwareName = function(win, fail) {
 
 /**
  * Gets the version of the firmware type of the token
- * @param {function} [win] callback function to be called upon successful execution
- * @param {function} [fail] callback function to be executed upon failure
+ * @param {stdStringCallback} [win] *(optional)* callback function to be called upon successful execution
+ * @param {stdErrorCallback} [fail] *(optional)* callback function to be executed upon failure
  */
 AnyBoard.BaseToken.prototype.getFirmwareVersion = function(win, fail) {
     if (!this.driver.hasOwnProperty('getVersion')) {
@@ -330,8 +325,8 @@ AnyBoard.BaseToken.prototype.getFirmwareVersion = function(win, fail) {
 
 /**
  * Gets a uniquie ID the firmware of the token
- * @param {function} [win] callback function to be called upon successful execution
- * @param {function} [fail] callback function to be executed upon failure
+ * @param {stdStringCallback} [win] *(optional)* callback function to be called upon successful execution
+ * @param {stdErrorCallback} [fail] *(optional)* callback function to be executed upon failure
  */
 AnyBoard.BaseToken.prototype.getFirmwareUUID = function(win, fail) {
     if (!this.driver.hasOwnProperty('getUUID')) {
@@ -344,8 +339,8 @@ AnyBoard.BaseToken.prototype.getFirmwareUUID = function(win, fail) {
 
 /**
  * Checks whether or not the token has simple LED
- * @param {function} [win] callback function to be called upon successful execution
- * @param {function} [fail] callback function to be executed upon failure
+ * @param {stdBoolCallback} [win] *(optional)* callback function to be called upon successful execution
+ * @param {stdErrorCallback} [fail] *(optional)* callback function to be executed upon failure
  */
 AnyBoard.BaseToken.prototype.hasLed = function(win, fail) {
     if (!this.driver.hasOwnProperty('hasLed')) {
@@ -358,8 +353,8 @@ AnyBoard.BaseToken.prototype.hasLed = function(win, fail) {
 
 /**
  * Checks whether or not the token has colored LEDs
- * @param {function} [win] callback function to be called upon successful execution
- * @param {function} [fail] callback function to be executed upon failure
+ * @param {stdBoolCallback} [win] *(optional)* callback function to be called upon successful execution
+ * @param {stdErrorCallback} [fail] *(optional)* callback function to be executed upon failure
  */
 AnyBoard.BaseToken.prototype.hasLedColor = function(win, fail) {
     if (!this.driver.hasOwnProperty('hasLedColor')) {
@@ -372,8 +367,8 @@ AnyBoard.BaseToken.prototype.hasLedColor = function(win, fail) {
 
 /**
  * Checks whether or not the token has vibration
- * @param {function} [win] callback function to be called upon successful execution
- * @param {function} [fail] callback function to be executed upon failure
+ * @param {stdBoolCallback} [win] *(optional)* callback function to be called upon successful execution
+ * @param {stdErrorCallback} [fail] *(optional)* callback function to be executed upon failure
  */
 AnyBoard.BaseToken.prototype.hasVibration = function(win, fail) {
     if (!this.driver.hasOwnProperty('hasVibration')) {
@@ -386,8 +381,8 @@ AnyBoard.BaseToken.prototype.hasVibration = function(win, fail) {
 
 /**
  * Checks whether or not the token has ColorDetection
- * @param {function} [win] callback function to be called upon successful execution
- * @param {function} [fail] callback function to be executed upon failure
+ * @param {stdBoolCallback} [win] *(optional)* callback function to be called upon successful execution
+ * @param {stdErrorCallback} [fail] *(optional)* callback function to be executed upon failure
  */
 AnyBoard.BaseToken.prototype.hasColorDetection = function(win, fail) {
     if (!this.driver.hasOwnProperty('hasColorDetection')) {
@@ -400,8 +395,8 @@ AnyBoard.BaseToken.prototype.hasColorDetection = function(win, fail) {
 
 /**
  * Checks whether or not the token has LedSceen
- * @param {function} [win] callback function to be called upon successful execution
- * @param {function} [fail] callback function to be executed upon failure
+ * @param {stdBoolCallback} [win] *(optional)* callback function to be called upon successful execution
+ * @param {stdErrorCallback} [fail] *(optional)* callback function to be executed upon failure
  */
 AnyBoard.BaseToken.prototype.hasLedScreen = function(win, fail) {
     if (!this.driver.hasOwnProperty('hasLedSceen')) {
@@ -414,8 +409,8 @@ AnyBoard.BaseToken.prototype.hasLedScreen = function(win, fail) {
 
 /**
  * Checks whether or not the token has RFID reader
- * @param {function} [win] callback function to be called upon successful execution
- * @param {function} [fail] callback function to be executed upon failure
+ * @param {stdBoolCallback} [win] *(optional)* callback function to be called upon successful execution
+ * @param {stdErrorCallback} [fail] *(optional)* callback function to be executed upon failure
  */
 AnyBoard.BaseToken.prototype.hasRfid = function(win, fail) {
     if (!this.driver.hasOwnProperty('hasRfid')) {
@@ -428,8 +423,8 @@ AnyBoard.BaseToken.prototype.hasRfid = function(win, fail) {
 
 /**
  * Checks whether or not the token has NFC reader
- * @param {function} [win] callback function to be called upon successful execution
- * @param {function} [fail] callback function to be executed upon failure
+ * @param {stdBoolCallback} [win] *(optional)* callback function to be called upon successful execution
+ * @param {stdErrorCallback} [fail] *(optional)* callback function to be executed upon failure
  */
 AnyBoard.BaseToken.prototype.hasNfc = function(win, fail) {
     if (!this.driver.hasOwnProperty('hasNfc')) {
@@ -442,8 +437,8 @@ AnyBoard.BaseToken.prototype.hasNfc = function(win, fail) {
 
 /**
  * Checks whether or not the token has Accelometer
- * @param {function} [win] callback function to be called upon successful execution
- * @param {function} [fail] callback function to be executed upon failure
+ * @param {stdBoolCallback} [win] *(optional)* callback function to be called upon successful execution
+ * @param {stdErrorCallback} [fail] *(optional)* callback function to be executed upon failure
  */
 AnyBoard.BaseToken.prototype.hasAccelometer = function(win, fail) {
     if (!this.driver.hasOwnProperty('hasAccelometer')) {
@@ -456,8 +451,8 @@ AnyBoard.BaseToken.prototype.hasAccelometer = function(win, fail) {
 
 /**
  * Checks whether or not the token has temperature measurement
- * @param {function} [win] callback function to be called upon successful execution
- * @param {function} [fail] callback function to be executed upon failure
+ * @param {stdBoolCallback} [win] *(optional)* callback function to be called upon successful execution
+ * @param {stdErrorCallback} [fail] *(optional)* callback function to be executed upon failure
  */
 AnyBoard.BaseToken.prototype.hasTemperature = function(win, fail) {
     if (!this.driver.hasOwnProperty('hasTemperature')) {
@@ -471,8 +466,8 @@ AnyBoard.BaseToken.prototype.hasTemperature = function(win, fail) {
 /**
  * Sets color on token
  * @param {string|Array} value string with color name or array of [red, green, blue] values 0-255
- * @param {function} [win] callback function to be called upon successful execution
- * @param {function} [fail] callback function to be executed upon
+ * @param {stdNoParamCallback} [win] *(optional)* callback function to be called upon successful execution
+ * @param {stdErrorCallback} [fail] *(optional)* callback function to be executed upon
  * @example
  * // sets Led to white
  * existingToken.ledOn([255, 255, 255]);
@@ -492,8 +487,8 @@ AnyBoard.BaseToken.prototype.ledOn = function(value, win, fail) {
 /**
  * tells token to blink its led
  * @param {string|Array} value string with color name or array of [red, green, blue] values 0-255
- * @param {function} [win] callback function to be called upon successful execution
- * @param {function} [fail] callback function to be executed upon
+ * @param {stdNoParamCallback} [win] *(optional)* callback function to be called upon successful execution
+ * @param {stdErrorCallback} [fail] *(optional)* callback function to be executed upon
  * @example
  * // blinks red
  * existingToken.ledBlink([255, 0, 0]);
@@ -512,12 +507,12 @@ AnyBoard.BaseToken.prototype.ledBlink = function(value, win, fail) {
 
 /**
  * Turns LED off
- * @param {function} [win] callback function to be called upon successful execution
- * @param {function} [fail] callback function to be executed upon
+ * @param {stdNoParamCallback} [win] *(optional)* callback function to be called upon successful execution
+ * @param {stdErrorCallback} [fail] *(optional)* callback function to be executed upon
  */
 AnyBoard.BaseToken.prototype.ledOff = function(win, fail) {
     if (!this.driver.hasOwnProperty('ledOff')) {
-        AnyBoard.Logger.warn('This token has not implemented ledOff', this)
+        AnyBoard.Logger.warn('This token has not implemented ledOff', this);
         fail && fail('This token has not implemented ledOff');
     } else {
         this.driver.ledOff(this, win, fail);

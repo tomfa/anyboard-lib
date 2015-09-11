@@ -79,7 +79,7 @@ AnyBoard.Drivers.getCompatibleDriver = function(type, compatibility) {
 /**
  * Internal function. Drivers added with this function are retrievable with get function.
  * New drivers are added automatically upon construction with new AnyBoard.Driver(...)
- * @param {function} driver driver to be added
+ * @param {AnyBoard.Driver} driver driver to be added
  * @private
  */
 AnyBoard.Drivers._add = function(driver) {
@@ -110,8 +110,8 @@ AnyBoard.Drivers.toString = function() {
  * @param {Array|object|string} options.compatibility An object or string that can be used to deduce compatibiity, or
  *      an array of different compatibilies. How this is used is determined by the set standard driver on TokenManager
  *      that handles scanning for and connecting to tokens.
- * @param {string} [options.dependencies] (optional) What if anything the driver depends on.
- * @param {string} [options.date] (optional) Date upon release/last build.
+ * @param {string} [options.dependencies] *(optional)* What if anything the driver depends on.
+ * @param {string} [options.date] *(optional)* Date upon release/last build.
  * @param {any} options.yourAttributeHere custom attributes, as well as specified ones, are all placed in
  *      driver.properties. E.g. 'heat' would be placed in driver.properties.heat.
  * @property {string} name name of the driver

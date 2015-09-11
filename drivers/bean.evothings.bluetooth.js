@@ -671,31 +671,31 @@
     beanBluetooth.initialize = function(token) {
         var handleReceiveUpdateFromToken = function(uint8array) {
             var command = uint8array[0];
-            var stringDaata = "";
+            var stringData = "";
 
             switch (command) {
                 case beanBluetooth._CMD_CODE.GET_BATTERY_STATUS:
                     for (var i = 1; i < uint8array.length; i++)
-                        stringDaata += String.fromCharCode(uint8array[i])
-                    token.trigger('GET_BATTERY_STATUS', {"value": stringDaata});
+                        stringData += String.fromCharCode(uint8array[i])
+                    token.trigger('GET_BATTERY_STATUS', {"value": stringData});
                     break;
                 case beanBluetooth._CMD_CODE.MOVE:
                     token.trigger('MOVE', {"value": uint8array[1], "newTile": uint8array[1], "oldTile": uint8array[2]});
                     break;
                 case beanBluetooth._CMD_CODE.GET_NAME:
                     for (var i = 1; i < uint8array.length; i++)
-                        stringDaata += String.fromCharCode(uint8array[i])
-                    token.trigger('GET_NAME', {"value": stringDaata});
+                        stringData += String.fromCharCode(uint8array[i]);
+                    token.trigger('GET_NAME', {"value": stringData});
                     break;
                 case beanBluetooth._CMD_CODE.GET_VERSION:
                     for (var i = 1; i < uint8array.length; i++)
-                        stringDaata += String.fromCharCode(uint8array[i])
-                    token.trigger('GET_VERSION', {"value": stringDaata});
+                        stringData += String.fromCharCode(uint8array[i]);
+                    token.trigger('GET_VERSION', {"value": stringData});
                     break;
                 case beanBluetooth._CMD_CODE.GET_UUID:
                     for (var i = 1; i < uint8array.length; i++)
-                        stringDaata += String.fromCharCode(uint8array[i])
-                    token.trigger('GET_UUID', {"value": stringDaata});
+                        stringData += String.fromCharCode(uint8array[i]);
+                    token.trigger('GET_UUID', {"value": stringData});
                     break;
                 case beanBluetooth._CMD_CODE.LED_BLINK:
                     token.trigger('LED_BLINK');
@@ -707,49 +707,49 @@
                     token.trigger('LED_ON');
                     break;
                 case beanBluetooth._CMD_CODE.HAS_LED:
-                    token.trigger('HAS_LED', {"value": uint8array[1]})
+                    token.trigger('HAS_LED', {"value": uint8array[1]});
                     break;
                 case beanBluetooth._CMD_CODE.HAS_LED_COLOR:
-                    token.trigger('HAS_LED_COLOR', {"value": uint8array[1]})
+                    token.trigger('HAS_LED_COLOR', {"value": uint8array[1]});
                     break;
                 case beanBluetooth._CMD_CODE.HAS_VIBRATION:
-                    token.trigger('HAS_VIBRATION', {"value": uint8array[1]})
+                    token.trigger('HAS_VIBRATION', {"value": uint8array[1]});
                     break;
                 case beanBluetooth._CMD_CODE.HAS_COLOR_DETECTION:
-                    token.trigger('HAS_COLOR_DETECTION', {"value": uint8array[1]})
+                    token.trigger('HAS_COLOR_DETECTION', {"value": uint8array[1]});
                     break;
                 case beanBluetooth._CMD_CODE.HAS_LED_SCREEN:
-                    token.trigger('HAS_LED_SCREEN', {"value": uint8array[1]})
+                    token.trigger('HAS_LED_SCREEN', {"value": uint8array[1]});
                     break;
                 case beanBluetooth._CMD_CODE.HAS_RFID:
-                    token.trigger('HAS_RFID', {"value": uint8array[1]})
+                    token.trigger('HAS_RFID', {"value": uint8array[1]});
                     break;
                 case beanBluetooth._CMD_CODE.HAS_NFC:
-                    token.trigger('HAS_NFC', {"value": uint8array[1]})
+                    token.trigger('HAS_NFC', {"value": uint8array[1]});
                     break;
                 case beanBluetooth._CMD_CODE.HAS_ACCELEROMETER:
-                    token.trigger('HAS_ACCELEROMETER', {"value": uint8array[1]})
+                    token.trigger('HAS_ACCELEROMETER', {"value": uint8array[1]});
                     break;
                 case beanBluetooth._CMD_CODE.HAS_TEMPERATURE:
-                    token.trigger('HAS_TEMPERATURE', {"value": uint8array[1]})
+                    token.trigger('HAS_TEMPERATURE', {"value": uint8array[1]});
                     break;
                 case beanBluetooth._CMD_CODE.HAS_PRINT:
-                    token.trigger('HAS_PRINT', {"value": uint8array[1]})
+                    token.trigger('HAS_PRINT', {"value": uint8array[1]});
                     break;
                 case beanBluetooth._CMD_CODE.PRINT_FEED:
-                    token.trigger('PRINT_FEED', {"value": uint8array[1]})
+                    token.trigger('PRINT_FEED');
                     break;
                 case beanBluetooth._CMD_CODE.PRINT_JUSTIFY:
-                    token.trigger('PRINT_JUSTIFY', {"value": uint8array[1]})
+                    token.trigger('PRINT_JUSTIFY');
                     break;
                 case beanBluetooth._CMD_CODE.PRINT_SET_SIZE:
-                    token.trigger('PRINT_SET_SIZE', {"value": uint8array[1]})
+                    token.trigger('PRINT_SET_SIZE');
                     break;
                 case beanBluetooth._CMD_CODE.PRINT_WRITE:
-                    token.trigger('PRINT_WRITE', {"value": uint8array[1]})
+                    token.trigger('PRINT_WRITE');
                     break;
                 case beanBluetooth._CMD_CODE.PRINT_NEWLINE:
-                    token.trigger('PRINT_NEWLINE', {"value": uint8array[1]})
+                    token.trigger('PRINT_NEWLINE');
                     break;
                 default:
                     token.trigger('INVALID_DATA_RECEIVE', {"value": uint8array});

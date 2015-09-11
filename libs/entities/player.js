@@ -1,11 +1,11 @@
 /** Represents a Player (AnyBoard.Player)
  * @constructor
  * @param {string} name name of the player
- * @param {object} [options] options for the player
- * @param {string} [options.color] color representing the player
- * @param {string} [options.faction] faction representing the player
- * @param {string} [options.class] class representing the player
- * @param {any} [options.yourAttributeHere] custom attributes, as well as specified ones, are all placed in player.properties. E.g. 'age' would be placed in player.properties.age.
+ * @param {object} [options] *(optional)* options for the player
+ * @param {string} [options.color] *(optional)* color representing the player
+ * @param {string} [options.faction] *(optional)* faction representing the player
+ * @param {string} [options.class] *(optional)* class representing the player
+ * @param {any} [options.yourAttributeHere] *(optional)* custom attributes, as well as specified ones, are all placed in player.properties. E.g. 'age' would be placed in player.properties.age.
  * @property {AnyBoard.Hand} hand hand of cards (Quests)
  * @property {string} faction faction (Sp[ecial abilities or perks)
  * @property {string} class class (Special abilities or perks)
@@ -45,7 +45,7 @@ AnyBoard.Player.get = function(name) {
 /**
  * Take resources from this player and give to receivingPlayer.
  * @param {AnyBoard.ResourceSet} resources dictionary of resources
- * @param {AnyBoard.Player} [receivingPlayer] Who shall receive the resources. Omit if not to anyone (e.g. give to "the bank")
+ * @param {AnyBoard.Player} [receivingPlayer] *(optional)* Who shall receive the resources. Omit if not to anyone (e.g. give to "the bank")
  * @returns {boolean} whether or not transaction was completed (false if Player don't hold enough resources)
  */
 AnyBoard.Player.prototype.pay = function(resources, receivingPlayer) {
