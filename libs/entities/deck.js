@@ -276,10 +276,20 @@ AnyBoard.Card.prototype.toString = function() {
 
 
 /**
-* This type of callback will be called when card is drawn or played
-* @callback playDrawCallback
-* @param {AnyBoard.Card} card that is played
-* @param {AnyBoard.Player} player that played the card
-* @param {object} [options] custom options as extra parameter when play was called
-*/
+ * This type of callback will be called when card is drawn or played
+ * @callback playDrawCallback
+ * @param {AnyBoard.Card} card that is played
+ * @param {AnyBoard.Player} player that played the card
+ * @param {object} [options] custom options as extra parameter when play was called
+ */
+
+/**
+ * This type of callback will be called when card is drawn or played
+ * @callback stdErrorCallback
+ * @param {AnyBoard.Card} card that is played
+ * @param {AnyBoard.Player} player that played the card
+ * @param {object} [options] custom options as extra parameter when play was called
+ */
+
+// TODO: Document the rest of the cbs
 

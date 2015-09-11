@@ -54,13 +54,13 @@ AnyBoard.Drivers.get = function(name) {
     });
  *
  * // Returns undefined (right type, wrong compatibility)
- * AnyBoard.Drivers.getCompatibleDriver('bluetooth, 'weirdCompatibility')
+ * AnyBoard.Drivers.getCompatibleDriver('bluetooth', 'weirdCompatibility');
  *
  * // Returns undefined (wrong type, right compatibility)
- * AnyBoard.Drivers.getCompatibleDriver('HTTP, {"service": "iCanTypeAnyThingHere"})
+ * AnyBoard.Drivers.getCompatibleDriver('HTTP, {"service": "iCanTypeAnyThingHere"});
  *
  * // Returns discoveryBluetooth driver
- * AnyBoard.Drivers.getCompatibleDriver('bluetooth', 'tardis')
+ * AnyBoard.Drivers.getCompatibleDriver('bluetooth', 'tardis');
  *
  * @param {string} type name of driver
  * @param {string|object} compatibility name of driver
@@ -176,8 +176,8 @@ AnyBoard.Driver.prototype.toString = function() {
  * @param {object} jsonDeck loaded JSON file. See [examples/deck-loading/](./examples/deck-loading) for JSON format and loading.
  * @property {string} name name of Deck.
  * @property {Array.<AnyBoard.Card>} cards complete set of cards in the deck
- * @property {Array.<Object>} pile remaining cards in this pile
- * @property {Array.<Object>} usedPile cards played from this deck
+ * @property {Array.<AnyBoard.Card>} pile remaining cards in this pile
+ * @property {Array.<AnyBoard.Card>} usedPile cards played from this deck
  * @property {boolean} autoUsedRefill *(default: true)* whether or not to automatically refill pile from usedPile when empty. Is ignored if autoNewRefill is true.
  * @property {boolean} autoNewRefill *(default: false)* whether or not to automatically refill pile with a whole new deck when empty.
  * @property {Array.<Function>} playListeners holds functions to be called when cards in this deck are played
@@ -320,7 +320,7 @@ AnyBoard.Deck.prototype.onDraw = function(callback) {
 };
 
 /**
- * Sting representation of a dek
+ * Sting representation of a deck
  * @returns {string}
  */
 AnyBoard.Deck.prototype.toString = function() {
@@ -447,19 +447,34 @@ AnyBoard.Card.prototype.toString = function() {
 
 
 /**
-* This type of callback will be called when card is drawn or played
-* @callback playDrawCallback
-* @param {AnyBoard.Card} card that is played
-* @param {AnyBoard.Player} player that played the card
-* @param {object} [options] custom options as extra parameter when play was called
-*/
+ * This type of callback will be called when card is drawn or played
+ * @callback playDrawCallback
+ * @param {AnyBoard.Card} card that is played
+ * @param {AnyBoard.Player} player that played the card
+ * @param {object} [options] custom options as extra parameter when play was called
+ */
+
+/**
+ * This type of callback will be called when card is drawn or played
+ * @callback stdErrorCallback
+ * @param {AnyBoard.Card} card that is played
+ * @param {AnyBoard.Player} player that played the card
+ * @param {object} [options] custom options as extra parameter when play was called
+ */
+
+// TODO: Document the rest of the cbs
 
 
 /** Represents a set of game dices that can be rolled to retrieve a random result.
  * @constructor
  * @param {number} [eyes=6] *(optional, default: 6)* number of max eyes on a roll with this dice
  * @param {number} [numOfDice=1] *(optional, default: 1)* number of dices
+ * @example
+ * // will create 1 dice, with 6 eyes
+ * var dice = new AnyBoard.Dices();
  *
+ * // will create 2 dice, with 6 eyes
+ * var dice = new AnyBoard.Dices(2, 6);
  */
 AnyBoard.Dices = function (eyes, numOfDice) {
     this.eyes = eyes || 6;
@@ -469,6 +484,17 @@ AnyBoard.Dices = function (eyes, numOfDice) {
 /**
  * Roll the dices and returns a the sum
  * @returns {number} combined result of rolls for all dices
+ * @example
+ * var dice = new AnyBoard.Dices();
+ *
+ * // returns random number between 1 and 6
+ * dice.roll()
+ *
+ * @example
+ * var dice = new AnyBoard.Dices(2, 6);
+ *
+ * // returns random number between 1 and 12
+ * dice.roll()
  */
 AnyBoard.Dices.prototype.roll = function() {
     var res = 0;
@@ -480,6 +506,17 @@ AnyBoard.Dices.prototype.roll = function() {
 /**
  * Roll the dices and returns an array of results for each dice
  * @returns {Array} list of results for each dice
+ * @example
+ * var dice = new AnyBoard.Dices(2, 6);
+ *
+ * // returns an Array of numbers
+ * var resultArray = dice.rollEach()
+ *
+ * // result of first dice, between 1-6
+ * resultArray[0]
+ *
+ * // result of second dice, between 1-6
+ * resultArray[1]
  */
 AnyBoard.Dices.prototype.rollEach = function() {
     var res = [];
@@ -815,12 +852,13 @@ AnyBoard.Resource.get = function(name) {
 
 /**
  * Creates a ResourceSet
+ * @constructor
  * @param {object} [resources] *(optional)* a set of initially contained resources
  * @param {boolean} [allowNegative=false] *(optional, default: false)*  whether or not to allow being subtracted resources to below 0 (dept)
  * @property {object} [resources] *(optional)* a set of initially contained resources
  * @property {boolean} [allowNegative=false] *(optional, default: false)*  whether or not to allow being subtracted resources to below 0 (dept)
- * @constructor
-
+ *
+ * @example
  * // Returns a resourceset that can be deducted below 0
  * var debtBank = new AnyBoard.ResourceSet({}, true);
  */
@@ -968,7 +1006,8 @@ AnyBoard.TokenManager = {
 
 /**
  * Sets a new default driver to handle communication for tokens without specified driver.
- * The driver must have implemented methods *scan(win, fail, timeout), in order to discover tokens.
+ * The driver must have implemented methods *scan(win, fail, timeout) connect(token, win, fail) and
+ * disconnect(token, win, fail)*, in order to discover tokens.
  *
  * @param {AnyBoard.Driver} driver driver to be used for communication
  */
@@ -988,8 +1027,8 @@ AnyBoard.TokenManager.setDriver = function(driver) {
 /**
  * Scans for tokens nearby and stores in discoveredTokens property
  * @param {onScanWinCallback} win function to be executed when devices are found (called for each device found)
- * @param {onFailCallback} fail function to be executed upon failure
- * @param {number} timeout amount of milliseconds to scan before stopping
+ * @param {onFailCallback} [fail] *optional* function to be executed upon failure
+ * @param {number} [timeout] amount of milliseconds to scan before stopping. Driver has a default.
  * @example
  * var onDiscover = function(token) { console.log("I found " + token) };
  *
@@ -1093,7 +1132,7 @@ AnyBoard.BaseToken.prototype.isConnected = function() {
 AnyBoard.BaseToken.prototype.connect = function(win, fail) {
     AnyBoard.Logger.debug('Attempting to connect to ' + this);
     var self = this;
-    AnyBoard.TokenManager.connect(
+    AnyBoard.TokenManager.driver.connect(
         self,
         function(device) {
             AnyBoard.Logger.debug('Connected to ' + self);
@@ -1119,7 +1158,7 @@ AnyBoard.BaseToken.prototype.connect = function(win, fail) {
  * Disconnects from the token.
  */
 AnyBoard.BaseToken.prototype.disconnect = function() {
-    AnyBoard.TokenManager.disconnect(this);
+    AnyBoard.TokenManager.driver.disconnect(this);
     AnyBoard.Logger.debug('' + this + ' disconnected', this);
     this.connected = false;
     this.trigger('disconnect', {device: this});

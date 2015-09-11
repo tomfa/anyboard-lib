@@ -137,7 +137,7 @@ AnyBoard.BaseToken.prototype.isConnected = function() {
 AnyBoard.BaseToken.prototype.connect = function(win, fail) {
     AnyBoard.Logger.debug('Attempting to connect to ' + this);
     var self = this;
-    AnyBoard.TokenManager.connect(
+    AnyBoard.TokenManager.driver.connect(
         self,
         function(device) {
             AnyBoard.Logger.debug('Connected to ' + self);
@@ -163,7 +163,7 @@ AnyBoard.BaseToken.prototype.connect = function(win, fail) {
  * Disconnects from the token.
  */
 AnyBoard.BaseToken.prototype.disconnect = function() {
-    AnyBoard.TokenManager.disconnect(this);
+    AnyBoard.TokenManager.driver.disconnect(this);
     AnyBoard.Logger.debug('' + this + ' disconnected', this);
     this.connected = false;
     this.trigger('disconnect', {device: this});
