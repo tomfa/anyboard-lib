@@ -6,7 +6,15 @@
  */
 AnyBoard.TokenManager = {
     tokens: {},
-    driver: null
+    driver: null,
+    listeners: {
+        tokenEvent: {},
+        onceTokenEvent: {},
+        tokenTokenEvent: {},
+        onceTokenTokenEvent: {},
+        tokenConstraintEvent: {},
+        onceTokenConstraintEvent: {}
+    }
 };
 
 /**
@@ -59,6 +67,153 @@ AnyBoard.TokenManager.get = function(address) {
 };
 
 /**
+ * Adds a callbackFunction to be executed always when a token-token event is triggered
+ * @param {string} eventName name of event to listen to
+ * @param {tokenTokenEventCallback} callbackFunction function to be executed
+ * @example
+ * var cb = function (initToken, resToken, event, options) {
+ *      console.log(initToken + " " + event + " " + resToken);
+ * };
+ *
+ * TokenManager.onTokenTokenEvent("MOVE_NEXT_TO", cb);
+ *
+ * // prints "existingToken MOVE_NEXT_TO anotherToken";
+ * existingToken.trigger("MOVE_NEXT_TO", {"meta-eventType": "token", "token": anotherToken};
+ *
+ * // prints "existingToken MOVE_NEXT_TO oldToken";
+ * existingToken.trigger("MOVE_NEXT_TO", {"meta-eventType": "token", "token": anotherToken};
+ */
+AnyBoard.TokenManager.onTokenTokenEvent = function(eventName, callbackFunction) {
+    AnyBoard.Logger.debug('Added listener to TT-event: ' + eventName, this);
+    if (!this.listeners.tokenTokenEvent[eventName])
+        this.listeners.tokenTokenEvent[eventName] = [];
+    this.listeners.tokenTokenEvent[eventName].push(callbackFunction);
+};
+
+/**
+ * Adds a callbackFunction to be executed next time a token-token event is triggered
+ * @param {string} eventName name of event to listen to
+ * @param {tokenTokenEventCallback} callbackFunction function to be executed
+ * @example
+ * var cb = function (initToken, resToken, event, options) {
+ *      console.log(initToken + " " + event + " " + resToken);
+ * };
+ *
+ * TokenManager.onceTokenTokenEvent("MOVE_NEXT_TO", cb);
+ *
+ * // prints "existingToken MOVE_NEXT_TO anotherToken";
+ * existingToken.trigger("MOVE_NEXT_TO", {"meta-eventType": "token-token", "token": anotherToken};
+ *
+ * // no effect
+ * existingToken.trigger("MOVE_NEXT_TO", {"meta-eventType": "token-token", "token": anotherToken};
+ */
+AnyBoard.TokenManager.onceTokenTokenEvent = function(eventName, callbackFunction) {
+    AnyBoard.Logger.debug('Added onceListener to TT-event: ' + eventName, this);
+    if (!this.listeners.onceTokenTokenEvent[eventName])
+        this.listeners.onceTokenTokenEvent[eventName] = [];
+    this.listeners.onceTokenTokenEvent[eventName].push(callbackFunction);
+};
+
+/**
+ * Adds a callbackFunction to be executed always when a token-constraint event is triggered.
+ * A token-constraint event is a physical token interaction with a game constraint, e.g. moving a pawn within a board.
+ * @param {string} eventName name of event to listen to
+ * @param {tokenConstraintEventCallback} callbackFunction function to be executed
+ * @example
+ * var cb = function (initToken, constraint, event, options) {
+ *      console.log(initToken + " " + event + " " + constraint);
+ * };
+ *
+ * TokenManager.onTokenConstraintEvent("MOVE", cb);
+ *
+ * // prints "existingToken MOVE Tile-5";
+ * existingToken.trigger("MOVE", {"meta-eventType": "token-constraint", "constraint": "Tile-5"};
+ *
+ * // prints "existingToken MOVE Tile-5";
+ * existingToken.trigger("MOVE", {"meta-eventType": "token-constraint", "constraint": "Tile-5"};
+ */
+AnyBoard.TokenManager.onTokenConstraintEvent = function(eventName, callbackFunction) {
+    AnyBoard.Logger.debug('Added listener to TC-event: ' + eventName, this);
+    if (!this.listeners.tokenConstraintEvent[eventName])
+        this.listeners.tokenConstraintEvent[eventName] = [];
+    this.listeners.tokenConstraintEvent[eventName].push(callbackFunction);
+};
+
+/**
+ * Adds a callbackFunction to be executed next time a token-constraint event is triggered
+ * @param {string} eventName name of event to listen to
+ * @param {tokenConstraintEventCallback} callbackFunction function to be executed
+ * @example
+ * var cb = function (initToken, constraint, event, options) {
+ *      console.log(initToken + " " + event + " " + constraint);
+ * };
+ *
+ * TokenManager.onceTokenConstraintEvent("MOVE", cb);
+ *
+ * // prints "existingToken MOVE Tile-5";
+ * existingToken.trigger("MOVE", {"meta-eventType": "token-constraint"", "constraint": "Tile-5"};
+ *
+ * // no effect
+ * existingToken.trigger("MOVE", {"meta-eventType": "token-constraint""};
+ */
+AnyBoard.TokenManager.onceTokenConstraintEvent = function(eventName, callbackFunction) {
+    AnyBoard.Logger.debug('Added onceListener to TC-event: ' + eventName, this);
+    if (!this.listeners.onceTokenConstraintEvent[eventName])
+        this.listeners.onceTokenConstraintEvent[eventName] = [];
+    this.listeners.onceTokenConstraintEvent[eventName].push(callbackFunction);
+};
+
+/**
+ * Adds a callbackFunction to be executed always when a token event is triggered.
+ * A token event is an physical interaction with a single token.
+ * @param {string} eventName name of event to listen to
+ * @param {tokenEventCallback} callbackFunction function to be executed
+ * @example
+ * var cb = function (initToken, event, options) {
+ *      console.log(initToken + " was " + event + "'ed ");
+ * };
+ *
+ * TokenManager.onTokenEvent("LIFT", cb);
+ *
+ * // prints "existingToken was LIFT'ed"
+ * existingToken.trigger("LIFT", {"meta-eventType": "token"};
+ *
+ * // prints "existingToken was LIFT'ed"
+ * existingToken.trigger("LIFT", {"meta-eventType": "token"};
+ */
+AnyBoard.TokenManager.onTokenEvent = function(eventName, callbackFunction) {
+    AnyBoard.Logger.debug('Added listener to T-event: ' + eventName, this);
+    if (!this.listeners.tokenEvent[eventName])
+        this.listeners.tokenEvent[eventName] = [];
+    this.listeners.tokenEvent[eventName].push(callbackFunction);
+};
+
+/**
+ * Adds a callbackFunction to be executed next time a token event is triggered
+ * @param {string} eventName name of event to listen to
+ * @param {tokenEventCallback} callbackFunction function to be executed
+ * @example
+ * var cb = function (initToken, event, options) {
+ *      console.log(initToken + " was " + event + "'ed ");
+ * };
+ *
+ * TokenManager.onceTokenEvent("LIFT", cb);
+ *
+ * // prints "existingToken was LIFT'ed"
+ * existingToken.trigger("LIFT", {"meta-eventType": "token"};
+ *
+ * // No effect
+ * existingToken.trigger('LIFT');
+ */
+AnyBoard.TokenManager.onceTokenEvent = function(eventName, callbackFunction) {
+    AnyBoard.Logger.debug('Added onceListener to T-event: ' + eventName, this);
+    if (!this.listeners.onceTokenEvent[eventName])
+        this.listeners.onceTokenEvent[eventName] = [];
+    this.listeners.onceTokenEvent[eventName].push(callbackFunction);
+};
+
+
+/**
  * Base class for tokens. Should be used by communication driver upon AnyBoard.TokenManager.scan()
  * @param {string} name name of the token
  * @param {string} address address of the token found when scanned
@@ -68,8 +223,7 @@ AnyBoard.TokenManager.get = function(address) {
  * @property {string} address address of the token found when scanned
  * @property {boolean} connected whether or not the token is connected
  * @property {object} device driver spesific data.
- * @property {object} listeners functions to be execute upon certain triggered events
- * @property {object} onceListeners functions to be execute upon next triggering of certain events
+ * @property {object} listeners functions to be executed upon certain triggered events
  * @property {Array.<Function>} sendQueue queue for communicating with
  * @property {object} cache key-value store for caching certain communication calls
  * @property {AnyBoard.Driver} driver driver that handles communication
@@ -80,11 +234,30 @@ AnyBoard.BaseToken = function(name, address, device, driver) {
     this.address = address;
     this.connected = false;
     this.device = device;
-    this.listeners = {};
-    this.onceListeners = {};
+    this.listeners = {
+        normal: {},
+        once: {},
+        tokenEvent: {},
+        onceTokenEvent: {},
+        tokenTokenEvent: {},
+        onceTokenTokenEvent: {},
+        tokenConstraintEvent: {},
+        onceTokenConstraintEvent: {}
+    };
     this.sendQueue = [];
     this.cache = {};
-    this.driver = driver || AnyBoard.BaseToken._defaultDriver;
+
+    if (!driver) {
+        AnyBoard.Logger.log("Did not send parameter driver. Defaulting to default driver", this);
+        if (!AnyBoard.BaseToken._defaultDriver || !AnyBoard.BaseToken._defaultDriver.send)
+            AnyBoard.Logger.log("Default BaseToken driver is not set! Token will not work properly!", this);
+        this.driver = AnyBoard.BaseToken._defaultDriver;
+    }
+    else {
+        (driver.send && typeof driver.send === 'function') || AnyBoard.Logger.warn('Could not find send() on given driver', this);
+        this.driver = driver;
+    }
+
 };
 
 AnyBoard.BaseToken._defaultDriver = {};
@@ -153,7 +326,8 @@ AnyBoard.BaseToken.prototype.disconnect = function() {
 };
 
 /**
- * Trigger an event on a token
+ * Trigger an event on a token. Also used to trigger special events (Token, Token-Token and Token-Eonstraint-events) by
+ * specifying 'meta-eventType' = 'token', 'token-token' or 'token-constraint' in eventOptions.
  * @param {string} eventName name of event
  * @param {object} [eventOptions] (*optional)* dictionary of parameters and values
  * @example
@@ -168,24 +342,51 @@ AnyBoard.BaseToken.prototype.disconnect = function() {
  */
 AnyBoard.BaseToken.prototype.trigger = function(eventName, eventOptions) {
     AnyBoard.Logger.debug('Triggered "' + eventName + '"', this);
-    if (this.listeners[eventName])
-        for (var i in this.listeners[eventName]) {
-            if (this.listeners[eventName].hasOwnProperty(i))
-                this.listeners[eventName][i](eventOptions);
+
+    var baseTrigger = function(dict, event, args) {
+        if (dict[event])
+            for (var i in dict[event]) {
+                if (dict[event].hasOwnProperty(i))
+                    dict[event][i].apply(null, args);
+            }
+    };
+
+    baseTrigger(this.listeners, eventName, [eventOptions]);
+    baseTrigger(this.onceListeners, eventName, [eventOptions]);
+    this.onceListeners[eventName] = [];
+
+    if (eventOptions.hasOwnProperty('meta-eventType')) {
+        if (eventOptions['meta-eventType'] == 'token-token') {
+            if (eventOptions.hasOwnProperty('token')) {
+                baseTrigger(AnyBoard.TokenManager.listeners.tokenTokenEvent, eventName, [eventOptions.token, eventOptions]);
+                baseTrigger(AnyBoard.TokenManager.listeners.onceTokenTokenEvent, eventName, [eventOptions.token, eventOptions]);
+                AnyBoard.TokenManager.listeners.onceTokenTokenEvent[eventName] = [];
+            } else {
+                AnyBoard.warn('Attempting to trigger token-token event type, but missing token option', this);
+            }
+
+        } else if (eventOptions['meta-eventType'] == 'token') {
+            baseTrigger(AnyBoard.TokenManager.listeners.tokenEvent, eventName, [eventOptions]);
+            baseTrigger(AnyBoard.TokenManager.listeners.onceTokenEvent, eventName, [eventOptions]);
+            AnyBoard.TokenManager.listeners.onceTokenEvent[eventName] = [];
+        } else if (eventOptions['meta-eventType'] == 'token-constraint') {
+            if (eventOptions.hasOwnProperty('constraint')) {
+                baseTrigger(AnyBoard.TokenManager.listeners.tokenConstraintEvent, eventName, [eventOptions.constraint, eventOptions]);
+                baseTrigger(AnyBoard.TokenManager.listeners.onceTokenConstraintEvent, eventName, [eventOptions.constraint, eventOptions]);
+                AnyBoard.TokenManager.listeners.onceTokenConstraintEvent[eventName] = [];
+            } else {
+                AnyBoard.warn('Attempting to trigger token-token event type, but missing constraint option', this);
+            }
+        } else {
+            AnyBoard.warn('Attempting to trigger invalid event type: ' + eventOptions['meta-eventType'], this);
         }
-    if (this.onceListeners[eventName]) {
-        for (var j in this.onceListeners[eventName]) {
-            if (this.onceListeners[eventName].hasOwnProperty(j))
-                this.onceListeners[eventName][j](eventOptions);
-        }
-        this.onceListeners[eventName] = [];
     }
 };
 
 /**
  * Adds a callbackFunction to be executed always when event is triggered
  * @param {string} eventName name of event to listen to
- * @param {simpleTriggerCallback} callbackFunction function to be executed
+ * @param {simpleEventCallback} callbackFunction function to be executed
  * @example
  * var onTimeTravelCallback = function () {console.log("The tardis is great!")};
  * existingToken.on('timeTravelled', onTimeTravelCallback);
@@ -213,15 +414,15 @@ AnyBoard.BaseToken.prototype.trigger = function(eventName, eventOptions) {
  */
 AnyBoard.BaseToken.prototype.on = function(eventName, callbackFunction) {
     AnyBoard.Logger.debug('Added listener to event: ' + eventName, this);
-    if (!this.listeners[eventName])
-        this.listeners[eventName] = [];
-    this.listeners[eventName].push(callbackFunction);
+    if (!this.listeners.normal[eventName])
+        this.listeners.normal[eventName] = [];
+    this.listeners.normal[eventName].push(callbackFunction);
 };
 
 /**
  * Adds a callbackFunction to be executed next time an event is triggered
  * @param {string} eventName name of event to listen to
- * @param {simpleTriggerCallback} callbackFunction function to be executed
+ * @param {simpleEventCallback} callbackFunction function to be executed
  * @example
  * var onTimeTravelCallback = function (options) {console.log("The tardis is great!")};
  * existingToken.once('timeTravelled', onTimeTravelCallback);
@@ -234,9 +435,9 @@ AnyBoard.BaseToken.prototype.on = function(eventName, callbackFunction) {
  */
 AnyBoard.BaseToken.prototype.once = function(eventName, callbackFunction) {
     AnyBoard.Logger.debug('Added onceListener to event: ' + eventName, this);
-    if (!this.onceListeners[eventName])
-        this.onceListeners[eventName] = [];
-    this.onceListeners[eventName].push(callbackFunction);
+    if (!this.listeners.onceListeners[eventName])
+        this.listeners.onceListeners[eventName] = [];
+    this.listeners.onceListeners[eventName].push(callbackFunction);
 };
 
 /**

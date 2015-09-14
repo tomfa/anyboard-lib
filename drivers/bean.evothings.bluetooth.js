@@ -541,6 +541,7 @@
      * @param {Function} callback function to be executed once we receive updates
      * @param {Function} success function to be executed if we manage to subscribe to updates
      * @param {Function} fail function to be executed if we fail to subscribe to updates
+     * @private
      */
     beanBluetooth._subscribe = function(token, callback, success, fail) {
         evothings.ble.writeDescriptor(
@@ -667,6 +668,7 @@
      *
      * In this initialize method, we subscribe to notifications sent by the rfduino device, and trigger events
      * on the token class upon receiving data.
+     * @param {AnyBoard.BaseToken} token token instance to be initialized
      */
     beanBluetooth.initialize = function(token) {
         var handleReceiveUpdateFromToken = function(uint8array) {
@@ -818,12 +820,8 @@
         };
     };
 
-    /**
+    /*
      * Returns the next GT header, given the number of packets remaining in the message.
-     * @param token
-     * @param remain
-     * @param pos
-     * @returns {*}
      * @private
      */
     beanBluetooth._gtHeader = function(token, remain, pos) {
@@ -838,7 +836,7 @@
 
     /**
      * Converts a string to an Uint8Array.
-     * @param string
+     * @param string string to be converted
      * @returns {Uint8Array}
      * @private
      */

@@ -46,9 +46,9 @@ AnyBoard.Resource.get = function(name) {
  * Creates a ResourceSet
  * @constructor
  * @param {object} [resources] *(optional)* a set of initially contained resources
- * @param {boolean} [allowNegative=false] *(default: false)*  whether or not to allow being subtracted resources to below 0 (dept)
+ * @param {boolean} [allowNegative=false] whether or not to allow being subtracted resources to below 0 (dept)
  * @property {object} [resources] *(optional)* a set of initially contained resources
- * @property {boolean} [allowNegative=false] *(default: false)*  whether or not to allow being subtracted resources to below 0 (dept)
+ * @property {boolean} [allowNegative=false] whether or not to allow being subtracted resources to below 0 (dept)
  *
  * @example
  * // Returns a resourceset that can be deducted below 0

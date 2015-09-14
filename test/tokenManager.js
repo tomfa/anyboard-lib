@@ -32,11 +32,11 @@ describe('AnyBoard.TokenManager', function() {
         scan: function(win, fail, threshold) {
             if (threshold > 50) {
                 setTimeout(function() {
-                    win({address: '815-493-00', name: 'jellyHouse'});
+                    win({address: '815-493-00', name: 'jellyHouse1'});
                 }, 50);
                 if (threshold > 150) {
                     setTimeout(function () {
-                        win({address: '123-456-78', name: 'jellyHouse'});
+                        win({address: '123-456-78', name: 'jellyHouse2'});
                     }, 150);
                     if (threshold > 320) {
                         setTimeout(function () {
@@ -44,7 +44,7 @@ describe('AnyBoard.TokenManager', function() {
                         }, 320);
                         if (threshold > 500) {
                             setTimeout(function () {
-                                win({address: 'testaddress', name: 'jellyHouse'});
+                                win({address: 'testaddress', name: 'jellyHouse4'});
                             }, 500);
                         }
                     }
@@ -55,19 +55,60 @@ describe('AnyBoard.TokenManager', function() {
     });
     AnyBoard.TokenManager.setDriver(dummyDriver)
 
-    describe('when calling AnyBoard.TokenManager.scan(win, fail, threshold)', function(){
-        it.skip('it will call win(object) for every device responding', function () {
+    describe('when scanning with .scan(win, fail, timeout)', function(){
+        it.skip('it will call win(tok) for every device responding', function () {
 
         });
-        it.skip('it will call fail(object) for every failure', function () {
+        it.skip('it will call fail(errorCode) for every failure', function () {
 
         });
-        it.skip('it will stop search after [threshold] amount of milliseconds', function () {
+        it.skip('it will stop search after [timeout] amount of milliseconds', function () {
 
         });
 
     });
-    describe('when calling AnyBoard.TokenManager.connect(tokenID)', function(){
+
+    describe('when setting driver with .setDriver(driver)', function(){
+        describe('and token with tokenID is discovered', function(){
+            it.skip('will return token', function () {
+
+            });
+        });
+        describe('and token with tokenID is connected', function(){
+            it.skip('will return token', function () {
+
+            });
+        });
+        describe('and no token with that tokenID is found', function(){
+            it.skip('will return undefined', function () {
+
+            });
+        });
+    });
+
+    describe('when getting a token with .get(tokenAddress)', function(){
+        describe('and token with token address is discovered', function(){
+            it.skip('will return token', function () {
+
+            });
+        });
+        describe('and token with token address is connected', function(){
+            it.skip('will return token', function () {
+
+            });
+        });
+        describe('and no token with that token address is found', function(){
+            it.skip('will return undefined', function () {
+
+            });
+        });
+    });
+});
+
+describe('AnyBoard.BaseToken', function() {
+    var spy = sinon.spy();
+
+    describe('when connecting with .connect(win, fail)', function(){
         describe('and token is not responding', function(){
             it.skip('will return false', function () {
 
@@ -85,27 +126,6 @@ describe('AnyBoard.TokenManager', function() {
             });
         });
     });
-    describe('when calling AnyBoard.TokenManager.get(tokenID)', function(){
-        describe('and token with tokenID is discovered', function(){
-            it.skip('will return token', function () {
-
-            });
-        });
-        describe('and token with tokenID is connected', function(){
-            it.skip('will return token', function () {
-
-            });
-        });
-        describe('and no token with that tokenID is found', function(){
-            it.skip('will return undefined', function () {
-
-            });
-        });
-    });
-});
-
-describe('AnyBoard.BaseToken', function() {
-    var spy = sinon.spy();
 
     describe('when adding a event listener using on(...)', function(){
         it.skip('will be triggered when an event with matching eventName is triggered', function () {
@@ -115,13 +135,14 @@ describe('AnyBoard.BaseToken', function() {
 
         });
     });
-    describe('when triggering events using trigger(...)', function() {
-
-        it.skip('will call listeners added using on(...) with matching name', function () {
+    describe('when adding a event listener using once(...)', function(){
+        it.skip('will be triggered when an event with matching eventName is triggered', function () {
 
         });
+        it.skip('will not be triggered a second time', function () {
 
-        it.skip('will not call listeners added using on(...) with non-matching name', function () {
+        });
+        it.skip('will not be triggered unless name of event matches', function () {
 
         });
     });

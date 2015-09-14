@@ -212,7 +212,7 @@ AnyBoard.Hand = function(player, options) {
 /**
  * Checks whether or not a player has an amount card in this hand.
  * @param {AnyBoard.Card} card card to be checked if is in hand
- * @param {number} [amount=1] *(default: 1)* amount of card to be checked if is in hand
+ * @param {number} [amount=1] amount of card to be checked if is in hand
  * @returns {boolean} hasCard whether or not the player has that amount or more of that card in this hand
  *
  * @example

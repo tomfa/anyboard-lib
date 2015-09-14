@@ -12,6 +12,76 @@ var AnyBoard = AnyBoard || {};
 if (typeof module !== "undefined") module.exports = AnyBoard;
 
 /**
+ * This type of callback will be called when card is drawn or played
+ * @callback playDrawCallback
+ * @param {AnyBoard.Card} card that is played
+ * @param {AnyBoard.Player} player that played the card
+ * @param {object} [options] *(optional)* custom options as extra parameter when AnyBoard.Player.play was called
+ */
+
+/**
+ * Type of callback called upon triggering of events
+ * @callback simpleEventCallback
+ * @param {object} [options] *(optional)* options called with the triggering of that event
+ */
+
+/**
+ * Type of callback called upon token-token events, i.e. when two tokens interact with eachother, wuch
+ * as 'STACK_ON', 'NEXT_TO'
+ * @callback tokenTokenEventCallback
+ * @param {AnyBoard.BaseToken} initiatingToken token whose interaction with has triggered the event
+ * @param {AnyBoard.BaseToken} respondingToken token that initiatingToken has interacted with
+ * @param {object} [options] *(optional)* options called with the triggering of that event
+ */
+
+/**
+ * Type of callback called upon triggering of a Token event, i.e. events triggered by the physical interaction
+ * with tokens, such as 'LIFT', 'SHAKE', 'TURN'
+ * @callback tokenEventCallback
+ * @param {AnyBoard.BaseToken} token token that has been interacted with
+ * @param {object} [options] *(optional)* options called with the triggering of that event
+ */
+
+/**
+ * Type of callback called upon triggering of a Token-Constraint event, i.e. events triggered by the physical interaction
+ * of a token upon a constraint, such as 'MOVED_TO'
+ * @callback tokenConstraintEventCallback
+ * @param {AnyBoard.BaseToken} token token that triggered the event
+ * @param {string} constraint constraint that has been interacted with. Currently only a string representation.
+ * @param {object} [options] *(optional)* options called with the triggering of that event
+ */
+
+/**
+ * Generic callback returning a string param
+ * @callback stdStringCallback
+ * @param {string} string
+ */
+
+/**
+ * Generic callback returning a bool param
+ * @callback stdBoolCallback
+ * @param {boolean} boolean
+ */
+
+/**
+ * Generic callback without params
+ * @callback stdNoParamCallback
+ */
+
+/**
+ * Type of callback called upon detecting a token
+ * @callback onScanCallback
+ * @param {AnyBoard.BaseToken} token discovered token
+ */
+
+/**
+ * This type of callback will be called upon failure to complete a function
+ * @callback stdErrorCallback
+ * @param {string} errorMessage
+ */
+
+
+/**
  * Manager of drivers.
  * @type {Object}
  */
@@ -92,7 +162,7 @@ AnyBoard.Drivers.getCompatibleDriver = function(type, compatibility) {
 /**
  * Internal function. Drivers added with this function are retrievable with get function.
  * New drivers are added automatically upon construction with new AnyBoard.Driver(...)
- * @param {function} driver driver to be added
+ * @param {AnyBoard.Driver} driver driver to be added
  * @private
  */
 AnyBoard.Drivers._add = function(driver) {
@@ -123,8 +193,8 @@ AnyBoard.Drivers.toString = function() {
  * @param {Array|object|string} options.compatibility An object or string that can be used to deduce compatibiity, or
  *      an array of different compatibilies. How this is used is determined by the set standard driver on TokenManager
  *      that handles scanning for and connecting to tokens.
- * @param {string} [options.dependencies] (optional) What if anything the driver depends on.
- * @param {string} [options.date] (optional) Date upon release/last build.
+ * @param {string} [options.dependencies] *(optional)* What if anything the driver depends on.
+ * @param {string} [options.date] *(optional)* Date upon release/last build.
  * @param {any} options.yourAttributeHere custom attributes, as well as specified ones, are all placed in
  *      driver.properties. E.g. 'heat' would be placed in driver.properties.heat.
  * @property {string} name name of the driver
@@ -180,8 +250,8 @@ AnyBoard.Driver.prototype.toString = function() {
  * @property {Array.<AnyBoard.Card>} usedPile cards played from this deck
  * @property {boolean} autoUsedRefill *(default: true)* whether or not to automatically refill pile from usedPile when empty. Is ignored if autoNewRefill is true.
  * @property {boolean} autoNewRefill *(default: false)* whether or not to automatically refill pile with a whole new deck when empty.
- * @property {Array.<Function>} playListeners holds functions to be called when cards in this deck are played
- * @property {Array.<Function>} drawListeners holds functions to be called when cards in this deck are drawn
+ * @property {Array.<playDrawCallback>} playListeners holds functions to be called when cards in this deck are played
+ * @property {Array.<playDrawCallback>} drawListeners holds functions to be called when cards in this deck are drawn
  *
  */
 AnyBoard.Deck = function (name, jsonDeck) {
@@ -201,7 +271,7 @@ AnyBoard.Deck = function (name, jsonDeck) {
         AnyBoard.Logger.warn("Deck with name " + this.name + " already exists. Old deck will no longer be available " +
             "through AnyBoard.Deck.get", this);
 
-    this.initiate(jsonDeck);
+    this._initiate(jsonDeck);
 };
 
 AnyBoard.Deck.all = {};
@@ -228,8 +298,9 @@ AnyBoard.Deck.prototype.shuffle = function() {
  * Reads Deck from jsonObject and provides a shuffled version in pile.
  * Is automatically called upon constructing a deck.
  * @param {object} jsonDeck loaded json file. See [examples-folder](./examples) for example of json file and loading
+ * @private
  */
-AnyBoard.Deck.prototype.initiate = function(jsonDeck) {
+AnyBoard.Deck.prototype._initiate = function(jsonDeck) {
     if (jsonDeck.hasOwnProperty('autoNewRefill'))
         this.autoNewRefill = jsonDeck.autoNewRefill;
     if (jsonDeck.hasOwnProperty('autoUsedRefill'))
@@ -245,7 +316,7 @@ AnyBoard.Deck.prototype.initiate = function(jsonDeck) {
 
 /**
  * Manually refills the pile. This is not necessary if autoUsedRefill or autoNewRefill property of deck is true.
- * @param {boolean} [newDeck=false] *(optional, default: false)* True if to refill with a new deck.
+ * @param {boolean} [newDeck=false] True if to refill with a new deck.
  * False if to refill with played cards (from usedPile)
  */
 AnyBoard.Deck.prototype.refill = function(newDeck) {
@@ -338,7 +409,7 @@ AnyBoard.Deck.prototype.toString = function() {
  * @param {string} [options.category] *(optional)* category of the card, not used by AnyBoard FrameWork
  * @param {number} [options.value] *(optional)* value of the card, not used by AnyBoard FrameWork
  * @param {string} [options.type] *(optional)* type of the card, not used by AnyBoard FrameWork
- * @param {number} [options.amount=1] *(optional, default: 1)* amount of this card in the deck
+ * @param {number} [options.amount=1] amount of this card in the deck
  * @param {any} [options.yourAttributeHere] custom attributes, as well as specified ones, are all placed in card.properties. E.g. 'heat' would be placed in card.properties.heat.
  * @property {string} title title of the card.
  * @property {string} description description for the Card
@@ -348,8 +419,8 @@ AnyBoard.Deck.prototype.toString = function() {
  * @property {string} type type of the card, not used by AnyBoard FrameWork
  * @property {number} amount amount of this card its deck
  * @property {AnyBoard.Deck} deck deck that this card belongs to
- * @property {Array} playListeneres holds functions to be called upon play of this spesific card (before potential playListeners on its belonging deck)
- * @property {Array} drawListeners holds functions to be called upon draw of this spesific card (before potential drawListeners on its belonging deck)
+ * @property {Array.<playDrawCallback>} playListeners holds functions to be called upon play of this spesific card (before potential playListeners on its belonging deck)
+ * @property {Array.<playDrawCallback>} drawListeners holds functions to be called upon draw of this spesific card (before potential drawListeners on its belonging deck)
  * @property {object} properties dictionary that holds custom attributes
  */
 AnyBoard.Card = function (deck, options) {
@@ -444,31 +515,10 @@ AnyBoard.Card.prototype._play = function(player, options) {
 AnyBoard.Card.prototype.toString = function() {
     return 'Card: ' + this.title + ', id: ' + this.id;
 };
-
-
-/**
- * This type of callback will be called when card is drawn or played
- * @callback playDrawCallback
- * @param {AnyBoard.Card} card that is played
- * @param {AnyBoard.Player} player that played the card
- * @param {object} [options] custom options as extra parameter when play was called
- */
-
-/**
- * This type of callback will be called when card is drawn or played
- * @callback stdErrorCallback
- * @param {AnyBoard.Card} card that is played
- * @param {AnyBoard.Player} player that played the card
- * @param {object} [options] custom options as extra parameter when play was called
- */
-
-// TODO: Document the rest of the cbs
-
-
 /** Represents a set of game dices that can be rolled to retrieve a random result.
  * @constructor
- * @param {number} [eyes=6] *(optional, default: 6)* number of max eyes on a roll with this dice
- * @param {number} [numOfDice=1] *(optional, default: 1)* number of dices
+ * @param {number} [eyes=6] number of max eyes on a roll with this dice
+ * @param {number} [numOfDice=1] number of dices
  * @example
  * // will create 1 dice, with 6 eyes
  * var dice = new AnyBoard.Dices();
@@ -528,11 +578,11 @@ AnyBoard.Dices.prototype.rollEach = function() {
 /** Represents a Player (AnyBoard.Player)
  * @constructor
  * @param {string} name name of the player
- * @param {object} [options] options for the player
- * @param {string} [options.color] color representing the player
- * @param {string} [options.faction] faction representing the player
- * @param {string} [options.class] class representing the player
- * @param {any} [options.yourAttributeHere] custom attributes, as well as specified ones, are all placed in player.properties. E.g. 'age' would be placed in player.properties.age.
+ * @param {object} [options] *(optional)* options for the player
+ * @param {string} [options.color] *(optional)* color representing the player
+ * @param {string} [options.faction] *(optional)* faction representing the player
+ * @param {string} [options.class] *(optional)* class representing the player
+ * @param {any} [options.yourAttributeHere] *(optional)* custom attributes, as well as specified ones, are all placed in player.properties. E.g. 'age' would be placed in player.properties.age.
  * @property {AnyBoard.Hand} hand hand of cards (Quests)
  * @property {string} faction faction (Sp[ecial abilities or perks)
  * @property {string} class class (Special abilities or perks)
@@ -572,7 +622,7 @@ AnyBoard.Player.get = function(name) {
 /**
  * Take resources from this player and give to receivingPlayer.
  * @param {AnyBoard.ResourceSet} resources dictionary of resources
- * @param {AnyBoard.Player} [receivingPlayer] Who shall receive the resources. Omit if not to anyone (e.g. give to "the bank")
+ * @param {AnyBoard.Player} [receivingPlayer] *(optional)* Who shall receive the resources. Omit if not to anyone (e.g. give to "the bank")
  * @returns {boolean} whether or not transaction was completed (false if Player don't hold enough resources)
  */
 AnyBoard.Player.prototype.pay = function(resources, receivingPlayer) {
@@ -739,7 +789,7 @@ AnyBoard.Hand = function(player, options) {
 /**
  * Checks whether or not a player has an amount card in this hand.
  * @param {AnyBoard.Card} card card to be checked if is in hand
- * @param {number} [amount=1] *(default: 1)* amount of card to be checked if is in hand
+ * @param {number} [amount=1] amount of card to be checked if is in hand
  * @returns {boolean} hasCard whether or not the player has that amount or more of that card in this hand
  *
  * @example
@@ -854,9 +904,9 @@ AnyBoard.Resource.get = function(name) {
  * Creates a ResourceSet
  * @constructor
  * @param {object} [resources] *(optional)* a set of initially contained resources
- * @param {boolean} [allowNegative=false] *(optional, default: false)*  whether or not to allow being subtracted resources to below 0 (dept)
+ * @param {boolean} [allowNegative=false] whether or not to allow being subtracted resources to below 0 (dept)
  * @property {object} [resources] *(optional)* a set of initially contained resources
- * @property {boolean} [allowNegative=false] *(optional, default: false)*  whether or not to allow being subtracted resources to below 0 (dept)
+ * @property {boolean} [allowNegative=false] whether or not to allow being subtracted resources to below 0 (dept)
  *
  * @example
  * // Returns a resourceset that can be deducted below 0
@@ -1001,7 +1051,15 @@ AnyBoard.ResourceSet.prototype.similarities = function(resourceSet) {
  */
 AnyBoard.TokenManager = {
     tokens: {},
-    driver: null
+    driver: null,
+    listeners: {
+        tokenEvent: {},
+        onceTokenEvent: {},
+        tokenTokenEvent: {},
+        onceTokenTokenEvent: {},
+        tokenConstraintEvent: {},
+        onceTokenConstraintEvent: {}
+    }
 };
 
 /**
@@ -1026,9 +1084,9 @@ AnyBoard.TokenManager.setDriver = function(driver) {
 
 /**
  * Scans for tokens nearby and stores in discoveredTokens property
- * @param {onScanWinCallback} win function to be executed when devices are found (called for each device found)
- * @param {onFailCallback} [fail] *optional* function to be executed upon failure
- * @param {number} [timeout] amount of milliseconds to scan before stopping. Driver has a default.
+ * @param {onScanCallback} [win] *(optional)* function to be executed when devices are found (called for each device found)
+ * @param {stdErrorCallback} [fail] *(optional)* function to be executed upon failure
+ * @param {number} [timeout] *(optional)* amount of milliseconds to scan before stopping. Driver has a default.
  * @example
  * var onDiscover = function(token) { console.log("I found " + token) };
  *
@@ -1039,22 +1097,10 @@ AnyBoard.TokenManager.scan = function(win, fail, timeout) {
     this.driver.scan(
         function(token) {
             AnyBoard.TokenManager.tokens[token.address] = token;
-            win(token);
+            win && win(token);
         },
         fail, timeout)
 };
-
-/**
- * Callback
- * @callback
- * @param {AnyBoard.BaseToken} token token that is returned upon scanning.
- */
-
-/**
- * Callback
- * @callback
- * @param {string} errorCode ErrorCode the function failed with
- */
 
 /**
  * Returns a token handled by this TokenManager
@@ -1066,17 +1112,163 @@ AnyBoard.TokenManager.get = function(address) {
 };
 
 /**
+ * Adds a callbackFunction to be executed always when a token-token event is triggered
+ * @param {string} eventName name of event to listen to
+ * @param {tokenTokenEventCallback} callbackFunction function to be executed
+ * @example
+ * var cb = function (initToken, resToken, event, options) {
+ *      console.log(initToken + " " + event + " " + resToken);
+ * };
+ *
+ * TokenManager.onTokenTokenEvent("MOVE_NEXT_TO", cb);
+ *
+ * // prints "existingToken MOVE_NEXT_TO anotherToken";
+ * existingToken.trigger("MOVE_NEXT_TO", {"meta-eventType": "token", "token": anotherToken};
+ *
+ * // prints "existingToken MOVE_NEXT_TO oldToken";
+ * existingToken.trigger("MOVE_NEXT_TO", {"meta-eventType": "token", "token": anotherToken};
+ */
+AnyBoard.TokenManager.onTokenTokenEvent = function(eventName, callbackFunction) {
+    AnyBoard.Logger.debug('Added listener to TT-event: ' + eventName, this);
+    if (!this.listeners.tokenTokenEvent[eventName])
+        this.listeners.tokenTokenEvent[eventName] = [];
+    this.listeners.tokenTokenEvent[eventName].push(callbackFunction);
+};
+
+/**
+ * Adds a callbackFunction to be executed next time a token-token event is triggered
+ * @param {string} eventName name of event to listen to
+ * @param {tokenTokenEventCallback} callbackFunction function to be executed
+ * @example
+ * var cb = function (initToken, resToken, event, options) {
+ *      console.log(initToken + " " + event + " " + resToken);
+ * };
+ *
+ * TokenManager.onceTokenTokenEvent("MOVE_NEXT_TO", cb);
+ *
+ * // prints "existingToken MOVE_NEXT_TO anotherToken";
+ * existingToken.trigger("MOVE_NEXT_TO", {"meta-eventType": "token-token", "token": anotherToken};
+ *
+ * // no effect
+ * existingToken.trigger("MOVE_NEXT_TO", {"meta-eventType": "token-token", "token": anotherToken};
+ */
+AnyBoard.TokenManager.onceTokenTokenEvent = function(eventName, callbackFunction) {
+    AnyBoard.Logger.debug('Added onceListener to TT-event: ' + eventName, this);
+    if (!this.listeners.onceTokenTokenEvent[eventName])
+        this.listeners.onceTokenTokenEvent[eventName] = [];
+    this.listeners.onceTokenTokenEvent[eventName].push(callbackFunction);
+};
+
+/**
+ * Adds a callbackFunction to be executed always when a token-constraint event is triggered.
+ * A token-constraint event is a physical token interaction with a game constraint, e.g. moving a pawn within a board.
+ * @param {string} eventName name of event to listen to
+ * @param {tokenConstraintEventCallback} callbackFunction function to be executed
+ * @example
+ * var cb = function (initToken, constraint, event, options) {
+ *      console.log(initToken + " " + event + " " + constraint);
+ * };
+ *
+ * TokenManager.onTokenConstraintEvent("MOVE", cb);
+ *
+ * // prints "existingToken MOVE Tile-5";
+ * existingToken.trigger("MOVE", {"meta-eventType": "token-constraint", "constraint": "Tile-5"};
+ *
+ * // prints "existingToken MOVE Tile-5";
+ * existingToken.trigger("MOVE", {"meta-eventType": "token-constraint", "constraint": "Tile-5"};
+ */
+AnyBoard.TokenManager.onTokenConstraintEvent = function(eventName, callbackFunction) {
+    AnyBoard.Logger.debug('Added listener to TC-event: ' + eventName, this);
+    if (!this.listeners.tokenConstraintEvent[eventName])
+        this.listeners.tokenConstraintEvent[eventName] = [];
+    this.listeners.tokenConstraintEvent[eventName].push(callbackFunction);
+};
+
+/**
+ * Adds a callbackFunction to be executed next time a token-constraint event is triggered
+ * @param {string} eventName name of event to listen to
+ * @param {tokenConstraintEventCallback} callbackFunction function to be executed
+ * @example
+ * var cb = function (initToken, constraint, event, options) {
+ *      console.log(initToken + " " + event + " " + constraint);
+ * };
+ *
+ * TokenManager.onceTokenConstraintEvent("MOVE", cb);
+ *
+ * // prints "existingToken MOVE Tile-5";
+ * existingToken.trigger("MOVE", {"meta-eventType": "token-constraint"", "constraint": "Tile-5"};
+ *
+ * // no effect
+ * existingToken.trigger("MOVE", {"meta-eventType": "token-constraint""};
+ */
+AnyBoard.TokenManager.onceTokenConstraintEvent = function(eventName, callbackFunction) {
+    AnyBoard.Logger.debug('Added onceListener to TC-event: ' + eventName, this);
+    if (!this.listeners.onceTokenConstraintEvent[eventName])
+        this.listeners.onceTokenConstraintEvent[eventName] = [];
+    this.listeners.onceTokenConstraintEvent[eventName].push(callbackFunction);
+};
+
+/**
+ * Adds a callbackFunction to be executed always when a token event is triggered.
+ * A token event is an physical interaction with a single token.
+ * @param {string} eventName name of event to listen to
+ * @param {tokenEventCallback} callbackFunction function to be executed
+ * @example
+ * var cb = function (initToken, event, options) {
+ *      console.log(initToken + " was " + event + "'ed ");
+ * };
+ *
+ * TokenManager.onTokenEvent("LIFT", cb);
+ *
+ * // prints "existingToken was LIFT'ed"
+ * existingToken.trigger("LIFT", {"meta-eventType": "token"};
+ *
+ * // prints "existingToken was LIFT'ed"
+ * existingToken.trigger("LIFT", {"meta-eventType": "token"};
+ */
+AnyBoard.TokenManager.onTokenEvent = function(eventName, callbackFunction) {
+    AnyBoard.Logger.debug('Added listener to T-event: ' + eventName, this);
+    if (!this.listeners.tokenEvent[eventName])
+        this.listeners.tokenEvent[eventName] = [];
+    this.listeners.tokenEvent[eventName].push(callbackFunction);
+};
+
+/**
+ * Adds a callbackFunction to be executed next time a token event is triggered
+ * @param {string} eventName name of event to listen to
+ * @param {tokenEventCallback} callbackFunction function to be executed
+ * @example
+ * var cb = function (initToken, event, options) {
+ *      console.log(initToken + " was " + event + "'ed ");
+ * };
+ *
+ * TokenManager.onceTokenEvent("LIFT", cb);
+ *
+ * // prints "existingToken was LIFT'ed"
+ * existingToken.trigger("LIFT", {"meta-eventType": "token"};
+ *
+ * // No effect
+ * existingToken.trigger('LIFT');
+ */
+AnyBoard.TokenManager.onceTokenEvent = function(eventName, callbackFunction) {
+    AnyBoard.Logger.debug('Added onceListener to T-event: ' + eventName, this);
+    if (!this.listeners.onceTokenEvent[eventName])
+        this.listeners.onceTokenEvent[eventName] = [];
+    this.listeners.onceTokenEvent[eventName].push(callbackFunction);
+};
+
+
+/**
  * Base class for tokens. Should be used by communication driver upon AnyBoard.TokenManager.scan()
  * @param {string} name name of the token
  * @param {string} address address of the token found when scanned
  * @param {object} device device object used and handled by driver
- * @param {AnyBoard.Driver} [driver=AnyBoard.TokenManager.driver] token driver for handling communication with it.
+ * @param {AnyBoard.Driver} [driver=AnyBoard.BaseToken._defaultDriver] token driver for handling communication with it.
  * @property {string} name name of the token
  * @property {string} address address of the token found when scanned
  * @property {boolean} connected whether or not the token is connected
  * @property {object} device driver spesific data.
- * @property {object} listeners functions to be execute upon certain triggered events
- * @property {object} onceListeners functions to be execute upon next triggering of certain events
+ * @property {object} listeners functions to be executed upon certain triggered events
  * @property {Array.<Function>} sendQueue queue for communicating with
  * @property {object} cache key-value store for caching certain communication calls
  * @property {AnyBoard.Driver} driver driver that handles communication
@@ -1087,18 +1279,37 @@ AnyBoard.BaseToken = function(name, address, device, driver) {
     this.address = address;
     this.connected = false;
     this.device = device;
-    this.listeners = {};
-    this.onceListeners = {};
+    this.listeners = {
+        normal: {},
+        once: {},
+        tokenEvent: {},
+        onceTokenEvent: {},
+        tokenTokenEvent: {},
+        onceTokenTokenEvent: {},
+        tokenConstraintEvent: {},
+        onceTokenConstraintEvent: {}
+    };
     this.sendQueue = [];
     this.cache = {};
-    this.driver = driver || AnyBoard.BaseToken._defaultDriver;
+
+    if (!driver) {
+        AnyBoard.Logger.log("Did not send parameter driver. Defaulting to default driver", this);
+        if (!AnyBoard.BaseToken._defaultDriver || !AnyBoard.BaseToken._defaultDriver.send)
+            AnyBoard.Logger.log("Default BaseToken driver is not set! Token will not work properly!", this);
+        this.driver = AnyBoard.BaseToken._defaultDriver;
+    }
+    else {
+        (driver.send && typeof driver.send === 'function') || AnyBoard.Logger.warn('Could not find send() on given driver', this);
+        this.driver = driver;
+    }
+
 };
 
 AnyBoard.BaseToken._defaultDriver = {};
 
 /**
  * Sets a new default driver to handle communication for tokens without specified driver.
- * The driver must have implement a method *scan(win, fail, timeout)* in order to discover tokens.
+ * The driver must have implement a method *send(win, fail)* in order to discover tokens.
  *
  * @param {AnyBoard.Driver} driver driver to be used for communication
  * @returns {boolean} whether or not driver was successfully set
@@ -1126,8 +1337,8 @@ AnyBoard.BaseToken.prototype.isConnected = function() {
 /**
  * Attempts to connect to token. Uses TokenManager driver, not its own, since connect
  *      needs to happen before determining suitable driver.
- * @param {function} [win] function to be executed upon success
- * @param {function} [fail] function to be executed upon failure
+ * @param {stdNoParamCallback} [win] *(optional)* function to be executed upon success
+ * @param {stdErrorCallback} [fail] *(optional)* function to be executed upon failure
  */
 AnyBoard.BaseToken.prototype.connect = function(win, fail) {
     AnyBoard.Logger.debug('Attempting to connect to ' + this);
@@ -1138,21 +1349,16 @@ AnyBoard.BaseToken.prototype.connect = function(win, fail) {
             AnyBoard.Logger.debug('Connected to ' + self);
             self.connected = true;
             self.trigger('connect', {device: self});
-            win(device);
+            win && win();
         },
         function(errorCode) {
             AnyBoard.Logger.debug('Could not connect to ' + self + '. ' + errorCode);
             self.trigger('disconnect', {device: self});
             self.connected = false;
-            fail(errorCode);
+            fail && fail(errorCode);
         }
     );
 };
-
-/**
- * Callback
- * @param {AnyBoard.BaseToken} token token that is returned upon scanning.
- */
 
 /**
  * Disconnects from the token.
@@ -1165,9 +1371,10 @@ AnyBoard.BaseToken.prototype.disconnect = function() {
 };
 
 /**
- * Trigger an event on a token
+ * Trigger an event on a token. Also used to trigger special events (Token, Token-Token and Token-Eonstraint-events) by
+ * specifying 'meta-eventType' = 'token', 'token-token' or 'token-constraint' in eventOptions.
  * @param {string} eventName name of event
- * @param {object} [eventOptions] dictionary of parameters and values
+ * @param {object} [eventOptions] (*optional)* dictionary of parameters and values
  * @example
  * var onTimeTravelCallback = function (options) {console.log("The tardis is great!")};
  * existingToken.on('timeTravelled', onTimeTravelCallback);
@@ -1180,27 +1387,53 @@ AnyBoard.BaseToken.prototype.disconnect = function() {
  */
 AnyBoard.BaseToken.prototype.trigger = function(eventName, eventOptions) {
     AnyBoard.Logger.debug('Triggered "' + eventName + '"', this);
-    if (this.listeners[eventName])
-        for (var i in this.listeners[eventName]) {
-            if (this.listeners[eventName].hasOwnProperty(i))
-                this.listeners[eventName][i](eventOptions);
+
+    var baseTrigger = function(dict, event, args) {
+        if (dict[event])
+            for (var i in dict[event]) {
+                if (dict[event].hasOwnProperty(i))
+                    dict[event][i].apply(null, args);
+            }
+    };
+
+    baseTrigger(this.listeners, eventName, [eventOptions]);
+    baseTrigger(this.onceListeners, eventName, [eventOptions]);
+    this.onceListeners[eventName] = [];
+
+    if (eventOptions.hasOwnProperty('meta-eventType')) {
+        if (eventOptions['meta-eventType'] == 'token-token') {
+            if (eventOptions.hasOwnProperty('token')) {
+                baseTrigger(AnyBoard.TokenManager.listeners.tokenTokenEvent, eventName, [eventOptions.token, eventOptions]);
+                baseTrigger(AnyBoard.TokenManager.listeners.onceTokenTokenEvent, eventName, [eventOptions.token, eventOptions]);
+                AnyBoard.TokenManager.listeners.onceTokenTokenEvent[eventName] = [];
+            } else {
+                AnyBoard.warn('Attempting to trigger token-token event type, but missing token option', this);
+            }
+
+        } else if (eventOptions['meta-eventType'] == 'token') {
+            baseTrigger(AnyBoard.TokenManager.listeners.tokenEvent, eventName, [eventOptions]);
+            baseTrigger(AnyBoard.TokenManager.listeners.onceTokenEvent, eventName, [eventOptions]);
+            AnyBoard.TokenManager.listeners.onceTokenEvent[eventName] = [];
+        } else if (eventOptions['meta-eventType'] == 'token-constraint') {
+            if (eventOptions.hasOwnProperty('constraint')) {
+                baseTrigger(AnyBoard.TokenManager.listeners.tokenConstraintEvent, eventName, [eventOptions.constraint, eventOptions]);
+                baseTrigger(AnyBoard.TokenManager.listeners.onceTokenConstraintEvent, eventName, [eventOptions.constraint, eventOptions]);
+                AnyBoard.TokenManager.listeners.onceTokenConstraintEvent[eventName] = [];
+            } else {
+                AnyBoard.warn('Attempting to trigger token-token event type, but missing constraint option', this);
+            }
+        } else {
+            AnyBoard.warn('Attempting to trigger invalid event type: ' + eventOptions['meta-eventType'], this);
         }
-    if (this.onceListeners[eventName]) {
-        for (var j in this.onceListeners[eventName]) {
-            if (this.onceListeners[eventName].hasOwnProperty(j))
-                this.onceListeners[eventName][j](eventOptions);
-        }
-        this.onceListeners[eventName] = [];
     }
 };
 
-// TODO: Add callbacks to JSDoc
 /**
  * Adds a callbackFunction to be executed always when event is triggered
  * @param {string} eventName name of event to listen to
- * @param {function} callbackFunction function to be executed
+ * @param {simpleEventCallback} callbackFunction function to be executed
  * @example
- * var onTimeTravelCallback = function (options) {console.log("The tardis is great!")};
+ * var onTimeTravelCallback = function () {console.log("The tardis is great!")};
  * existingToken.on('timeTravelled', onTimeTravelCallback);
  *
  * // Triggers the function, and prints praise for the tardis
@@ -1208,19 +1441,33 @@ AnyBoard.BaseToken.prototype.trigger = function(eventName, eventOptions) {
  *
  * existingToken.trigger('timeTravelled');  // prints again
  * existingToken.trigger('timeTravelled');  // prints again
+ * @example
+ * var onTimeTravelCallback = function (options) {
+ *     // Options can be left out of a trigger. You should therefore check
+ *     // that input is as expected, throw an error or give a default value
+ *     var name = (options && options.name ? options.name : "You're");
+  *
+ *     console.log(options.name + " is great!");
+ * };
+ * existingToken.on('timeTravelled', onTimeTravelCallback);
+ *
+ * // prints "Dr.Who is great!"
+ * existingToken.trigger('timeTravelled', {"name": "Dr.Who"});
+ *
+ * // prints "You're great!"
+ * existingToken.trigger('timeTravelled');
  */
 AnyBoard.BaseToken.prototype.on = function(eventName, callbackFunction) {
     AnyBoard.Logger.debug('Added listener to event: ' + eventName, this);
-    if (!this.listeners[eventName])
-        this.listeners[eventName] = [];
-    this.listeners[eventName].push(callbackFunction);
+    if (!this.listeners.normal[eventName])
+        this.listeners.normal[eventName] = [];
+    this.listeners.normal[eventName].push(callbackFunction);
 };
 
-// TODO: Add callbacks to JSDoc
 /**
  * Adds a callbackFunction to be executed next time an event is triggered
  * @param {string} eventName name of event to listen to
- * @param {function} callbackFunction function to be executed
+ * @param {simpleEventCallback} callbackFunction function to be executed
  * @example
  * var onTimeTravelCallback = function (options) {console.log("The tardis is great!")};
  * existingToken.once('timeTravelled', onTimeTravelCallback);
@@ -1233,17 +1480,16 @@ AnyBoard.BaseToken.prototype.on = function(eventName, callbackFunction) {
  */
 AnyBoard.BaseToken.prototype.once = function(eventName, callbackFunction) {
     AnyBoard.Logger.debug('Added onceListener to event: ' + eventName, this);
-    if (!this.onceListeners[eventName])
-        this.onceListeners[eventName] = [];
-    this.onceListeners[eventName].push(callbackFunction);
+    if (!this.listeners.onceListeners[eventName])
+        this.listeners.onceListeners[eventName] = [];
+    this.listeners.onceListeners[eventName].push(callbackFunction);
 };
 
-// TODO: Add callbacks to JSDoc
 /**
  * Sends data to the token. Uses either own driver, or (if not set) TokenManager driver
  * @param {Uint8Array|ArrayBuffer|String} data data to be sent
- * @param {function} win function to be executed upon success
- * @param {function} fail function to be executed upon error
+ * @param {stdNoParamCallback} [win] *(optional)* function to be executed upon success
+ * @param {stdErrorCallback} [fail] *(optional)* function to be executed upon error
  */
 AnyBoard.BaseToken.prototype.send = function(data, win, fail) {
     AnyBoard.Logger.debug('Attempting to send with data: ' + data, this);
@@ -1254,7 +1500,7 @@ AnyBoard.BaseToken.prototype.send = function(data, win, fail) {
             function(device){
                 self.send(data, win, fail);
             }, function(errorCode){
-                fail(errorCode);
+                fail && fail(errorCode);
             }
         )
     } else {
@@ -1269,8 +1515,8 @@ AnyBoard.BaseToken.prototype.send = function(data, win, fail) {
  * Refer to the individual driver for token spesific implementation and capabilites
  *
  * @param {string} value
- * @param {function} [win] callback function to be called upon successful execution
- * @param {function} [fail] callback function to be executed upon failure
+ * @param {stdNoParamCallback} [win] *(optional)* callback function to be called upon successful execution
+ * @param {stdErrorCallback} [fail] *(optional)* callback function to be executed upon failure
  *
  */
 AnyBoard.BaseToken.prototype.print = function(value, win, fail) {
@@ -1284,8 +1530,8 @@ AnyBoard.BaseToken.prototype.print = function(value, win, fail) {
 
 /**
  * Gets the name of the firmware type of the token
- * @param {function} [win] callback function to be called upon successful execution
- * @param {function} [fail] callback function to be executed upon failure
+ * @param {stdStringCallback} [win] *(optional)* callback function to be called upon successful execution
+ * @param {stdErrorCallback} [fail] *(optional)* callback function to be executed upon failure
  * @example
  * // Function to be executed upon name retrieval
  * var getNameCallback = function (name) {console.log("Firmware name: " + name)};
@@ -1310,8 +1556,8 @@ AnyBoard.BaseToken.prototype.getFirmwareName = function(win, fail) {
 
 /**
  * Gets the version of the firmware type of the token
- * @param {function} [win] callback function to be called upon successful execution
- * @param {function} [fail] callback function to be executed upon failure
+ * @param {stdStringCallback} [win] *(optional)* callback function to be called upon successful execution
+ * @param {stdErrorCallback} [fail] *(optional)* callback function to be executed upon failure
  */
 AnyBoard.BaseToken.prototype.getFirmwareVersion = function(win, fail) {
     if (!this.driver.hasOwnProperty('getVersion')) {
@@ -1325,8 +1571,8 @@ AnyBoard.BaseToken.prototype.getFirmwareVersion = function(win, fail) {
 
 /**
  * Gets a uniquie ID the firmware of the token
- * @param {function} [win] callback function to be called upon successful execution
- * @param {function} [fail] callback function to be executed upon failure
+ * @param {stdStringCallback} [win] *(optional)* callback function to be called upon successful execution
+ * @param {stdErrorCallback} [fail] *(optional)* callback function to be executed upon failure
  */
 AnyBoard.BaseToken.prototype.getFirmwareUUID = function(win, fail) {
     if (!this.driver.hasOwnProperty('getUUID')) {
@@ -1339,8 +1585,8 @@ AnyBoard.BaseToken.prototype.getFirmwareUUID = function(win, fail) {
 
 /**
  * Checks whether or not the token has simple LED
- * @param {function} [win] callback function to be called upon successful execution
- * @param {function} [fail] callback function to be executed upon failure
+ * @param {stdBoolCallback} [win] *(optional)* callback function to be called upon successful execution
+ * @param {stdErrorCallback} [fail] *(optional)* callback function to be executed upon failure
  */
 AnyBoard.BaseToken.prototype.hasLed = function(win, fail) {
     if (!this.driver.hasOwnProperty('hasLed')) {
@@ -1353,8 +1599,8 @@ AnyBoard.BaseToken.prototype.hasLed = function(win, fail) {
 
 /**
  * Checks whether or not the token has colored LEDs
- * @param {function} [win] callback function to be called upon successful execution
- * @param {function} [fail] callback function to be executed upon failure
+ * @param {stdBoolCallback} [win] *(optional)* callback function to be called upon successful execution
+ * @param {stdErrorCallback} [fail] *(optional)* callback function to be executed upon failure
  */
 AnyBoard.BaseToken.prototype.hasLedColor = function(win, fail) {
     if (!this.driver.hasOwnProperty('hasLedColor')) {
@@ -1367,8 +1613,8 @@ AnyBoard.BaseToken.prototype.hasLedColor = function(win, fail) {
 
 /**
  * Checks whether or not the token has vibration
- * @param {function} [win] callback function to be called upon successful execution
- * @param {function} [fail] callback function to be executed upon failure
+ * @param {stdBoolCallback} [win] *(optional)* callback function to be called upon successful execution
+ * @param {stdErrorCallback} [fail] *(optional)* callback function to be executed upon failure
  */
 AnyBoard.BaseToken.prototype.hasVibration = function(win, fail) {
     if (!this.driver.hasOwnProperty('hasVibration')) {
@@ -1381,8 +1627,8 @@ AnyBoard.BaseToken.prototype.hasVibration = function(win, fail) {
 
 /**
  * Checks whether or not the token has ColorDetection
- * @param {function} [win] callback function to be called upon successful execution
- * @param {function} [fail] callback function to be executed upon failure
+ * @param {stdBoolCallback} [win] *(optional)* callback function to be called upon successful execution
+ * @param {stdErrorCallback} [fail] *(optional)* callback function to be executed upon failure
  */
 AnyBoard.BaseToken.prototype.hasColorDetection = function(win, fail) {
     if (!this.driver.hasOwnProperty('hasColorDetection')) {
@@ -1395,8 +1641,8 @@ AnyBoard.BaseToken.prototype.hasColorDetection = function(win, fail) {
 
 /**
  * Checks whether or not the token has LedSceen
- * @param {function} [win] callback function to be called upon successful execution
- * @param {function} [fail] callback function to be executed upon failure
+ * @param {stdBoolCallback} [win] *(optional)* callback function to be called upon successful execution
+ * @param {stdErrorCallback} [fail] *(optional)* callback function to be executed upon failure
  */
 AnyBoard.BaseToken.prototype.hasLedScreen = function(win, fail) {
     if (!this.driver.hasOwnProperty('hasLedSceen')) {
@@ -1409,8 +1655,8 @@ AnyBoard.BaseToken.prototype.hasLedScreen = function(win, fail) {
 
 /**
  * Checks whether or not the token has RFID reader
- * @param {function} [win] callback function to be called upon successful execution
- * @param {function} [fail] callback function to be executed upon failure
+ * @param {stdBoolCallback} [win] *(optional)* callback function to be called upon successful execution
+ * @param {stdErrorCallback} [fail] *(optional)* callback function to be executed upon failure
  */
 AnyBoard.BaseToken.prototype.hasRfid = function(win, fail) {
     if (!this.driver.hasOwnProperty('hasRfid')) {
@@ -1423,8 +1669,8 @@ AnyBoard.BaseToken.prototype.hasRfid = function(win, fail) {
 
 /**
  * Checks whether or not the token has NFC reader
- * @param {function} [win] callback function to be called upon successful execution
- * @param {function} [fail] callback function to be executed upon failure
+ * @param {stdBoolCallback} [win] *(optional)* callback function to be called upon successful execution
+ * @param {stdErrorCallback} [fail] *(optional)* callback function to be executed upon failure
  */
 AnyBoard.BaseToken.prototype.hasNfc = function(win, fail) {
     if (!this.driver.hasOwnProperty('hasNfc')) {
@@ -1437,8 +1683,8 @@ AnyBoard.BaseToken.prototype.hasNfc = function(win, fail) {
 
 /**
  * Checks whether or not the token has Accelometer
- * @param {function} [win] callback function to be called upon successful execution
- * @param {function} [fail] callback function to be executed upon failure
+ * @param {stdBoolCallback} [win] *(optional)* callback function to be called upon successful execution
+ * @param {stdErrorCallback} [fail] *(optional)* callback function to be executed upon failure
  */
 AnyBoard.BaseToken.prototype.hasAccelometer = function(win, fail) {
     if (!this.driver.hasOwnProperty('hasAccelometer')) {
@@ -1451,8 +1697,8 @@ AnyBoard.BaseToken.prototype.hasAccelometer = function(win, fail) {
 
 /**
  * Checks whether or not the token has temperature measurement
- * @param {function} [win] callback function to be called upon successful execution
- * @param {function} [fail] callback function to be executed upon failure
+ * @param {stdBoolCallback} [win] *(optional)* callback function to be called upon successful execution
+ * @param {stdErrorCallback} [fail] *(optional)* callback function to be executed upon failure
  */
 AnyBoard.BaseToken.prototype.hasTemperature = function(win, fail) {
     if (!this.driver.hasOwnProperty('hasTemperature')) {
@@ -1466,8 +1712,8 @@ AnyBoard.BaseToken.prototype.hasTemperature = function(win, fail) {
 /**
  * Sets color on token
  * @param {string|Array} value string with color name or array of [red, green, blue] values 0-255
- * @param {function} [win] callback function to be called upon successful execution
- * @param {function} [fail] callback function to be executed upon
+ * @param {stdNoParamCallback} [win] *(optional)* callback function to be called upon successful execution
+ * @param {stdErrorCallback} [fail] *(optional)* callback function to be executed upon
  * @example
  * // sets Led to white
  * existingToken.ledOn([255, 255, 255]);
@@ -1487,8 +1733,8 @@ AnyBoard.BaseToken.prototype.ledOn = function(value, win, fail) {
 /**
  * tells token to blink its led
  * @param {string|Array} value string with color name or array of [red, green, blue] values 0-255
- * @param {function} [win] callback function to be called upon successful execution
- * @param {function} [fail] callback function to be executed upon
+ * @param {stdNoParamCallback} [win] *(optional)* callback function to be called upon successful execution
+ * @param {stdErrorCallback} [fail] *(optional)* callback function to be executed upon
  * @example
  * // blinks red
  * existingToken.ledBlink([255, 0, 0]);
@@ -1507,12 +1753,12 @@ AnyBoard.BaseToken.prototype.ledBlink = function(value, win, fail) {
 
 /**
  * Turns LED off
- * @param {function} [win] callback function to be called upon successful execution
- * @param {function} [fail] callback function to be executed upon
+ * @param {stdNoParamCallback} [win] *(optional)* callback function to be called upon successful execution
+ * @param {stdErrorCallback} [fail] *(optional)* callback function to be executed upon
  */
 AnyBoard.BaseToken.prototype.ledOff = function(win, fail) {
     if (!this.driver.hasOwnProperty('ledOff')) {
-        AnyBoard.Logger.warn('This token has not implemented ledOff', this)
+        AnyBoard.Logger.warn('This token has not implemented ledOff', this);
         fail && fail('This token has not implemented ledOff');
     } else {
         this.driver.ledOff(this, win, fail);
@@ -1532,15 +1778,13 @@ AnyBoard.BaseToken.prototype.toString = function() {
  * Will then log all events, regardless of severity
  *
  * @static {object}
- * @property {number} threshold *(default: 10)* sets a threshold on whether or not to log an event.
- *      At 10, AnyBoard will log all normal logs, warning logs, and erros, but ignore debug logs.
- *      At 0, will also log debug events. At 20, only warning and error. At 30 only error events.
+ * @property {number} threshold *(default: 10)* threshold on whether or not to log an event.
+ *      Any message with level above or equal threshold will be logged
  * @property {number} debugLevel *(value: 0)* sets a threshold for when a log should be considered a debug log event.
  * @property {number} normalLevel *(value: 10)* sets a threshold for when a log should be considered a normal log event.
  * @property {number} warningLevel *(value: 20)* sets a threshold for when a log should be considered a warning.
  * @property {number} errorLevel *(value: 30)* sets a threshold for when a log should be considered a fatal error.
- * @property {function} loggerObject *(default: console)* logging method. Must have implemented .debug(), .log(), .warn() and .error()
- *
+ * @property {object} loggerObject *(default: console)* logging method. Must have implemented .debug(), .log(), .warn() and .error()
  */
 AnyBoard.Logger = {
     threshold: 10,
@@ -1560,9 +1804,8 @@ AnyBoard.Logger = {
     _message: function(level, message, sender) {
         var messageFormat = 'AnyBoard (' + level + '): ' + message  + (sender ? ' (' + sender + ')' : '');
         if ((this.threshold <= level || this.errorLevel <= level) && this.debugLevel <= level) {
-            if (level >= this.errorLevel) {
+            if (level >= this.errorLevel)
                 this.loggerObject.error && this.loggerObject.error(messageFormat);
-            }
             else if (level >= this.warningLevel)
                 this.loggerObject.warn && this.loggerObject.warn(messageFormat);
             else if (level >= this.normalLevel)
@@ -1608,9 +1851,31 @@ AnyBoard.Logger = {
      */
     debug: function(message, sender) {
         this._message(this.debugLevel, message, sender)
+    },
+
+    /**
+     * Sets threshold for logging
+     * @param {number} severity a message has to have before being logged
+     * @example
+     * // By default, debug doesn't log
+     * AnyBoard.debug("Hi")  // does not log
+     * @example
+     * // But you can lower the thresholdlevel
+     * AnyBoard.Logger.setThreshold(AnyBoard.Logger.debugLevel)
+     * AnyBoard.debug("I'm here afterall!")  // logs
+     * @example
+     * // Or increase it to avoid certain logging
+     * AnyBoard.Logger.setThreshold(AnyBoard.Logger.errorLevel)
+     * AnyBoard.warn("The tardis has arrived!")  // does not log
+     * @example
+     * // But you can never avoid errors
+     * AnyBoard.Logger.setThreshold(AnyBoard.Logger.errorLevel+1)
+     * AnyBoard.error("The Doctor is dead!!")  // logs
+     */
+    setThreshold: function(severity) {
+        this.threshold = severity;
     }
 };
-
 /**
  * Utility functions for AnyBoard
  */

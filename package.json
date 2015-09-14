@@ -1,9 +1,9 @@
 {
   "name": "AnyBoard",
-  "description": "JavaScript libraries designed to assist in creating boardgames with Phaser (phaser.io)",
-  "readme": "",
-  "repository": "",
-  "version": "0.0.0",
+  "description": "JavaScript libraries designed to assist developers in creating hybrid board games",
+  "readme": "https://github.com/tomfa/anyboard-lib/blob/master/README.md",
+  "repository": "https://github.com/tomfa/anyboard-lib",
+  "version": "0.1.0",
   "dependencies": {
     "grunt-jsdoc-plugin": "^0.1.4"
   },

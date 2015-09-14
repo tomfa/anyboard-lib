@@ -21,8 +21,33 @@ if (typeof module !== "undefined") module.exports = AnyBoard;
 
 /**
  * Type of callback called upon triggering of events
- * @callback simpleTriggerCallback
- * @param {string} event name of event
+ * @callback simpleEventCallback
+ * @param {object} [options] *(optional)* options called with the triggering of that event
+ */
+
+/**
+ * Type of callback called upon token-token events, i.e. when two tokens interact with eachother, wuch
+ * as 'STACK_ON', 'NEXT_TO'
+ * @callback tokenTokenEventCallback
+ * @param {AnyBoard.BaseToken} initiatingToken token whose interaction with has triggered the event
+ * @param {AnyBoard.BaseToken} respondingToken token that initiatingToken has interacted with
+ * @param {object} [options] *(optional)* options called with the triggering of that event
+ */
+
+/**
+ * Type of callback called upon triggering of a Token event, i.e. events triggered by the physical interaction
+ * with tokens, such as 'LIFT', 'SHAKE', 'TURN'
+ * @callback tokenEventCallback
+ * @param {AnyBoard.BaseToken} token token that has been interacted with
+ * @param {object} [options] *(optional)* options called with the triggering of that event
+ */
+
+/**
+ * Type of callback called upon triggering of a Token-Constraint event, i.e. events triggered by the physical interaction
+ * of a token upon a constraint, such as 'MOVED_TO'
+ * @callback tokenConstraintEventCallback
+ * @param {AnyBoard.BaseToken} token token that triggered the event
+ * @param {string} constraint constraint that has been interacted with. Currently only a string representation.
  * @param {object} [options] *(optional)* options called with the triggering of that event
  */
 

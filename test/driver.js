@@ -2,7 +2,7 @@ var assert = require("assert");
 var AnyBoard = require("./../dist/AnyBoard.js");
 var sinon = require('sinon');
 
-AnyBoard.Logger.threshold = AnyBoard.Logger.errorLevel;
+AnyBoard.Logger.setThreshold(AnyBoard.Logger.errorLevel);
 
 var validDriverData = {
     'name': 'validDriver',
@@ -46,13 +46,19 @@ describe('AnyBoard.Driver', function() {
         });
     });
     describe('when constructing with invalid arguments', function () {
-        after(function(){ AnyBoard.Logger.loggerObject = console; });
-        it('will call error() on AnyBoard.Logger', function () {
+        before(function(){
+            AnyBoard.Logger.setThreshold(AnyBoard.Logger.debugLevel)
+        });
+        after(function(){
+            AnyBoard.Logger.loggerObject = console;
+            AnyBoard.Logger.setThreshold(AnyBoard.Logger.errorLevel)
+        });
+        it('will call warn() on AnyBoard.Logger', function () {
             var otherLogger = sinon.spy();
-            var errorLogger = sinon.spy();
-            AnyBoard.Logger.loggerObject = {debug: otherLogger, log: otherLogger, warn: otherLogger, error: errorLogger};
-            var a = new AnyBoard.Driver(invalidDriverData);
-            assert(errorLogger.called)
+            var warnLogger = sinon.spy();
+            AnyBoard.Logger.loggerObject = {debug: otherLogger, log: otherLogger, warn: warnLogger, error: otherLogger};
+            new AnyBoard.Driver(invalidDriverData);
+            assert(warnLogger.called)
         });
         it('and not be found with AnyBoard.Drivers.get([name of driver])', function () {
             assert(typeof AnyBoard.Deck.get(invalidDriverData.name) === 'undefined')

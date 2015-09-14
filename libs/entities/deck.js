@@ -9,8 +9,8 @@
  * @property {Array.<AnyBoard.Card>} usedPile cards played from this deck
  * @property {boolean} autoUsedRefill *(default: true)* whether or not to automatically refill pile from usedPile when empty. Is ignored if autoNewRefill is true.
  * @property {boolean} autoNewRefill *(default: false)* whether or not to automatically refill pile with a whole new deck when empty.
- * @property {Array.<Function>} playListeners holds functions to be called when cards in this deck are played
- * @property {Array.<Function>} drawListeners holds functions to be called when cards in this deck are drawn
+ * @property {Array.<playDrawCallback>} playListeners holds functions to be called when cards in this deck are played
+ * @property {Array.<playDrawCallback>} drawListeners holds functions to be called when cards in this deck are drawn
  *
  */
 AnyBoard.Deck = function (name, jsonDeck) {
@@ -30,7 +30,7 @@ AnyBoard.Deck = function (name, jsonDeck) {
         AnyBoard.Logger.warn("Deck with name " + this.name + " already exists. Old deck will no longer be available " +
             "through AnyBoard.Deck.get", this);
 
-    this.initiate(jsonDeck);
+    this._initiate(jsonDeck);
 };
 
 AnyBoard.Deck.all = {};
@@ -57,8 +57,9 @@ AnyBoard.Deck.prototype.shuffle = function() {
  * Reads Deck from jsonObject and provides a shuffled version in pile.
  * Is automatically called upon constructing a deck.
  * @param {object} jsonDeck loaded json file. See [examples-folder](./examples) for example of json file and loading
+ * @private
  */
-AnyBoard.Deck.prototype.initiate = function(jsonDeck) {
+AnyBoard.Deck.prototype._initiate = function(jsonDeck) {
     if (jsonDeck.hasOwnProperty('autoNewRefill'))
         this.autoNewRefill = jsonDeck.autoNewRefill;
     if (jsonDeck.hasOwnProperty('autoUsedRefill'))
@@ -74,7 +75,7 @@ AnyBoard.Deck.prototype.initiate = function(jsonDeck) {
 
 /**
  * Manually refills the pile. This is not necessary if autoUsedRefill or autoNewRefill property of deck is true.
- * @param {boolean} [newDeck=false] *(default: false)* True if to refill with a new deck.
+ * @param {boolean} [newDeck=false] True if to refill with a new deck.
  * False if to refill with played cards (from usedPile)
  */
 AnyBoard.Deck.prototype.refill = function(newDeck) {
@@ -167,7 +168,7 @@ AnyBoard.Deck.prototype.toString = function() {
  * @param {string} [options.category] *(optional)* category of the card, not used by AnyBoard FrameWork
  * @param {number} [options.value] *(optional)* value of the card, not used by AnyBoard FrameWork
  * @param {string} [options.type] *(optional)* type of the card, not used by AnyBoard FrameWork
- * @param {number} [options.amount=1] *(optional, default: 1)* amount of this card in the deck
+ * @param {number} [options.amount=1] amount of this card in the deck
  * @param {any} [options.yourAttributeHere] custom attributes, as well as specified ones, are all placed in card.properties. E.g. 'heat' would be placed in card.properties.heat.
  * @property {string} title title of the card.
  * @property {string} description description for the Card
@@ -177,8 +178,8 @@ AnyBoard.Deck.prototype.toString = function() {
  * @property {string} type type of the card, not used by AnyBoard FrameWork
  * @property {number} amount amount of this card its deck
  * @property {AnyBoard.Deck} deck deck that this card belongs to
- * @property {Array} playListeneres holds functions to be called upon play of this spesific card (before potential playListeners on its belonging deck)
- * @property {Array} drawListeners holds functions to be called upon draw of this spesific card (before potential drawListeners on its belonging deck)
+ * @property {Array.<playDrawCallback>} playListeners holds functions to be called upon play of this spesific card (before potential playListeners on its belonging deck)
+ * @property {Array.<playDrawCallback>} drawListeners holds functions to be called upon draw of this spesific card (before potential drawListeners on its belonging deck)
  * @property {object} properties dictionary that holds custom attributes
  */
 AnyBoard.Card = function (deck, options) {

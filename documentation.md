@@ -9,8 +9,20 @@
 <dt><a href="#playDrawCallback">playDrawCallback</a> : <code>function</code></dt>
 <dd><p>This type of callback will be called when card is drawn or played</p>
 </dd>
-<dt><a href="#simpleTriggerCallback">simpleTriggerCallback</a> : <code>function</code></dt>
+<dt><a href="#simpleEventCallback">simpleEventCallback</a> : <code>function</code></dt>
 <dd><p>Type of callback called upon triggering of events</p>
+</dd>
+<dt><a href="#tokenTokenEventCallback">tokenTokenEventCallback</a> : <code>function</code></dt>
+<dd><p>Type of callback called upon token-token events, i.e. when two tokens interact with eachother, wuch
+as &#39;STACK_ON&#39;, &#39;NEXT_TO&#39;</p>
+</dd>
+<dt><a href="#tokenEventCallback">tokenEventCallback</a> : <code>function</code></dt>
+<dd><p>Type of callback called upon triggering of a Token event, i.e. events triggered by the physical interaction
+with tokens, such as &#39;LIFT&#39;, &#39;SHAKE&#39;, &#39;TURN&#39;</p>
+</dd>
+<dt><a href="#tokenConstraintEventCallback">tokenConstraintEventCallback</a> : <code>function</code></dt>
+<dd><p>Type of callback called upon triggering of a Token-Constraint event, i.e. events triggered by the physical interaction
+of a token upon a constraint, such as &#39;MOVED_TO&#39;</p>
 </dd>
 <dt><a href="#stdStringCallback">stdStringCallback</a> : <code>function</code></dt>
 <dd><p>Generic callback returning a string param</p>
@@ -42,7 +54,6 @@ Global variable AnyBoard.
     * [new AnyBoard.Deck(name, jsonDeck)](#new_AnyBoard.Deck_new)
     * _instance_
       * [.shuffle()](#AnyBoard.Deck+shuffle)
-      * [.initiate(jsonDeck)](#AnyBoard.Deck+initiate)
       * [.refill([newDeck])](#AnyBoard.Deck+refill)
       * [.onPlay(func)](#AnyBoard.Deck+onPlay)
       * [.onDraw(callback)](#AnyBoard.Deck+onDraw)
@@ -123,6 +134,12 @@ Global variable AnyBoard.
     * [.setDriver(driver)](#AnyBoard.TokenManager.setDriver)
     * [.scan([win], [fail], [timeout])](#AnyBoard.TokenManager.scan)
     * [.get(address)](#AnyBoard.TokenManager.get) ⇒ <code>[BaseToken](#AnyBoard.BaseToken)</code>
+    * [.onTokenTokenEvent(eventName, callbackFunction)](#AnyBoard.TokenManager.onTokenTokenEvent)
+    * [.onceTokenTokenEvent(eventName, callbackFunction)](#AnyBoard.TokenManager.onceTokenTokenEvent)
+    * [.onTokenConstraintEvent(eventName, callbackFunction)](#AnyBoard.TokenManager.onTokenConstraintEvent)
+    * [.onceTokenConstraintEvent(eventName, callbackFunction)](#AnyBoard.TokenManager.onceTokenConstraintEvent)
+    * [.onTokenEvent(eventName, callbackFunction)](#AnyBoard.TokenManager.onTokenEvent)
+    * [.onceTokenEvent(eventName, callbackFunction)](#AnyBoard.TokenManager.onceTokenEvent)
   * [.Logger](#AnyBoard.Logger)
     * [.warn(message, [sender])](#AnyBoard.Logger.warn)
     * [.error(message, [sender])](#AnyBoard.Logger.error)
@@ -188,15 +205,14 @@ Returns a short description of the Driver instance
 | usedPile | <code>[Array.&lt;Card&gt;](#AnyBoard.Card)</code> | cards played from this deck |
 | autoUsedRefill | <code>boolean</code> | *(default: true)* whether or not to automatically refill pile from usedPile when empty. Is ignored if autoNewRefill is true. |
 | autoNewRefill | <code>boolean</code> | *(default: false)* whether or not to automatically refill pile with a whole new deck when empty. |
-| playListeners | <code>Array.&lt;function()&gt;</code> | holds functions to be called when cards in this deck are played |
-| drawListeners | <code>Array.&lt;function()&gt;</code> | holds functions to be called when cards in this deck are drawn |
+| playListeners | <code>[Array.&lt;playDrawCallback&gt;](#playDrawCallback)</code> | holds functions to be called when cards in this deck are played |
+| drawListeners | <code>[Array.&lt;playDrawCallback&gt;](#playDrawCallback)</code> | holds functions to be called when cards in this deck are drawn |
 
 
 * [.Deck](#AnyBoard.Deck)
   * [new AnyBoard.Deck(name, jsonDeck)](#new_AnyBoard.Deck_new)
   * _instance_
     * [.shuffle()](#AnyBoard.Deck+shuffle)
-    * [.initiate(jsonDeck)](#AnyBoard.Deck+initiate)
     * [.refill([newDeck])](#AnyBoard.Deck+refill)
     * [.onPlay(func)](#AnyBoard.Deck+onPlay)
     * [.onDraw(callback)](#AnyBoard.Deck+onDraw)
@@ -221,17 +237,6 @@ Pile is automatically shuffled upon construction, and upon initiate().
 New cards added upon refill() are also automatically shuffled.
 
 **Kind**: instance method of <code>[Deck](#AnyBoard.Deck)</code>  
-<a name="AnyBoard.Deck+initiate"></a>
-#### deck.initiate(jsonDeck)
-Reads Deck from jsonObject and provides a shuffled version in pile.
-Is automatically called upon constructing a deck.
-
-**Kind**: instance method of <code>[Deck](#AnyBoard.Deck)</code>  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| jsonDeck | <code>object</code> | loaded json file. See [examples-folder](./examples) for example of json file and loading |
-
 <a name="AnyBoard.Deck+refill"></a>
 #### deck.refill([newDeck])
 Manually refills the pile. This is not necessary if autoUsedRefill or autoNewRefill property of deck is true.
@@ -240,7 +245,7 @@ Manually refills the pile. This is not necessary if autoUsedRefill or autoNewRef
 
 | Param | Type | Default | Description |
 | --- | --- | --- | --- |
-| [newDeck] | <code>boolean</code> | <code>false</code> | *(default: false)* True if to refill with a new deck. False if to refill with played cards (from usedPile) |
+| [newDeck] | <code>boolean</code> | <code>false</code> | True if to refill with a new deck. False if to refill with played cards (from usedPile) |
 
 <a name="AnyBoard.Deck+onPlay"></a>
 #### deck.onPlay(func)
@@ -293,8 +298,8 @@ Returns deck with given name
 | type | <code>string</code> | type of the card, not used by AnyBoard FrameWork |
 | amount | <code>number</code> | amount of this card its deck |
 | deck | <code>[Deck](#AnyBoard.Deck)</code> | deck that this card belongs to |
-| playListeneres | <code>Array</code> | holds functions to be called upon play of this spesific card (before potential playListeners on its belonging deck) |
-| drawListeners | <code>Array</code> | holds functions to be called upon draw of this spesific card (before potential drawListeners on its belonging deck) |
+| playListeners | <code>[Array.&lt;playDrawCallback&gt;](#playDrawCallback)</code> | holds functions to be called upon play of this spesific card (before potential playListeners on its belonging deck) |
+| drawListeners | <code>[Array.&lt;playDrawCallback&gt;](#playDrawCallback)</code> | holds functions to be called upon draw of this spesific card (before potential drawListeners on its belonging deck) |
 | properties | <code>object</code> | dictionary that holds custom attributes |
 
 
@@ -323,7 +328,7 @@ Should be instantiated in bulk by calling the deck constructor
 | [options.category] | <code>string</code> |  | *(optional)* category of the card, not used by AnyBoard FrameWork |
 | [options.value] | <code>number</code> |  | *(optional)* value of the card, not used by AnyBoard FrameWork |
 | [options.type] | <code>string</code> |  | *(optional)* type of the card, not used by AnyBoard FrameWork |
-| [options.amount] | <code>number</code> | <code>1</code> | *(optional, default: 1)* amount of this card in the deck |
+| [options.amount] | <code>number</code> | <code>1</code> | amount of this card in the deck |
 | [options.yourAttributeHere] | <code>any</code> |  | custom attributes, as well as specified ones, are all placed in card.properties. E.g. 'heat' would be placed in card.properties.heat. |
 
 <a name="AnyBoard.Card+onPlay"></a>
@@ -378,8 +383,8 @@ Represents a set of game dices that can be rolled to retrieve a random result.
 
 | Param | Type | Default | Description |
 | --- | --- | --- | --- |
-| [eyes] | <code>number</code> | <code>6</code> | *(default: 6)* number of max eyes on a roll with this dice |
-| [numOfDice] | <code>number</code> | <code>1</code> | *(default: 1)* number of dices |
+| [eyes] | <code>number</code> | <code>6</code> | number of max eyes on a roll with this dice |
+| [numOfDice] | <code>number</code> | <code>1</code> | number of dices |
 
 **Example**  
 ```js
@@ -639,7 +644,7 @@ Checks whether or not a player has an amount card in this hand.
 | Param | Type | Default | Description |
 | --- | --- | --- | --- |
 | card | <code>[Card](#AnyBoard.Card)</code> |  | card to be checked if is in hand |
-| [amount] | <code>number</code> | <code>1</code> | *(default: 1)* amount of card to be checked if is in hand |
+| [amount] | <code>number</code> | <code>1</code> | amount of card to be checked if is in hand |
 
 **Example**  
 ```js
@@ -735,7 +740,7 @@ AnyBoard.Resource.get("gold");
 | Name | Type | Default | Description |
 | --- | --- | --- | --- |
 | resources | <code>object</code> |  | *(optional)* a set of initially contained resources |
-| allowNegative | <code>boolean</code> | <code>false</code> | *(default: false)*  whether or not to allow being subtracted resources to below 0 (dept) |
+| allowNegative | <code>boolean</code> | <code>false</code> | whether or not to allow being subtracted resources to below 0 (dept) |
 
 
 * [.ResourceSet](#AnyBoard.ResourceSet)
@@ -753,7 +758,7 @@ Creates a ResourceSet
 | Param | Type | Default | Description |
 | --- | --- | --- | --- |
 | [resources] | <code>object</code> |  | *(optional)* a set of initially contained resources |
-| [allowNegative] | <code>boolean</code> | <code>false</code> | *(default: false)*  whether or not to allow being subtracted resources to below 0 (dept) |
+| [allowNegative] | <code>boolean</code> | <code>false</code> | whether or not to allow being subtracted resources to below 0 (dept) |
 
 **Example**  
 ```js
@@ -870,8 +875,7 @@ myTreasure.similarities(otherTresure);
 | address | <code>string</code> | address of the token found when scanned |
 | connected | <code>boolean</code> | whether or not the token is connected |
 | device | <code>object</code> | driver spesific data. |
-| listeners | <code>object</code> | functions to be execute upon certain triggered events |
-| onceListeners | <code>object</code> | functions to be execute upon next triggering of certain events |
+| listeners | <code>object</code> | functions to be executed upon certain triggered events |
 | sendQueue | <code>Array.&lt;function()&gt;</code> | queue for communicating with |
 | cache | <code>object</code> | key-value store for caching certain communication calls |
 | driver | <code>[Driver](#AnyBoard.Driver)</code> | driver that handles communication |
@@ -944,7 +948,8 @@ Disconnects from the token.
 **Kind**: instance method of <code>[BaseToken](#AnyBoard.BaseToken)</code>  
 <a name="AnyBoard.BaseToken+trigger"></a>
 #### baseToken.trigger(eventName, [eventOptions])
-Trigger an event on a token
+Trigger an event on a token. Also used to trigger special events (Token, Token-Token and Token-Eonstraint-events) by
+specifying 'meta-eventType' = 'token', 'token-token' or 'token-constraint' in eventOptions.
 
 **Kind**: instance method of <code>[BaseToken](#AnyBoard.BaseToken)</code>  
 
@@ -973,7 +978,7 @@ Adds a callbackFunction to be executed always when event is triggered
 | Param | Type | Description |
 | --- | --- | --- |
 | eventName | <code>string</code> | name of event to listen to |
-| callbackFunction | <code>[simpleTriggerCallback](#simpleTriggerCallback)</code> | function to be executed |
+| callbackFunction | <code>[simpleEventCallback](#simpleEventCallback)</code> | function to be executed |
 
 **Example**  
 ```js
@@ -1012,7 +1017,7 @@ Adds a callbackFunction to be executed next time an event is triggered
 | Param | Type | Description |
 | --- | --- | --- |
 | eventName | <code>string</code> | name of event to listen to |
-| callbackFunction | <code>[simpleTriggerCallback](#simpleTriggerCallback)</code> | function to be executed |
+| callbackFunction | <code>[simpleEventCallback](#simpleEventCallback)</code> | function to be executed |
 
 **Example**  
 ```js
@@ -1350,6 +1355,12 @@ A token manager. Holds all tokens. Discovers and connects to them.
   * [.setDriver(driver)](#AnyBoard.TokenManager.setDriver)
   * [.scan([win], [fail], [timeout])](#AnyBoard.TokenManager.scan)
   * [.get(address)](#AnyBoard.TokenManager.get) ⇒ <code>[BaseToken](#AnyBoard.BaseToken)</code>
+  * [.onTokenTokenEvent(eventName, callbackFunction)](#AnyBoard.TokenManager.onTokenTokenEvent)
+  * [.onceTokenTokenEvent(eventName, callbackFunction)](#AnyBoard.TokenManager.onceTokenTokenEvent)
+  * [.onTokenConstraintEvent(eventName, callbackFunction)](#AnyBoard.TokenManager.onTokenConstraintEvent)
+  * [.onceTokenConstraintEvent(eventName, callbackFunction)](#AnyBoard.TokenManager.onceTokenConstraintEvent)
+  * [.onTokenEvent(eventName, callbackFunction)](#AnyBoard.TokenManager.onTokenEvent)
+  * [.onceTokenEvent(eventName, callbackFunction)](#AnyBoard.TokenManager.onceTokenEvent)
 
 <a name="AnyBoard.TokenManager.setDriver"></a>
 #### TokenManager.setDriver(driver)
@@ -1393,6 +1404,158 @@ Returns a token handled by this TokenManager
 | --- | --- | --- |
 | address | <code>string</code> | identifer of the token found when scanned |
 
+<a name="AnyBoard.TokenManager.onTokenTokenEvent"></a>
+#### TokenManager.onTokenTokenEvent(eventName, callbackFunction)
+Adds a callbackFunction to be executed always when a token-token event is triggered
+
+**Kind**: static method of <code>[TokenManager](#AnyBoard.TokenManager)</code>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| eventName | <code>string</code> | name of event to listen to |
+| callbackFunction | <code>[tokenTokenEventCallback](#tokenTokenEventCallback)</code> | function to be executed |
+
+**Example**  
+```js
+var cb = function (initToken, resToken, event, options) {
+     console.log(initToken + " " + event + " " + resToken);
+};
+
+TokenManager.onTokenTokenEvent("MOVE_NEXT_TO", cb);
+
+// prints "existingToken MOVE_NEXT_TO anotherToken";
+existingToken.trigger("MOVE_NEXT_TO", {"meta-eventType": "token", "token": anotherToken};
+
+// prints "existingToken MOVE_NEXT_TO oldToken";
+existingToken.trigger("MOVE_NEXT_TO", {"meta-eventType": "token", "token": anotherToken};
+```
+<a name="AnyBoard.TokenManager.onceTokenTokenEvent"></a>
+#### TokenManager.onceTokenTokenEvent(eventName, callbackFunction)
+Adds a callbackFunction to be executed next time a token-token event is triggered
+
+**Kind**: static method of <code>[TokenManager](#AnyBoard.TokenManager)</code>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| eventName | <code>string</code> | name of event to listen to |
+| callbackFunction | <code>[tokenTokenEventCallback](#tokenTokenEventCallback)</code> | function to be executed |
+
+**Example**  
+```js
+var cb = function (initToken, resToken, event, options) {
+     console.log(initToken + " " + event + " " + resToken);
+};
+
+TokenManager.onceTokenTokenEvent("MOVE_NEXT_TO", cb);
+
+// prints "existingToken MOVE_NEXT_TO anotherToken";
+existingToken.trigger("MOVE_NEXT_TO", {"meta-eventType": "token-token", "token": anotherToken};
+
+// no effect
+existingToken.trigger("MOVE_NEXT_TO", {"meta-eventType": "token-token", "token": anotherToken};
+```
+<a name="AnyBoard.TokenManager.onTokenConstraintEvent"></a>
+#### TokenManager.onTokenConstraintEvent(eventName, callbackFunction)
+Adds a callbackFunction to be executed always when a token-constraint event is triggered.
+A token-constraint event is a physical token interaction with a game constraint, e.g. moving a pawn within a board.
+
+**Kind**: static method of <code>[TokenManager](#AnyBoard.TokenManager)</code>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| eventName | <code>string</code> | name of event to listen to |
+| callbackFunction | <code>[tokenConstraintEventCallback](#tokenConstraintEventCallback)</code> | function to be executed |
+
+**Example**  
+```js
+var cb = function (initToken, constraint, event, options) {
+     console.log(initToken + " " + event + " " + constraint);
+};
+
+TokenManager.onTokenConstraintEvent("MOVE", cb);
+
+// prints "existingToken MOVE Tile-5";
+existingToken.trigger("MOVE", {"meta-eventType": "token-constraint", "constraint": "Tile-5"};
+
+// prints "existingToken MOVE Tile-5";
+existingToken.trigger("MOVE", {"meta-eventType": "token-constraint", "constraint": "Tile-5"};
+```
+<a name="AnyBoard.TokenManager.onceTokenConstraintEvent"></a>
+#### TokenManager.onceTokenConstraintEvent(eventName, callbackFunction)
+Adds a callbackFunction to be executed next time a token-constraint event is triggered
+
+**Kind**: static method of <code>[TokenManager](#AnyBoard.TokenManager)</code>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| eventName | <code>string</code> | name of event to listen to |
+| callbackFunction | <code>[tokenConstraintEventCallback](#tokenConstraintEventCallback)</code> | function to be executed |
+
+**Example**  
+```js
+var cb = function (initToken, constraint, event, options) {
+     console.log(initToken + " " + event + " " + constraint);
+};
+
+TokenManager.onceTokenConstraintEvent("MOVE", cb);
+
+// prints "existingToken MOVE Tile-5";
+existingToken.trigger("MOVE", {"meta-eventType": "token-constraint"", "constraint": "Tile-5"};
+
+// no effect
+existingToken.trigger("MOVE", {"meta-eventType": "token-constraint""};
+```
+<a name="AnyBoard.TokenManager.onTokenEvent"></a>
+#### TokenManager.onTokenEvent(eventName, callbackFunction)
+Adds a callbackFunction to be executed always when a token event is triggered.
+A token event is an physical interaction with a single token.
+
+**Kind**: static method of <code>[TokenManager](#AnyBoard.TokenManager)</code>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| eventName | <code>string</code> | name of event to listen to |
+| callbackFunction | <code>[tokenEventCallback](#tokenEventCallback)</code> | function to be executed |
+
+**Example**  
+```js
+var cb = function (initToken, event, options) {
+     console.log(initToken + " was " + event + "'ed ");
+};
+
+TokenManager.onTokenEvent("LIFT", cb);
+
+// prints "existingToken was LIFT'ed"
+existingToken.trigger("LIFT", {"meta-eventType": "token"};
+
+// prints "existingToken was LIFT'ed"
+existingToken.trigger("LIFT", {"meta-eventType": "token"};
+```
+<a name="AnyBoard.TokenManager.onceTokenEvent"></a>
+#### TokenManager.onceTokenEvent(eventName, callbackFunction)
+Adds a callbackFunction to be executed next time a token event is triggered
+
+**Kind**: static method of <code>[TokenManager](#AnyBoard.TokenManager)</code>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| eventName | <code>string</code> | name of event to listen to |
+| callbackFunction | <code>[tokenEventCallback](#tokenEventCallback)</code> | function to be executed |
+
+**Example**  
+```js
+var cb = function (initToken, event, options) {
+     console.log(initToken + " was " + event + "'ed ");
+};
+
+TokenManager.onceTokenEvent("LIFT", cb);
+
+// prints "existingToken was LIFT'ed"
+existingToken.trigger("LIFT", {"meta-eventType": "token"};
+
+// No effect
+existingToken.trigger('LIFT');
+```
 <a name="AnyBoard.Logger"></a>
 ### AnyBoard.Logger
 Static logger object that handles logging. Will log using hyper.log if hyper is present (when using Evothings).
@@ -1538,15 +1701,52 @@ This type of callback will be called when card is drawn or played
 | player | <code>[Player](#AnyBoard.Player)</code> | that played the card |
 | [options] | <code>object</code> | *(optional)* custom options as extra parameter when AnyBoard.Player.play was called |
 
-<a name="simpleTriggerCallback"></a>
-## simpleTriggerCallback : <code>function</code>
+<a name="simpleEventCallback"></a>
+## simpleEventCallback : <code>function</code>
 Type of callback called upon triggering of events
 
 **Kind**: global typedef  
 
 | Param | Type | Description |
 | --- | --- | --- |
-| event | <code>string</code> | name of event |
+| [options] | <code>object</code> | *(optional)* options called with the triggering of that event |
+
+<a name="tokenTokenEventCallback"></a>
+## tokenTokenEventCallback : <code>function</code>
+Type of callback called upon token-token events, i.e. when two tokens interact with eachother, wuch
+as 'STACK_ON', 'NEXT_TO'
+
+**Kind**: global typedef  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| initiatingToken | <code>[BaseToken](#AnyBoard.BaseToken)</code> | token whose interaction with has triggered the event |
+| respondingToken | <code>[BaseToken](#AnyBoard.BaseToken)</code> | token that initiatingToken has interacted with |
+| [options] | <code>object</code> | *(optional)* options called with the triggering of that event |
+
+<a name="tokenEventCallback"></a>
+## tokenEventCallback : <code>function</code>
+Type of callback called upon triggering of a Token event, i.e. events triggered by the physical interaction
+with tokens, such as 'LIFT', 'SHAKE', 'TURN'
+
+**Kind**: global typedef  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| token | <code>[BaseToken](#AnyBoard.BaseToken)</code> | token that has been interacted with |
+| [options] | <code>object</code> | *(optional)* options called with the triggering of that event |
+
+<a name="tokenConstraintEventCallback"></a>
+## tokenConstraintEventCallback : <code>function</code>
+Type of callback called upon triggering of a Token-Constraint event, i.e. events triggered by the physical interaction
+of a token upon a constraint, such as 'MOVED_TO'
+
+**Kind**: global typedef  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| token | <code>[BaseToken](#AnyBoard.BaseToken)</code> | token that triggered the event |
+| constraint | <code>string</code> | constraint that has been interacted with. Currently only a string representation. |
 | [options] | <code>object</code> | *(optional)* options called with the triggering of that event |
 
 <a name="stdStringCallback"></a>

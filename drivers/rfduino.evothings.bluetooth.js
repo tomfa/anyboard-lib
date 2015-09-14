@@ -270,7 +270,21 @@
                     token.trigger('GET_BATTERY_STATUS', {"value": strData});
                     break;
                 case rfduinoBluetooth._CMD_CODE.MOVE:
-                    token.trigger('MOVE', {"value": uint8array[1], "newTile": uint8array[1], "oldTile": uint8array[2]});
+                    var currentTile = uint8array[1];
+                    var previousTile = uint8array[2];
+                    token.trigger('MOVE', {"value": currentTile, "newTile": currentTile, "oldTile": previousTile});
+                    token.trigger('MOVE_TO', {'meta-eventType': 'token-constraint' ,"constraint": currentTile});
+                    token.trigger('MOVE_FROM', {'meta-eventType': 'token-constraint' ,"constraint": previousTile});
+
+                    for (var key in AnyBoard.TokenManager.tokens) {
+                        if (AnyBoard.TokenManager.tokens.hasOwnProperty(key)) {
+                            var t = AnyBoard.TokenManager.tokens[key];
+                            if (t.currentTile && t.currentTile === currentTile) {
+                                t.trigger('MOVE_NEXT_TO', {'meta-eventType': 'token-token' ,"token": t})
+                            }
+                        }
+                    }
+                    token.currentTile = currentTile;
                     break;
                 case rfduinoBluetooth._CMD_CODE.GET_NAME:
                     for (var i = 1; i < uint8array.length; i++)
