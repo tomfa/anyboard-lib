@@ -1,0 +1,18 @@
+{	
+	"name": "DoomsDeck",
+	"color": "black",
+	"autoUsedRefill": false,
+	"autoNewRefill": true,
+	"cards":[
+		{"title": "Card of Doom", 
+		"description": "Display your private hand to all players.", 
+		"category": "Doom",
+		"value": 1,
+		"amount": 5},
+		{"title": "Card of Fish", 
+		"description": "Display your private hand to all players.", 
+		"category": "Doom",
+		"value": 2,
+		"amount": 3}
+	]
+}

@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, user-scalable=no
+        initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0" />
+
+    <title>AnyToken Deck and Card</title>
+
+    <style>
+        @import 'ui/css/evothings-app.css';
+
+        p.topic {
+            font-weight: bold;
+        }
+
+        .hand, .info {
+            font-size: 1rem;
+        }
+
+        .hand button {
+            display: block;
+        }
+
+        .output {
+            width: 100%; 
+            height: 10rem; 
+            font-size: 1rem; 
+            outline: none; 
+            resize: none; 
+            overflow-y: scroll
+        }
+    </style>
+
+    <script>
+    </script>
+
+    <!-- AnyBoard libraries -->
+    <script src="dist/AnyBoard.js"></script>
+
+    <!-- jquery for example methods-->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+
+    <script>
+        $(document).ready(function() {
+            // We tell AnyBoard to log everything
+            AnyBoard.Logger.threshold = 0;
+
+            // If you want to read json file from local files, see Cordova FileReader.
+            // If you want from web server, see jQuery ajax or javascript XMLRequest
+            var deckJson = {
+                "name": "DoomsDeck",
+                "color": "black",
+                "autoUsedRefill": true,  // Will refill from used (played) pile
+                "autoNewRefill": false,  // Will not refill from completly new instance of deck (can never run out)
+                "cards":[
+                    {
+                        "title": "Card of No Cards",
+                        "description": "You lost your hand! BOOM!",
+                        "category": "Doom",
+                        "amount": 5  // Instances of this card in deck
+                    },
+                    {
+                        "title": "Card of Fish",
+                        "description": "Display your private hand to all players.",
+                        "category": "Doom",
+                        "amount": 3
+                    }
+                ]
+            };
+
+            // Create a Deck,
+            var deck = new AnyBoard.Deck("testDeck", deckJson);
+
+            // Create a player
+            var player = new AnyBoard.Player("Tomas");
+
+            // Custom logger that logs to textarea in browser
+            var loadTime = Date.now();
+            var log = function(text) {
+                $('.output').prepend("[" + (Date.now()-loadTime) + "ms]: " + text + "\n");
+            };
+
+            // Renders display of remaining cards
+            var displayRemainingCards = function() {
+                $('.deck-pile-left').text(deck.pile.length);
+                $('.deck-usedpile-left').text(deck.usedPile.length);
+            };
+
+            // Renders display of players hand
+            var displayHand = function(hand) {
+                $('.hand').html('');
+                for (var cardId in hand.cards) {
+                    if (hand.cards.hasOwnProperty(cardId))
+                        for (var i = 0; i < hand.cards[cardId]; i++) {
+                            $('.hand').prepend(
+                                    '<button type="button" class="green" onclick="app.play(\'' + AnyBoard.Card.get(cardId).title + '\')" >' +
+                                    '    Play ' + AnyBoard.Card.get(cardId).title +
+                                    '</button>'
+                            )
+                        }
+                }
+            };
+
+            // Function that handles a draw event
+            var drawHandler = function(card, player, options) {
+                if (!card) {
+                    log("Deck is empty. Could not draw card.");
+                    return;
+                }
+                log(player + " drew " + card);
+                displayRemainingCards();
+            };
+            deck.onDraw(drawHandler);
+
+            // Function that handles a play event
+            var playHandler = function(card, player, options) {
+                log(player + " played " + card);
+                alert(card.description);
+                displayRemainingCards();
+            };
+            deck.onPlay(playHandler);
+
+            // Calling a special playCallback to be executed upon Card of No Cards play
+            var cardOfNoCardsHandler = function(card, player, options){
+                if (options && options.target) {
+                    var target = AnyBoard.Player.get(options.target);
+                    target.hand.discardHand();
+                }
+            };
+            AnyBoard.Card.get("Card of No Cards").onPlay(cardOfNoCardsHandler);
+
+            // Set functions available in the document
+            document.app = {
+                draw: function() { player.draw(deck); displayHand(player.hand); },
+                play: function(cardName) {
+                    var card = AnyBoard.Card.get(cardName);
+                    player.play(card, {target: 'Tomas'});
+                    displayHand(player.hand);
+                }
+            };
+
+            displayRemainingCards();
+        });
+    </script>
+
+</head>
+
+<body ontouchstart="">
+    <h1>AnyToken Deck Demo</h1>
+
+    <p>
+        Demo of Deck, displaying the creation of Decks, and listeners upon drawing and playing cards.
+        Click the blue button to draw cards, and whatever is in your hand will be displayed as own buttons
+        (one button for each card in your hand). Click the cards to play them.
+    </p>
+
+    <button type="button" class="blue" onclick="app.draw()">
+        Draw Card from Deck
+    </button>
+    <div class="info">
+        <span class="deck-pile-left">0</span> left (<span class="deck-usedpile-left">0</span> in usedPile)
+    </div>
+    <div class="hand">
+
+    </div>
+
+    <h4>Log:</h4>
+    <textarea class="output" disabled="disabled"></textarea>
+
+    <br />
+
+</body>
+
+</html>
