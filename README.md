@@ -27,8 +27,8 @@ and [rfduino](http://www.rfduino.com/) which is based on a [evothings](evothings
     <!-- cordova.js -->
 	<script src="cordova.js"></script>
 
-    <!-- AnyBoard libraries -->
-    <script src="dist/AnyBoard.js"></script>
+    <!-- AnyboardJS libraries -->
+    <script src="dist/anyboard.js"></script>
 
     <!-- Include evothings -->
     <script src="libs/evothings/evothings.js"></script>
@@ -43,7 +43,8 @@ and [rfduino](http://www.rfduino.com/) which is based on a [evothings](evothings
     <!-- Include driver for AnyboardJS rfduino Pawn-->
     <script src="drivers/rfduino.evothings.bluetooth.js"></script>
 ```
-6. Start writing some code, e.g.
+
+Now you're ready to start writing some code, e.g.
 ```
 <script>
     AnyBoard.TokenManager.scan(function(token) {
@@ -62,7 +63,7 @@ If you wish to contribute to the development of the AnyBoard library, clone this
 
 ### Setup
 - Install [node](http://nodejs.org/)
-- clone this repo ```git clone git@github.com:tomfa/anyboard.js.git``
+- clone this repo ```git clone git@github.com:tomfa/anyboardjs.git``
 - navigate to this folder in console 
 - ```npm install``` - installs dependencies
 
