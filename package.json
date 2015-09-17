@@ -1,8 +1,12 @@
 {
-  "name": "AnyBoard",
-  "description": "JavaScript libraries designed to assist developers in creating hybrid board games",
-  "readme": "https://github.com/tomfa/anyboard-lib/blob/master/README.md",
-  "repository": "https://github.com/tomfa/anyboard-lib",
+  "name": "Anyboard",
+  "description": "JavaScript libraries designed to assist developers in creating hybrid board games with IoT devices",
+  "readme": "https://github.com/tomfa/anyboardjs/blob/master/README.md",
+  "repository": "https://github.com/tomfa/anyboardjs",
+  "bugs": {
+    "url": "https://github.com/tomfa/anyboardjs/issues"
+  },
+  "license": "Unlicense",
   "version": "0.1.0",
   "dependencies": {
     "grunt-jsdoc-plugin": "^0.1.4"
@@ -12,7 +16,7 @@
     "grunt-contrib-clean": "^0.6.0",
     "grunt-contrib-concat": "^0.5.1",
     "grunt-contrib-connect": "^0.10.1",
-    "grunt-contrib-copy": "^0.8.0",
+    "grunt-contrib-copy": "^0.8.1",
     "grunt-contrib-cssmin": "^0.12.3",
     "grunt-contrib-htmlmin": "^0.4.0",
     "grunt-contrib-jshint": "^0.11.2",
