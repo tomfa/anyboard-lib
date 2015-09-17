@@ -78,26 +78,22 @@ module.exports = function(grunt) {
         },
         jsdoc2md: {
             oneOutputFile: {
-                src: "dist/AnyBoard.js",
+                src: "dist/<%= pkg.name %>.js",
                 dest: "documentation.md"
             }
-            //separateOutputFilePerInput: {
-            //    files: [
-            //        { src: "src/jacket.js", dest: "api/jacket.md" },
-            //        { src: "src/shirt.js", dest: "api/shirt.md" }
-            //    ]
-            //},
-            //withOptions: {
-            //    options: {
-            //        "no-gfm": true
-            //    },
-            //    src: "src/wardrobe.js",
-            //    dest: "api/with-index.md"
-            //}
+        },
+        copy: {
+            main: {
+                files: [
+                    {expand: true, src: ['dist/<%= pkg.name %>.js'], dest: 'examples/mobile-deck/'},
+                    {expand: true, src: ['dist/<%= pkg.name %>.js'], dest: 'examples/html-deck/'},
+                    {expand: true, src: ['dist/<%= pkg.name %>.js'], dest: 'examples/mobile-led-on/'},
+                    {expand: true, src: ['dist/<%= pkg.name %>.js'], dest: 'examples/mobile-bean-printer/'},
+                    {expand: true, src: ['dist/<%= pkg.name %>.js'], dest: 'examples/mobile-rfduino-color-detection/'},
+                ]
+            }
         }
-
-
-    }); 
+    });
 
     grunt.registerTask('default', []);
     grunt.registerTask('test', ['build', 'mochaTest']);
