@@ -3,15 +3,15 @@ var AnyBoard = require("./../dist/AnyBoard.js");
 
 AnyBoard.Logger.threshold = AnyBoard.Logger.errorLevel;
 
-describe('AnyBoard.Dices', function() {
+describe('AnyBoard.Dice', function() {
 	var simpledice;
 	var oneDice;
 	var twoDice;
 
   describe('when initated without parameters', function () {
-  	simpledice = new AnyBoard.Dices()
-	it('is initiated "new AnyBoard.Dices()"', function () {
-  		simpledice = new AnyBoard.Dices()
+  	simpledice = new AnyBoard.Dice()
+	it('is initiated "new AnyBoard.Dice()"', function () {
+  		simpledice = new AnyBoard.Dice()
   	});
     it('has 1 dice', function () {
       assert.equal(1, simpledice.numOfDice)
@@ -22,9 +22,9 @@ describe('AnyBoard.Dices', function() {
   });
 
   describe('when initated with one parameter', function () {
-  	oneDice = new AnyBoard.Dices(10)
-  	it('is initiated with e.g. "new AnyBoard.Dices(10)"', function () {
-      oneDice = new AnyBoard.Dices(10)
+  	oneDice = new AnyBoard.Dice(10)
+  	it('is initiated with e.g. "new AnyBoard.Dice(10)"', function () {
+      oneDice = new AnyBoard.Dice(10)
     });
     it('have 1 dice', function () {
       assert.equal(1, oneDice.numOfDice)
@@ -35,9 +35,9 @@ describe('AnyBoard.Dices', function() {
   });
 
   describe('when initated with two parameters', function () {
-  	twoDice = new AnyBoard.Dices(12, 6)
-  	it('is initiated with e.g. "new AnyBoard.Dices(12, 6)"', function () {
-      twoDice = new AnyBoard.Dices(12, 6)
+  	twoDice = new AnyBoard.Dice(12, 6)
+  	it('is initiated with e.g. "new AnyBoard.Dice(12, 6)"', function () {
+      twoDice = new AnyBoard.Dice(12, 6)
     });
     it('have the second parameter amount of dices (6)', function () {
       assert.equal(6, twoDice.numOfDice)

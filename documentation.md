@@ -68,10 +68,10 @@ Global variable AnyBoard.
       * [.toString()](#AnyBoard.Card+toString) ⇒ <code>string</code>
     * _static_
       * [.get(cardTitleOrID)](#AnyBoard.Card.get) ⇒ <code>[Card](#AnyBoard.Card)</code>
-  * [.Dices](#AnyBoard.Dices)
-    * [new AnyBoard.Dices([eyes], [numOfDice])](#new_AnyBoard.Dices_new)
-    * [.roll()](#AnyBoard.Dices+roll) ⇒ <code>number</code>
-    * [.rollEach()](#AnyBoard.Dices+rollEach) ⇒ <code>Array</code>
+  * [.Dice](#AnyBoard.Dice)
+    * [new AnyBoard.Dice([eyes], [numOfDice])](#new_AnyBoard.Dice_new)
+    * [.roll()](#AnyBoard.Dice+roll) ⇒ <code>number</code>
+    * [.rollEach()](#AnyBoard.Dice+rollEach) ⇒ <code>Array</code>
   * [.Player](#AnyBoard.Player)
     * [new AnyBoard.Player(name, [options])](#new_AnyBoard.Player_new)
     * _instance_
@@ -367,17 +367,17 @@ Returns card with given id
 | --- | --- | --- |
 | cardTitleOrID | <code>number</code> &#124; <code>string</code> | id or title of card |
 
-<a name="AnyBoard.Dices"></a>
-### AnyBoard.Dices
+<a name="AnyBoard.Dice"></a>
+### AnyBoard.Dice
 **Kind**: static class of <code>[AnyBoard](#AnyBoard)</code>  
 
-* [.Dices](#AnyBoard.Dices)
-  * [new AnyBoard.Dices([eyes], [numOfDice])](#new_AnyBoard.Dices_new)
-  * [.roll()](#AnyBoard.Dices+roll) ⇒ <code>number</code>
-  * [.rollEach()](#AnyBoard.Dices+rollEach) ⇒ <code>Array</code>
+* [.Dice](#AnyBoard.Dice)
+  * [new AnyBoard.Dice([eyes], [numOfDice])](#new_AnyBoard.Dice_new)
+  * [.roll()](#AnyBoard.Dice+roll) ⇒ <code>number</code>
+  * [.rollEach()](#AnyBoard.Dice+rollEach) ⇒ <code>Array</code>
 
-<a name="new_AnyBoard.Dices_new"></a>
-#### new AnyBoard.Dices([eyes], [numOfDice])
+<a name="new_AnyBoard.Dice_new"></a>
+#### new AnyBoard.Dice([eyes], [numOfDice])
 Represents a set of game dices that can be rolled to retrieve a random result.
 
 
@@ -389,48 +389,48 @@ Represents a set of game dices that can be rolled to retrieve a random result.
 **Example**  
 ```js
 // will create 1 dice, with 6 eyes
-var dice = new AnyBoard.Dices();
+var dice = new AnyBoard.Dice();
 
-// will create 2 dice, with 6 eyes
-var dice = new AnyBoard.Dices(2, 6);
+// will create 2 dice, with 18 eyes
+var dice = new AnyBoard.Dice(18, 2);
 ```
-<a name="AnyBoard.Dices+roll"></a>
-#### dices.roll() ⇒ <code>number</code>
+<a name="AnyBoard.Dice+roll"></a>
+#### dice.roll() ⇒ <code>number</code>
 Roll the dices and returns a the sum
 
-**Kind**: instance method of <code>[Dices](#AnyBoard.Dices)</code>  
+**Kind**: instance method of <code>[Dice](#AnyBoard.Dice)</code>  
 **Returns**: <code>number</code> - combined result of rolls for all dices  
 **Example**  
 ```js
-var dice = new AnyBoard.Dices();
+var dice = new AnyBoard.Dice();
 
 // returns random number between 1 and 6
 dice.roll()
 ```
 **Example**  
 ```js
-var dice = new AnyBoard.Dices(2, 6);
+var dice = new AnyBoard.Dice(12, 2);
 
-// returns random number between 1 and 12
+// returns random number between 2 and 24
 dice.roll()
 ```
-<a name="AnyBoard.Dices+rollEach"></a>
-#### dices.rollEach() ⇒ <code>Array</code>
+<a name="AnyBoard.Dice+rollEach"></a>
+#### dice.rollEach() ⇒ <code>Array</code>
 Roll the dices and returns an array of results for each dice
 
-**Kind**: instance method of <code>[Dices](#AnyBoard.Dices)</code>  
+**Kind**: instance method of <code>[Dice](#AnyBoard.Dice)</code>  
 **Returns**: <code>Array</code> - list of results for each dice  
 **Example**  
 ```js
-var dice = new AnyBoard.Dices(2, 6);
+var dice = new AnyBoard.Dice(8, 2);
 
 // returns an Array of numbers
 var resultArray = dice.rollEach()
 
-// result of first dice, between 1-6
+// result of first dice, between 1-8
 resultArray[0]
 
-// result of second dice, between 1-6
+// result of second dice, between 1-8
 resultArray[1]
 ```
 <a name="AnyBoard.Player"></a>
