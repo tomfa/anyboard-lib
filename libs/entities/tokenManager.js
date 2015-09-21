@@ -246,18 +246,7 @@ AnyBoard.BaseToken = function(name, address, device, driver) {
     };
     this.sendQueue = [];
     this.cache = {};
-
-    if (!driver) {
-        AnyBoard.Logger.log("Did not send parameter driver. Defaulting to default driver", this);
-        if (!AnyBoard.BaseToken._defaultDriver || !AnyBoard.BaseToken._defaultDriver.send)
-            AnyBoard.Logger.log("Default BaseToken driver is not set! Token will not work properly!", this);
-        this.driver = AnyBoard.BaseToken._defaultDriver;
-    }
-    else {
-        (driver.send && typeof driver.send === 'function') || AnyBoard.Logger.warn('Could not find send() on given driver', this);
-        this.driver = driver;
-    }
-
+    this.driver = driver || AnyBoard.BaseToken._defaultDriver;
 };
 
 AnyBoard.BaseToken._defaultDriver = {};
@@ -270,15 +259,23 @@ AnyBoard.BaseToken._defaultDriver = {};
  * @returns {boolean} whether or not driver was successfully set
  */
 AnyBoard.BaseToken.setDefaultDriver = function(driver) {
-    // Check that functions exists on driver
-    (driver.send && typeof driver.send === 'function') || AnyBoard.Logger.warn('Could not find send() on given driver', this);
-
     if (driver.send && typeof driver.send === 'function') {
         AnyBoard.BaseToken._defaultDriver = driver;
         return true;
     }
-
+    AnyBoard.Logger.warn('Could not find send() on given driver', this);
     return false;
+};
+
+/**
+ * Sets driver for the token.
+ * @param driver
+ */
+AnyBoard.BaseToken.prototype.setDriver = function(driver){
+    if (driver && driver.send && typeof driver.send === 'function')
+        this.driver = driver;
+    else
+        AnyBoard.Logger.warn('Could not find send() on given driver', this);
 };
 
 /**
@@ -351,9 +348,9 @@ AnyBoard.BaseToken.prototype.trigger = function(eventName, eventOptions) {
             }
     };
 
-    baseTrigger(this.listeners, eventName, [eventOptions]);
-    baseTrigger(this.onceListeners, eventName, [eventOptions]);
-    this.onceListeners[eventName] = [];
+    baseTrigger(this.listeners.normal, eventName, [eventOptions]);
+    baseTrigger(this.listeners.once, eventName, [eventOptions]);
+    this.listeners.once[eventName] = [];
 
     if (eventOptions.hasOwnProperty('meta-eventType')) {
         if (eventOptions['meta-eventType'] == 'token-token') {
@@ -435,9 +432,9 @@ AnyBoard.BaseToken.prototype.on = function(eventName, callbackFunction) {
  */
 AnyBoard.BaseToken.prototype.once = function(eventName, callbackFunction) {
     AnyBoard.Logger.debug('Added onceListener to event: ' + eventName, this);
-    if (!this.listeners.onceListeners[eventName])
-        this.listeners.onceListeners[eventName] = [];
-    this.listeners.onceListeners[eventName].push(callbackFunction);
+    if (!this.listeners.once[eventName])
+        this.listeners.once[eventName] = [];
+    this.listeners.once[eventName].push(callbackFunction);
 };
 
 /**
