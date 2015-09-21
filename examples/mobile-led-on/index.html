@@ -62,7 +62,8 @@
 
                     // Add listener to be executed if the token connects
                     token.on('connect', function() {
-                        document.getElementById(token.name).className = 'green';})
+                        document.getElementById(token.name).className = 'green';
+                    });
 
                     // Add listener to be executed if the token disconnects
                     token.on('disconnect', function() {

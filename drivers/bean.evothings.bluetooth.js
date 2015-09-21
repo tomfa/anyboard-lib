@@ -549,11 +549,11 @@
             token.device.serialDesc,
             new Uint8Array([1, 0]),
             function (data) {
-                AnyBoard.Logger.log("successfully subscribed to notifications from", token);
+                AnyBoard.Logger.log("Successfully subscribed to notifications from", token);
                 success && success();
             },
             function (data) {
-                AnyBoard.Logger.log("failed at subscribing to notifications from", token);
+                AnyBoard.Logger.log("Failed at subscribing to notifications from", token);
                 fail && fail();
             }
         );
