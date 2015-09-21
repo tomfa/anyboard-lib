@@ -1269,6 +1269,7 @@ AnyBoard.TokenManager.onceTokenEvent = function(eventName, callbackFunction) {
  * @property {boolean} connected whether or not the token is connected
  * @property {object} device driver spesific data.
  * @property {object} listeners functions to be executed upon certain triggered events
+ * @property {object} onceListeners functions to be executed upon the next triggering of a certain (only once).
  * @property {Array.<Function>} sendQueue queue for communicating with
  * @property {object} cache key-value store for caching certain communication calls
  * @property {AnyBoard.Driver} driver driver that handles communication
@@ -1279,16 +1280,8 @@ AnyBoard.BaseToken = function(name, address, device, driver) {
     this.address = address;
     this.connected = false;
     this.device = device;
-    this.listeners = {
-        normal: {},
-        once: {},
-        tokenEvent: {},
-        onceTokenEvent: {},
-        tokenTokenEvent: {},
-        onceTokenTokenEvent: {},
-        tokenConstraintEvent: {},
-        onceTokenConstraintEvent: {}
-    };
+    this.listeners = {};
+    this.onceListeners = {};
     this.sendQueue = [];
     this.cache = {};
     this.driver = driver || AnyBoard.BaseToken._defaultDriver;
@@ -1393,9 +1386,9 @@ AnyBoard.BaseToken.prototype.trigger = function(eventName, eventOptions) {
             }
     };
 
-    baseTrigger(this.listeners.normal, eventName, [eventOptions]);
-    baseTrigger(this.listeners.once, eventName, [eventOptions]);
-    this.listeners.once[eventName] = [];
+    baseTrigger(this.listeners, eventName, [eventOptions]);
+    baseTrigger(this.onceListeners, eventName, [eventOptions]);
+    this.onceListeners[eventName] = [];
 
     if (eventOptions.hasOwnProperty('meta-eventType')) {
         if (eventOptions['meta-eventType'] == 'token-token') {
@@ -1456,9 +1449,9 @@ AnyBoard.BaseToken.prototype.trigger = function(eventName, eventOptions) {
  */
 AnyBoard.BaseToken.prototype.on = function(eventName, callbackFunction) {
     AnyBoard.Logger.debug('Added listener to event: ' + eventName, this);
-    if (!this.listeners.normal[eventName])
-        this.listeners.normal[eventName] = [];
-    this.listeners.normal[eventName].push(callbackFunction);
+    if (!this.listeners[eventName])
+        this.listeners[eventName] = [];
+    this.listeners[eventName].push(callbackFunction);
 };
 
 /**
@@ -1477,9 +1470,9 @@ AnyBoard.BaseToken.prototype.on = function(eventName, callbackFunction) {
  */
 AnyBoard.BaseToken.prototype.once = function(eventName, callbackFunction) {
     AnyBoard.Logger.debug('Added onceListener to event: ' + eventName, this);
-    if (!this.listeners.once[eventName])
-        this.listeners.once[eventName] = [];
-    this.listeners.once[eventName].push(callbackFunction);
+    if (!this.onceListeners[eventName])
+        this.onceListeners[eventName] = [];
+    this.onceListeners[eventName].push(callbackFunction);
 };
 
 /**
