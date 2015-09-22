@@ -29,7 +29,7 @@ uint8_t getData[20];
 String temp_string;
 
 // BOARD CONSTANTS
-const int TX_PIN = 3;
+const int TX_PIN = 5;
 const int RX_PIN = 4;
 SoftwareSerial mySerial(RX_PIN, TX_PIN);    // Declare SoftwareSerial obj first
 Adafruit_Thermal printer(&mySerial);        // Pass addr to printer constructor
