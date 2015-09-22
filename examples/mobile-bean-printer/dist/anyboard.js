@@ -1390,7 +1390,7 @@ AnyBoard.BaseToken.prototype.trigger = function(eventName, eventOptions) {
     baseTrigger(this.onceListeners, eventName, [eventOptions]);
     this.onceListeners[eventName] = [];
 
-    if (eventOptions.hasOwnProperty('meta-eventType')) {
+    if (eventOptions && eventOptions.hasOwnProperty('meta-eventType')) {
         if (eventOptions['meta-eventType'] == 'token-token') {
             if (eventOptions.hasOwnProperty('token')) {
                 baseTrigger(AnyBoard.TokenManager.listeners.tokenTokenEvent, eventName, [eventOptions.token, eventOptions]);
