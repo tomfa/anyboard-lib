@@ -64,8 +64,11 @@ If you wish to contribute to the development of the AnyBoard library, clone this
 ### Setup
 - Install [node](http://nodejs.org/)
 - clone this repo ```git clone git@github.com:tomfa/anyboardjs.git``
-- navigate to this folder in console 
-- ```npm install``` - installs dependencies
+- navigate to this folder in console: ```cd path/to/anyboardjs``` 
+- install node dependencies: ```npm install```
+- install grunt-cli ```npm install -g grunt-cli``` (potentially need sudo)
+
+You've got what you need in order to develop efficiently!
 
 ### Create new drivers
 There are two type of drivers. One for discovering devices 

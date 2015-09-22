@@ -86,10 +86,25 @@ module.exports = function(grunt) {
             main: {
                 files: [
                     {expand: true, src: ['dist/<%= pkg.name %>.js'], dest: 'examples/mobile-deck/'},
+
                     {expand: true, src: ['dist/<%= pkg.name %>.js'], dest: 'examples/html-deck/'},
+
                     {expand: true, src: ['dist/<%= pkg.name %>.js'], dest: 'examples/mobile-led-on/'},
+                    {expand: true, src: ['driver/bean.evothings.bluetooth.js'], dest: 'examples/mobile-led-on/'},
+                    {expand: true, src: ['driver/discovery.evothings.bluetooth.js'], dest: 'examples/mobile-led-on/'},
+                    {expand: true, src: ['driver/rfduino.evothings.bluetooth.js'], dest: 'examples/mobile-led-on/'},
+                    {expand: true, src: ['firmware/BeanToken.ino'], dest: 'examples/mobile-led-on/'},
+                    {expand: true, src: ['firmware/RFduinoToken.ino'], dest: 'examples/mobile-led-on/'},
+
                     {expand: true, src: ['dist/<%= pkg.name %>.js'], dest: 'examples/mobile-bean-printer/'},
+                    {expand: true, src: ['driver/bean.evothings.bluetooth.js'], dest: 'examples/mobile-bean-printer/'},
+                    {expand: true, src: ['driver/discovery.evothings.bluetooth.js'], dest: 'examples/mobile-bean-printer/'},
+                    {expand: true, src: ['firmware/BeanPrinter.ino'], dest: 'examples/mobile-bean-printer/'},
+
                     {expand: true, src: ['dist/<%= pkg.name %>.js'], dest: 'examples/mobile-rfduino-color-detection/'},
+                    {expand: true, src: ['driver/discovery.evothings.bluetooth.js'], dest: 'examples/mobile-led-on/'},
+                    {expand: true, src: ['driver/rfduino.evothings.bluetooth.js'], dest: 'examples/mobile-led-on/'},
+                    {expand: true, src: ['firmware/RFduinoToken.ino'], dest: 'examples/mobile-rfduino-color-detection/'},
                 ]
             }
         }
