@@ -68,7 +68,6 @@ void setup() {
     printer.begin();
     printer.justify('L');           // Justifies text left by default (options: L, C, R)
     printer.setSize('M');           // Sets size of text to medium (options: L, M, S)
-    printer.println(F("Anyboard Platform"));
 
     // Setup bean
     Bean.setBeanName(NAME);         // Sets the discoverable name
