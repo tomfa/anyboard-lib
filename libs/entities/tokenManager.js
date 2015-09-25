@@ -345,24 +345,26 @@ AnyBoard.BaseToken.prototype.trigger = function(eventName, eventOptions) {
     baseTrigger(this.onceListeners, eventName, [eventOptions]);
     this.onceListeners[eventName] = [];
 
+    var self = this;
+
     if (eventOptions && eventOptions.hasOwnProperty('meta-eventType')) {
         if (eventOptions['meta-eventType'] == 'token-token') {
             if (eventOptions.hasOwnProperty('token')) {
-                baseTrigger(AnyBoard.TokenManager.listeners.tokenTokenEvent, eventName, [eventOptions.token, eventOptions]);
-                baseTrigger(AnyBoard.TokenManager.listeners.onceTokenTokenEvent, eventName, [eventOptions.token, eventOptions]);
+                baseTrigger(AnyBoard.TokenManager.listeners.tokenTokenEvent, eventName, [self, eventOptions.token, eventOptions]);
+                baseTrigger(AnyBoard.TokenManager.listeners.onceTokenTokenEvent, eventName, [self, eventOptions.token, eventOptions]);
                 AnyBoard.TokenManager.listeners.onceTokenTokenEvent[eventName] = [];
             } else {
                 AnyBoard.warn('Attempting to trigger token-token event type, but missing token option', this);
             }
 
         } else if (eventOptions['meta-eventType'] == 'token') {
-            baseTrigger(AnyBoard.TokenManager.listeners.tokenEvent, eventName, [eventOptions]);
-            baseTrigger(AnyBoard.TokenManager.listeners.onceTokenEvent, eventName, [eventOptions]);
+            baseTrigger(AnyBoard.TokenManager.listeners.tokenEvent, eventName, [self, eventOptions]);
+            baseTrigger(AnyBoard.TokenManager.listeners.onceTokenEvent, eventName, [self, eventOptions]);
             AnyBoard.TokenManager.listeners.onceTokenEvent[eventName] = [];
         } else if (eventOptions['meta-eventType'] == 'token-constraint') {
             if (eventOptions.hasOwnProperty('constraint')) {
-                baseTrigger(AnyBoard.TokenManager.listeners.tokenConstraintEvent, eventName, [eventOptions.constraint, eventOptions]);
-                baseTrigger(AnyBoard.TokenManager.listeners.onceTokenConstraintEvent, eventName, [eventOptions.constraint, eventOptions]);
+                baseTrigger(AnyBoard.TokenManager.listeners.tokenConstraintEvent, eventName, [self, eventOptions.constraint, eventOptions]);
+                baseTrigger(AnyBoard.TokenManager.listeners.onceTokenConstraintEvent, eventName, [self, eventOptions.constraint, eventOptions]);
                 AnyBoard.TokenManager.listeners.onceTokenConstraintEvent[eventName] = [];
             } else {
                 AnyBoard.warn('Attempting to trigger token-token event type, but missing constraint option', this);
