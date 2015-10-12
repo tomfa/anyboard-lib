@@ -72,9 +72,9 @@ If you wish to contribute to the development of the AnyBoard library, clone this
 - install node dependencies: ```npm install```
 - install grunt-cli ```npm install -g grunt-cli``` (potentially need sudo)
 
-You've got what you need in order to develop efficiently! However, you should first note that the grunt build and copy commands (below) will *overwrite* the following code:
-- Any code in firmware and drivers folder inside will be overwritten by firmware and drivers in the root folder
-- Any code inside all dist folder will be replaced with compiled versions of AnyBoard, which is based on the code in the libs folders.
+You've got what you need in order to develop efficiently! However, you should first note that the grunt build and copy commands (below) **will overwrite** the following code:
+- Any code in firmware and drivers folder inside ```examples``` will be overwritten by firmware and drivers in the root folder
+- Any code inside **all** ```dist``` folder will be replaced with compiled versions of AnyBoard, which is based on the code in the libs folders.
 
 ### Commands
 - ```grunt test``` - runs all tests from files in the folder ```test```
