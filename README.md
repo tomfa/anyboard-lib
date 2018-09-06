@@ -31,7 +31,7 @@ and [rfduino](http://www.rfduino.com/) which is based on a [evothings](evothings
 5. Create an index.html with the following inside ```<head>```:
 ```
     <!-- cordova.js -->
-	<script src="cordova.js"></script>
+    <script src="cordova.js"></script>
 
     <!-- AnyboardJS libraries -->
     <script src="dist/anyboard.js"></script>
