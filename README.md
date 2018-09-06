@@ -1,6 +1,9 @@
 # AnyboardJS
 
-A simple JS-framework for creating (mobile) games (using IoT devices).
+Note: This repo is a result of a 2015 Master Thesis. 
+See https://github.com/Anyboard/anyboard for further developments.
+
+A simple JS-framework for creating mobile games, using IoT devices.
 
 - [Library documentation](documentation.md)
 - [Examples](examples)
